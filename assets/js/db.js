@@ -32,8 +32,10 @@
     const t = now();
     const h = 3600 * 1000;
     const users = [
-      { id: 'U-MARIA', name: 'Maria Santos', email: 'maria@example.com', pin: '1234', points: 850, bottles: 34, createdAt: t - 40 * 24 * h },
-      { id: 'U-JOSE', name: 'Jose Reyes', email: 'jose@example.com', pin: '1234', points: 120, bottles: 6, createdAt: t - 12 * 24 * h },
+      { id: 'U-MARIA', name: 'Maria Santos', email: 'maria@example.com', pin: '1234', points: 850, coins: 12.5, wifiMinutes: 45, wifiSession: null, bottles: 34, notifRead: [], prefs: { notifs: true }, createdAt: t - 40 * 24 * h },
+      { id: 'U-JOSE', name: 'Jose Reyes', email: 'jose@example.com', pin: '1234', points: 120, coins: 0, wifiMinutes: 5, wifiSession: null, bottles: 6, notifRead: [], prefs: { notifs: true }, createdAt: t - 12 * 24 * h },
+      { id: 'U-ANA', name: 'Ana Dela Cruz', email: 'ana@example.com', pin: '1234', points: 2140, coins: 4, wifiMinutes: 120, wifiSession: null, bottles: 112, notifRead: [], prefs: { notifs: true }, createdAt: t - 90 * 24 * h },
+      { id: 'U-LEO', name: 'Leo Bautista', email: 'leo@example.com', pin: '1234', points: 40, coins: 0, wifiMinutes: 0, wifiSession: null, bottles: 2, notifRead: [], prefs: { notifs: true }, createdAt: t - 3 * 24 * h },
     ];
     const machines = [
       { id: 'BCF-001', name: 'Barangay Hall', location: 'Poblacion, Bocaue', status: 'online', binLevel: 42, coinHopper: 68, wifiSignal: 'strong', coinsEnabled: true, wifiEnabled: true, totalBottles: 1284, totalPaidOut: 148.6, lastEmptied: t - 2 * 24 * h, lastRefilled: t - 5 * 24 * h, session: null },
@@ -82,6 +84,7 @@
       transactions,
       vouchers,
       alerts,
+      cashouts: [],   // app cash-out codes redeemed at a kiosk → { code, userId, amount, status, createdAt }
       links: {},        // kiosk QR login codes → { machineId, status, userId, createdAt }
       appSession: null, // user app: logged-in user id
       adminSession: null,
@@ -89,10 +92,23 @@
   }
 
   /* ---------- persistence ---------- */
+  /** Fill in fields added after a store was first seeded (safe on every load). */
+  function migrate(d) {
+    if (!d || typeof d !== 'object') return seed();
+    if (!Array.isArray(d.cashouts)) d.cashouts = [];
+    (d.users || []).forEach((u) => {
+      if (typeof u.coins !== 'number') u.coins = 0;
+      if (typeof u.wifiMinutes !== 'number') u.wifiMinutes = 0;
+      if (u.wifiSession === undefined) u.wifiSession = null;
+      if (!Array.isArray(u.notifRead)) u.notifRead = [];
+      if (!u.prefs) u.prefs = { notifs: true };
+    });
+    return d;
+  }
   function load() {
     try {
       const raw = localStorage.getItem(KEY);
-      if (raw) { db = JSON.parse(raw); return db; }
+      if (raw) { db = migrate(JSON.parse(raw)); return db; }
     } catch (e) { console.warn('[BocofiDB] corrupt store, reseeding', e); }
     db = seed();
     persist();
@@ -127,7 +143,7 @@
     byEmail: (email) => get().users.find((u) => u.email.toLowerCase() === String(email).trim().toLowerCase()) || null,
     register(name, email, pin) {
       if (users.byEmail(email)) throw new Error('An account with that email already exists.');
-      const u = { id: uid('U-'), name: name.trim(), email: email.trim().toLowerCase(), pin: String(pin), points: 0, bottles: 0, createdAt: now() };
+      const u = { id: uid('U-'), name: name.trim(), email: email.trim().toLowerCase(), pin: String(pin), points: 0, coins: 0, wifiMinutes: 0, wifiSession: null, bottles: 0, notifRead: [], prefs: { notifs: true }, createdAt: now() };
       update((d) => d.users.push(u));
       return u;
     },
@@ -142,6 +158,8 @@
     addPoints(id, pts, bottles = 0) {
       update((d) => { const u = d.users.find((x) => x.id === id); if (u) { u.points = Math.max(0, Math.round(u.points + pts)); u.bottles = (u.bottles || 0) + bottles; } });
     },
+    addCoins(id, pesos) { update((d) => { const u = d.users.find((x) => x.id === id); if (u) u.coins = Math.max(0, round2((u.coins || 0) + pesos)); }); },
+    addWifi(id, minutes) { update((d) => { const u = d.users.find((x) => x.id === id); if (u) u.wifiMinutes = Math.max(0, Math.round(((u.wifiMinutes || 0) + minutes) * 100) / 100); }); },
     patch(id, fields) { update((d) => { const u = d.users.find((x) => x.id === id); if (u) Object.assign(u, fields); }); },
     remove(id) { update((d) => { d.users = d.users.filter((x) => x.id !== id); if (d.appSession === id) d.appSession = null; }); },
   };
@@ -197,6 +215,25 @@
     markRead(id) { update((d) => { const a = d.alerts.find((x) => x.id === id); if (a) a.read = true; }); },
     markAllRead() { update((d) => d.alerts.forEach((a) => { a.read = true; })); },
     clear() { update((d) => { d.alerts = []; }); },
+  };
+
+  /** Cash-out codes: the app locks coin balance behind a code the user shows at a kiosk. */
+  const cashouts = {
+    all: () => get().cashouts.slice().sort((a, b) => b.createdAt - a.createdAt),
+    forUser: (userId) => cashouts.all().filter((c) => c.userId === userId),
+    byCode: (code) => get().cashouts.find((c) => c.code === String(code).trim().toUpperCase()) || null,
+    create(userId, amount) {
+      amount = round2(amount);
+      const u = users.byId(userId);
+      if (!u || amount <= 0 || amount > (u.coins || 0)) throw new Error('Not enough coin balance.');
+      const code = 'CO-' + Math.random().toString(16).slice(2, 6).toUpperCase();
+      const c = { code, userId, amount, status: 'pending', createdAt: now(), expiresAt: now() + 24 * 3600 * 1000 };
+      update((d) => { const usr = d.users.find((x) => x.id === userId); usr.coins = round2(usr.coins - amount); d.cashouts.push(c); });
+      return c;
+    },
+    cancel(code) { update((d) => { const c = d.cashouts.find((x) => x.code === code); if (c && c.status === 'pending') { c.status = 'cancelled'; const u = d.users.find((x) => x.id === c.userId); if (u) u.coins = round2(u.coins + c.amount); } }); },
+    markPaid(code, machineId = null) { update((d) => { const c = d.cashouts.find((x) => x.code === code); if (c && c.status === 'pending') { c.status = 'paid'; c.paidAt = now(); c.machineId = machineId; } }); },
+    status(c) { if (c.status !== 'pending') return c.status; if (c.expiresAt < now()) return 'expired'; return 'pending'; },
   };
 
   /** QR login handshake: kiosk creates a code, the app resolves it. */
@@ -262,7 +299,7 @@
 
   global.BocofiDB = {
     KEY, get, update, reset, on, load,
-    users, machines, transactions, vouchers, alerts, links, config, admin, stats,
+    users, machines, transactions, vouchers, alerts, cashouts, links, config, admin, stats,
     util: { uid, now, clamp, round2, fmtPeso, fmtPts, fmtDate, fmtTime, esc },
   };
   load();
