@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#2f6b3a">
+  <title>BOCO-FI · Machine Kiosk</title>
+  <link rel="icon" href="../assets/img/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/css/base.css">
+  <link rel="stylesheet" href="kiosk.css">
+</head>
+<body>
+  <div class="kiosk leafy-bg" id="kiosk">
+
+    <!-- ===== header (storyboard: ☰ · logo · 🔔 · avatar) ===== -->
+    <header class="k-header">
+      <button class="k-iconbtn" id="btnMenu" aria-label="Service menu" aria-expanded="false">
+        <svg class="ico" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <img class="k-logo" src="../assets/img/logo.svg" alt="BOCO-FI">
+      <div class="k-header-right">
+        <button class="k-iconbtn" id="btnBell" aria-label="Machine notices">
+          <svg class="ico" viewBox="0 0 24 24"><path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4l2-2z"/><path d="M10 21h4"/></svg>
+          <span class="k-bell-count" id="bellCount" hidden>0</span>
+        </button>
+        <button class="k-avatar" id="btnUser" aria-label="Current user">
+          <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- ===== stage: the current screen is rendered here ===== -->
+    <main class="k-stage" id="stage" aria-live="polite"></main>
+
+    <!-- ===== footer progress (storyboard: 7-step bar) ===== -->
+    <footer class="k-footer">
+      <span class="k-step" id="stepLabel">1.1 · Idle</span>
+      <div class="k-progress" aria-hidden="true">
+        <div class="k-progress-fill" id="progressFill"></div>
+        <div class="k-progress-ticks" id="progressTicks"></div>
+      </div>
+      <span class="k-machine" id="machineLabel">BCF-001</span>
+    </footer>
+
+    <!-- ===== notices popover ===== -->
+    <div class="k-pop" id="popNotices" hidden>
+      <h4>Machine notices</h4>
+      <ul id="noticeList"></ul>
+    </div>
+    <div class="k-pop" id="popUser" hidden>
+      <h4>Session</h4>
+      <p id="userInfo" class="muted">No user linked.</p>
+    </div>
+
+    <!-- ===== service drawer (owner / demo tools) ===== -->
+    <aside class="k-drawer" id="drawer" aria-label="Service menu" hidden>
+      <div class="k-drawer-head">
+        <h3>Service menu</h3>
+        <button class="k-iconbtn" id="btnCloseDrawer" aria-label="Close">
+          <svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+
+      <section>
+        <label class="k-lbl" for="selMachine">This machine</label>
+        <select class="select" id="selMachine"></select>
+      </section>
+
+      <section>
+        <h4>Sensor simulator</h4>
+        <p class="help">There is no hardware in this prototype — use these to emulate the machine's sensors. Changes are written to the shared store and show up in the admin dashboard.</p>
+        <label class="k-lbl">Bin fill level <output id="outBin">0%</output></label>
+        <input type="range" id="rngBin" min="0" max="100" step="1">
+        <label class="k-lbl">Coin hopper <output id="outCoins">0%</output></label>
+        <input type="range" id="rngCoins" min="0" max="100" step="1">
+        <label class="k-lbl" for="selWifi">Wi-Fi signal</label>
+        <select class="select" id="selWifi">
+          <option value="strong">Strong</option>
+          <option value="weak">Weak</option>
+          <option value="none">No signal</option>
+        </select>
+      </section>
+
+      <section>
+        <h4>Session tools</h4>
+        <div class="stack">
+          <button class="btn btn-outline btn-block" id="btnSimScan">Simulate app scan (link demo user)</button>
+          <button class="btn btn-ghost btn-block" id="btnResetSession">Reset to idle screen</button>
+          <a class="btn btn-ghost btn-block" href="../admin/index.html" target="_blank" rel="noopener">Open admin dashboard ↗</a>
+          <a class="btn btn-ghost btn-block" href="../app/index.html" target="_blank" rel="noopener">Open user app ↗</a>
+        </div>
+      </section>
+    </aside>
+    <div class="k-scrim" id="scrim" hidden></div>
+  </div>
+
+  <div class="toast-host" id="toasts"></div>
+
+  <script src="../assets/js/db.js"></script>
+  <script src="kiosk.js"></script>
+</body>
+</html>
