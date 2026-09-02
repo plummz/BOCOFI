@@ -5,35 +5,75 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#2f6b3a">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="BOCO-FI">
   <title>BOCO-FI · App</title>
   <link rel="icon" href="../assets/img/mark.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="../assets/img/mark.svg">
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="../assets/css/base.css">
-  <link rel="stylesheet" href="app.css">
+  <link rel="stylesheet" href="../assets/css/base.css?v=2">
+  <link rel="stylesheet" href="app.css?v=2">
 </head>
 <body>
   <div class="phone" id="app">
-    <header class="a-header">
-      <img src="../assets/img/logo.svg" alt="BOCO-FI" class="a-logo">
-      <button class="a-avatar" id="hdrAvatar" data-view="profile" aria-label="Profile" hidden></button>
+
+    <!-- ☰ · logo · 🔔 · avatar  (storyboard header) -->
+    <header class="a-header" id="shellHdr" hidden>
+      <button class="icon-btn" id="btnMenu" aria-label="Open menu" aria-controls="drawer" aria-expanded="false">
+        <svg class="ico" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <a class="a-logo-wrap" href="#/home" aria-label="Home"><img src="../assets/img/logo.svg" alt="BOCO-FI" class="a-logo"></a>
+      <div class="hdr-right">
+        <button class="icon-btn" id="btnBell" data-view="notifications" aria-label="Notifications">
+          <svg class="ico" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0"/></svg>
+          <span class="bell-badge" id="bellBadge" hidden></span>
+        </button>
+        <button class="a-avatar" id="hdrAvatar" data-view="profile" aria-label="Profile"></button>
+      </div>
     </header>
+
+    <!-- slide-in menu -->
+    <div class="drawer-overlay" id="drawerOverlay" hidden></div>
+    <aside class="drawer" id="drawer" aria-label="Main menu" aria-hidden="true">
+      <div class="drawer-head">
+        <div class="d-avatar" id="dAvatar"></div>
+        <div class="d-user"><b id="dName">—</b><small id="dTier">—</small></div>
+        <button class="icon-btn" id="btnCloseDrawer" aria-label="Close menu"><svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <nav class="drawer-nav" id="drawerNav">
+        <button data-view="home"><svg class="ico" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Dashboard</button>
+        <button data-view="wallet"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 15h2"/></svg>Wallet</button>
+        <button data-view="recycle"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M21 14v7h-7"/></svg>Recycle · link a machine</button>
+        <button data-view="wifi"><svg class="ico" viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0M5.5 12.5a10 10 0 0 1 13 0M9 16a5 5 0 0 1 6 0"/><circle cx="12" cy="19.5" r="1" fill="currentColor"/></svg>Wi-Fi</button>
+        <button data-view="redeem"><svg class="ico" viewBox="0 0 24 24"><path d="M20 12v8H4v-8M2 7h20v5H2zM12 7v13M12 7c-2-4-6-3-6-1s3 1 6 1M12 7c2-4 6-3 6-1s-3 1-6 1"/></svg>Rewards</button>
+        <button data-view="machines"><svg class="ico" viewBox="0 0 24 24"><path d="M12 22s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>Find a machine</button>
+        <button data-view="history"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>History</button>
+        <button data-view="notifications"><svg class="ico" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0"/></svg>Notifications <span class="d-badge" id="dBadge" hidden></span></button>
+        <button data-view="leaderboard"><svg class="ico" viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M5 4h14v4a7 7 0 0 1-14 0zM5 6H2a3 3 0 0 0 3 3M19 6h3a3 3 0 0 1-3 3"/></svg>Leaderboard</button>
+        <button data-view="profile"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Profile &amp; settings</button>
+        <button data-view="help"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17h.01"/></svg>Help</button>
+      </nav>
+      <div class="drawer-foot">
+        <button class="btn btn-outline btn-block" id="btnDrawerLogout">Log out</button>
+        <small class="muted">BOCO-FI app · v2</small>
+      </div>
+    </aside>
 
     <main class="a-main" id="view"></main>
 
+    <!-- bottom tab bar -->
     <nav class="a-nav" id="nav" hidden>
       <button data-view="home"><svg class="ico" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Home</span></button>
-      <button data-view="link"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M21 14v7h-7"/></svg><span>Link</span></button>
-      <button data-view="vouchers"><svg class="ico" viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0M5.5 12.5a10 10 0 0 1 13 0M9 16a5 5 0 0 1 6 0"/><circle cx="12" cy="19.5" r="1" fill="currentColor"/></svg><span>Wi-Fi</span></button>
-      <button data-view="history"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>History</span></button>
-      <button data-view="profile"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Profile</span></button>
+      <button data-view="wallet"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 15h2"/></svg><span>Wallet</span></button>
+      <button data-view="recycle" class="nav-center" aria-label="Recycle"><span class="nav-fab"><svg class="ico" viewBox="0 0 24 24"><path d="M7 19l-3-5 3-5M17 5l3 5-3 5M4 14h9a4 4 0 0 0 4-4V5M20 10h-9a4 4 0 0 0-4 4v5"/></svg></span><span>Recycle</span></button>
+      <button data-view="wifi"><svg class="ico" viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0M5.5 12.5a10 10 0 0 1 13 0M9 16a5 5 0 0 1 6 0"/><circle cx="12" cy="19.5" r="1" fill="currentColor"/></svg><span>Wi-Fi</span></button>
+      <button id="navMenu"><svg class="ico" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>Menu</span></button>
     </nav>
   </div>
   <div class="toast-host" id="toasts"></div>
 
-  <script src="../assets/js/db.js"></script>
-  <script src="app.js"></script>
+  <script src="../assets/js/db.js?v=2"></script>
+  <script src="app.js?v=2"></script>
 </body>
 </html>

@@ -5,7 +5,7 @@ A reverse vending machine system for the Philippines. Users insert plastic bottl
 | Surface | Path | Who uses it |
 |---|---|---|
 | **Machine kiosk** | `kiosk/` | The touchscreen on the vending machine. Implements all 25 screens of the wireframe site map (1.1 Idle → 7.2 Session ended). |
-| **User app** | `app/` | Recyclers. Register/log in, link to a machine by code, see balance & history, claim saved credits as Wi-Fi vouchers. Mobile-first, PWA manifest. |
+| **User app** | `app/` | Recyclers. Dashboard with three balances (stacked points · coin balance ₱ · Wi-Fi time remaining), ☰ drawer menu + bottom tab bar, wallet (convert points → coins / Wi-Fi, cash-out codes for the kiosk), Wi-Fi countdown session + top-ups + kiosk vouchers, rewards bundles, machine finder, history filters, notifications, leaderboard & tiers, profile/settings, help. Mobile-first PWA. |
 | **Owner / admin** | `admin/` | The machine owner. Dashboard, machines (sensor state + controls), owner alerts, transactions (CSV export), users, vouchers, reward settings. |
 | Launcher | `index.html` | Links to the three surfaces + demo instructions. |
 
@@ -39,7 +39,7 @@ Serving over http(s) also enables the user app's service worker.
 assets/js/db.js      shared data layer (localStorage + cross-tab sync)   ← swap for an API
 assets/css/base.css  design tokens & primitives
 kiosk/               index.html · kiosk.css · kiosk.js
-app/                 index.html · app.css · app.js · manifest.json · sw.js
+app/                 index.html · app.css · app.js · manifest.json · sw.js   (hash routes: #/home #/wallet #/recycle #/wifi #/redeem #/machines #/history #/notifications #/leaderboard #/profile #/help)
 admin/               index.html · admin.css · admin.js
 ```
 
@@ -48,9 +48,10 @@ admin/               index.html · admin.css · admin.js
 ### Data model (summary)
 
 - `machines[]` — `id, name, location, status, binLevel, coinHopper, wifiSignal, coinsEnabled, wifiEnabled, totalBottles, totalPaidOut, session`
-- `users[]` — `id, name, email, pin, points, bottles`
-- `transactions[]` — `id, machineId, userId|null, items[{type,label,value}], total, reward: coins|wifi|save|claim, points?, minutes?, voucherCode?`
+- `users[]` — `id, name, email, pin, points, coins (₱), wifiMinutes, wifiSession{startedAt,minutesAtStart,code}|null, bottles, notifRead[], prefs`
+- `transactions[]` — `id, machineId, userId|null, items[{type,label,value}], total, reward: coins|wifi|save|claim|convert-coins|convert-wifi|cashout|cashout-cancel|wifi-use|voucher-add|bundle, points?, minutes?, voucherCode?, code?, label?`
 - `vouchers[]` — `code, minutes, userId, machineId, expiresAt, redeemed`
+- `cashouts[]` — app cash-out codes redeemed at a kiosk: `code, userId, amount, status: pending|paid|cancelled, expiresAt`
 - `alerts[]` — owner notifications raised by machines (`bin`, `coins`, `wifi`, `rewards`)
 - `links{}` — kiosk login codes: `{ machineId, status: pending|linked, userId }`
 - `config` — reward table, rates, thresholds, admin credentials
