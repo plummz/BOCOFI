@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2f6b3a">
+  <title>BOCO-FI · Recycling Rewards System</title>
+  <link rel="icon" href="assets/img/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <style>
+    body { min-height: 100vh; min-height: 100dvh; }
+    .hero { max-width: 1040px; margin: 0 auto; padding: clamp(2rem, 6vw, 4rem) 1.25rem 3rem; }
+    .hero img { width: min(320px, 70vw); display: block; margin-bottom: 1rem; }
+    .hero h1 { font-size: clamp(1.6rem, 4vw, 2.4rem); }
+    .hero p.lead { font-size: 1.1rem; color: var(--ink-2); max-width: 60ch; }
+    .surfaces { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-top: 2rem; }
+    .surface { display: flex; flex-direction: column; gap: .6rem; padding: 1.4rem; border-radius: var(--radius-lg); background: #fff; box-shadow: var(--shadow); text-decoration: none; color: inherit; border-top: 6px solid var(--accent, var(--green-500)); transition: transform .15s ease, box-shadow .15s ease; }
+    .surface:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(31,74,40,.16); }
+    .surface .ico { width: 2.2rem; height: 2.2rem; color: var(--accent, var(--green-500)); }
+    .surface h2 { margin: .2rem 0 0; }
+    .surface .cta { margin-top: auto; color: var(--accent, var(--green-700)); font-weight: 700; }
+    .demo { margin-top: 2.5rem; }
+    .demo code { background: #fff; padding: .15em .45em; border-radius: 6px; border: 1px solid var(--line); }
+    .demo ul { padding-left: 1.2rem; }
+    footer { text-align: center; color: var(--ink-3); font-size: .85rem; padding: 1rem; }
+  </style>
+</head>
+<body class="leafy-bg">
+  <main class="hero">
+    <img src="assets/img/logo.svg" alt="BOCO-FI">
+    <h1>Bottle Collection &amp; Wi-Fi rewards</h1>
+    <p class="lead">A reverse vending machine system for the Philippines: insert plastic bottles or aluminium cans, get coins, a Wi-Fi voucher, or points saved to your account. This repository contains all three surfaces of the system.</p>
+
+    <div class="surfaces">
+      <a class="surface" href="kiosk/index.html" style="--accent:#2e9e5b">
+        <svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        <h2>Machine kiosk</h2>
+        <p class="muted">The touchscreen on the vending machine. All 25 screens from the wireframe site map (1.1 Idle → 7.2 Session ended) with a built-in sensor simulator.</p>
+        <span class="cta">Open kiosk →</span>
+      </a>
+      <a class="surface" href="app/index.html" style="--accent:#2f6fd8">
+        <svg class="ico" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg>
+        <h2>User app</h2>
+        <p class="muted">Mobile-first app for recyclers: create an account, link to a machine by scanning its code, watch your balance grow, and claim saved credits as Wi-Fi vouchers.</p>
+        <span class="cta">Open user app →</span>
+      </a>
+      <a class="surface" href="admin/index.html" style="--accent:#7c4fd0">
+        <svg class="ico" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 3 5-6"/></svg>
+        <h2>Owner / admin</h2>
+        <p class="muted">Dashboard for the machine owner: bin capacity, coin hopper and Wi-Fi status per machine, owner alerts, transactions, users, vouchers and reward settings.</p>
+        <span class="cta">Open admin →</span>
+      </a>
+    </div>
+
+    <section class="demo card">
+      <h3>Try the full loop</h3>
+      <ul>
+        <li>Open the <strong>kiosk</strong> and the <strong>user app</strong> in two tabs (or two devices on the same browser profile). They share one local data store and update each other live.</li>
+        <li>User app demo account: <code>maria@example.com</code> · PIN <code>1234</code></li>
+        <li>Admin login: <code>admin</code> / <code>admin123</code></li>
+        <li>On the kiosk, tap <em>Log in</em>, then in the app choose <em>Link to machine</em> and type the 4-letter code shown on the kiosk.</li>
+        <li>Use the kiosk's <em>sensor simulator</em> (bottom of the insert screen, or the ☰ menu) to "insert" bottles and cans.</li>
+      </ul>
+      <p class="muted" style="margin:0">No backend is required — everything runs from static files and <code>localStorage</code>. See <code>README.md</code> for the data model and how to connect a real server.</p>
+    </section>
+  </main>
+  <footer>BOCO-FI · reverse vending machine system · prototype build</footer>
+</body>
+</html>
