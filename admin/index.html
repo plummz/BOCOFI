@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2f6b3a">
+  <title>BOCO-FI · Owner Dashboard</title>
+  <link rel="icon" href="../assets/img/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/css/base.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <!-- ===== login ===== -->
+  <div class="login leafy-bg" id="login" hidden>
+    <form class="login-card" id="formLogin" novalidate>
+      <img src="../assets/img/logo.svg" alt="BOCO-FI" class="login-logo">
+      <h2>Owner dashboard</h2>
+      <p class="muted">Sign in to manage machines, rewards and users.</p>
+      <div class="field"><label for="lUser">Username</label><input class="input" id="lUser" autocomplete="username" value="admin" required></div>
+      <div class="field"><label for="lPass">Password</label><input class="input" id="lPass" type="password" autocomplete="current-password" value="admin123" required></div>
+      <div class="error" id="loginErr"></div>
+      <button class="btn btn-block" type="submit">Sign in</button>
+      <p class="help center mt">Demo credentials are pre-filled. Change them in Settings.</p>
+    </form>
+  </div>
+
+  <!-- ===== shell ===== -->
+  <div class="shell" id="shell" hidden>
+    <aside class="side" id="side">
+      <div class="side-brand"><img src="../assets/img/logo.svg" alt="BOCO-FI"></div>
+      <nav class="side-nav" id="sideNav">
+        <a href="#dashboard" data-route="dashboard"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>Dashboard</a>
+        <a href="#machines" data-route="machines"><svg class="ico" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 6h6M9 10h6M12 17h.01"/></svg>Machines</a>
+        <a href="#alerts" data-route="alerts"><svg class="ico" viewBox="0 0 24 24"><path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4l2-2z"/><path d="M10 21h4"/></svg>Alerts <span class="pill" id="navAlertCount" hidden>0</span></a>
+        <a href="#transactions" data-route="transactions"><svg class="ico" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Transactions</a>
+        <a href="#users" data-route="users"><svg class="ico" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M16 4a4 4 0 0 1 0 8M22 21a7 7 0 0 0-5-6.7"/></svg>Users</a>
+        <a href="#vouchers" data-route="vouchers"><svg class="ico" viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0M5.5 12.5a10 10 0 0 1 13 0M9 16a5 5 0 0 1 6 0"/><circle cx="12" cy="19.5" r="1" fill="currentColor"/></svg>Vouchers</a>
+        <a href="#settings" data-route="settings"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Settings</a>
+      </nav>
+      <div class="side-foot">
+        <a class="btn btn-ghost btn-sm" href="../kiosk/index.html" target="_blank" rel="noopener">Open kiosk ↗</a>
+        <a class="btn btn-ghost btn-sm" href="../app/index.html" target="_blank" rel="noopener">Open user app ↗</a>
+        <button class="btn btn-outline btn-sm" id="btnLogout">Sign out</button>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim" hidden></div>
+
+    <div class="content">
+      <header class="topbar">
+        <button class="hamb" id="btnSide" aria-label="Menu"><svg class="ico" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+        <h1 id="pageTitle">Dashboard</h1>
+        <div class="row">
+          <span class="badge ok" id="liveBadge"><i class="dot ok"></i> live</span>
+          <span class="muted" id="whoami">admin</span>
+        </div>
+      </header>
+      <main class="page" id="page"></main>
+    </div>
+  </div>
+
+  <div class="toast-host" id="toasts"></div>
+  <script src="../assets/js/db.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
