@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 96" width="320" height="96" role="img" aria-label="BOCO-FI">
+  <defs>
+    <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5aa860"/><stop offset="1" stop-color="#2f6b3a"/>
+    </linearGradient>
+  </defs>
+  <!-- sprout mark -->
+  <path d="M42 84 C 30 60, 34 40, 56 26 C 60 44, 54 66, 42 84 Z" fill="url(#leaf)"/>
+  <path d="M42 84 C 20 70, 14 50, 22 32 C 40 40, 46 62, 42 84 Z" fill="#3f8f4f" opacity=".9"/>
+  <path d="M42 84 L42 60" stroke="#2f6b3a" stroke-width="3" stroke-linecap="round"/>
+  <!-- wifi arcs -->
+  <path d="M60 22 a14 14 0 0 1 14 -8" fill="none" stroke="#4a90d9" stroke-width="3" stroke-linecap="round"/>
+  <path d="M62 12 a24 24 0 0 1 22 -10" fill="none" stroke="#4a90d9" stroke-width="3" stroke-linecap="round" opacity=".7"/>
+  <circle cx="60" cy="30" r="3" fill="#4a90d9"/>
+  <!-- wordmark -->
+  <text x="94" y="66" font-family="Inter, 'Segoe UI', system-ui, sans-serif" font-size="46" font-weight="800" letter-spacing="1" fill="#2f6b3a">BOCO<tspan fill="#4a90d9">-FI</tspan></text>
+</svg>
