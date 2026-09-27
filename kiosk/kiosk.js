@@ -294,12 +294,21 @@
       </div>`;
     },
 
-    '5.1': () => `
+    '5.1': () => {
+      const m = machine();
+      const config = DB.config.get();
+      const level = m ? clamp(Number(m.binLevel) || 0, 0, 100) : 0;
+      const online = !!m && m.status === 'online';
+      const high = online && DB.machines.availability(m).binHigh;
+      return `
       <h2>Bin capacity</h2>
       <div class="panel">
-        <div class="bar warn"><i style="width:${machine().binLevel}%"></i></div>
-        <div class="muted">Bin at ${machine().binLevel}% — crusher will run shortly</div>
-      </div>`,
+        <div class="bar warn"><i style="width:${level}%"></i></div>
+        <div class="muted" role="${online ? 'status' : 'alert'}">${m ? `${esc(m.name)} · bin at ${level}% (crusher threshold ${config.binAlertThreshold}%).` : 'No recycling machine is configured.'}</div>
+      </div>
+      <p class="sub" role="${online ? 'status' : 'alert'}">${online ? high ? 'The bin is ready for a crusher cycle.' : 'The bin is below the crusher threshold.' : `Machine ${esc(m ? m.status : 'unavailable')}; the crusher cannot run.`}</p>
+      <div class="actions"><button class="btn btn-blue" id="btnCapacityContinue">${online && high ? 'START CRUSHING' : 'CONTINUE TO REWARDS'}</button></div>`;
+    },
 
     '5.2': () => `
       <h2>Crushing</h2>
@@ -586,7 +595,23 @@
     },
     '4.5': (el) => { $('#btnNoMore', el).addEventListener('click', () => go(S.items.length ? '6.1' : '7.2')); },
 
-    '5.1': () => later(2200, () => go('5.2')),
+    '5.1': (el) => {
+      const continueCapacity = () => {
+        const m = machine();
+        const a = m && DB.machines.availability(m);
+        go(a && a.online && a.binHigh ? '5.2' : '5.3');
+      };
+      const button = $('#btnCapacityContinue', el);
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+        button.textContent = 'Checking bin…';
+        later(300, continueCapacity);
+      });
+      later(2200, continueCapacity);
+    },
     '5.2': (el) => {
       const bar = $('#crushBar', el);
       requestAnimationFrame(() => { bar.style.transition = 'width 2.8s linear'; bar.style.width = '100%'; });
