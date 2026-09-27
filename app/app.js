@@ -346,9 +346,9 @@
         <h4>Link to a machine</h4>
         <p class="help">On the kiosk tap <b>Log in</b>, then enter the 4-letter code shown under the QR code.</p>
         <div class="field"><label for="fCode">Machine code</label><input class="input mono" id="fCode" maxlength="4" autocapitalize="characters" autocomplete="off" placeholder="XXXX" required></div>
-        <div class="error" id="linkErr"></div>
+        <div class="error" id="linkErr" role="alert" aria-live="polite"></div>
         <button class="btn btn-blue btn-block" type="submit">${ICON.qr} Link my account</button>
-        ${pending.length ? `<p class="help mt">Demo · machines waiting for a scan:</p><div class="code-hint">${pending.map((p) => `<button type="button" class="btn btn-outline btn-sm" data-code="${esc(p.code)}">${esc(p.code)} · ${esc(p.machineId)}</button>`).join('')}</div>` : ''}
+        ${pending.length ? `<p class="help mt">Machines waiting for a scan:</p><div class="code-hint">${pending.map((p) => { const m = DB.machines.byId(p.machineId); return `<button type="button" class="btn btn-outline btn-sm" data-code="${esc(p.code)}">${esc(p.code)} · ${esc(m ? m.name : p.machineId)}</button>`; }).join('')}</div>` : '<p class="empty" role="status">No machine codes are waiting right now. Start a link on a kiosk, then enter its code here.</p>'}
       </form>
       <div class="card">
         <h4>How it works</h4>
@@ -610,10 +610,28 @@
 
     recycle(u) {
       const input = $('#fCode');
+      const form = $('#formLink'); const button = form.querySelector('[type="submit"]');
       const submit = (code) => {
         const err = $('#linkErr'); err.textContent = '';
-        try { const mId = DB.links.resolve(code, u.id); const m = DB.machines.byId(mId); toast(`Linked to ${m ? m.name : mId} · insert your items`, 'ok'); goto('home'); }
-        catch (ex) { err.textContent = ex.message; }
+        if (button.disabled) return;
+        const normalized = String(code || '').trim().toUpperCase();
+        if (!/^[A-Z0-9]{4}$/.test(normalized)) { err.textContent = 'Enter the 4-character code shown on the kiosk.'; input.focus(); return; }
+        button.disabled = true; button.setAttribute('aria-busy', 'true'); button.textContent = 'Linking…';
+        $$('[data-code]').forEach((b) => { b.disabled = true; });
+        setTimeout(() => {
+          try {
+            const latest = DB.users.byId(u.id); if (!latest) throw new Error('Your account is unavailable. Sign in again and retry.');
+            const link = DB.links.get(normalized); if (!link || link.status !== 'pending') throw new Error(link ? 'That code has already been used.' : 'Code not found. Check the machine screen and try again.');
+            const m = DB.machines.byId(link.machineId);
+            if (!m) throw new Error('The machine for this code is no longer listed. Ask the operator for help.');
+            DB.links.resolve(normalized, latest.id);
+            toast(`Linked to ${m.name} · insert your items`, 'ok'); goto('home');
+          } catch (ex) {
+            err.textContent = ex.message;
+            button.disabled = false; button.removeAttribute('aria-busy'); button.innerHTML = `${ICON.qr} Link my account`;
+            $$('[data-code]').forEach((b) => { b.disabled = false; });
+          }
+        }, 200);
       };
       $('#formLink').onsubmit = (e) => { e.preventDefault(); submit(input.value); };
       $$('[data-code]').forEach((b) => b.addEventListener('click', () => submit(b.dataset.code)));
