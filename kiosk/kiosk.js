@@ -321,13 +321,20 @@
       </div>`;
     },
 
-    '5.3': () => `
+    '5.3': () => {
+      const m = machine();
+      const a = m && DB.machines.availability(m);
+      const canAdd = !!a && a.online && !a.binFull;
+      return `
       <h1>What would you like to do?</h1>
-      <div class="chip">Session total <b>${fmtPeso(S.total)}</b> · ${S.items.length} item${S.items.length > 1 ? 's' : ''}</div>
+      <div class="chip" role="status">Session total <b>${fmtPeso(S.total)}</b> · ${S.items.length} item${S.items.length === 1 ? '' : 's'}</div>
+      <p class="sub" role="${S.items.length && a && a.online ? 'status' : 'alert'}">${S.items.length ? a && a.online ? 'Your accepted items are ready for another item or a reward.' : 'The machine is unavailable. You can still review available account rewards.' : 'There are no accepted items to claim yet.'}</p>
+      ${S.crusherError ? `<p class="start-status" role="alert">${esc(S.crusherError)}</p>` : ''}
       <div class="actions">
-        <button class="btn btn-lg" style="background:var(--c-storage)" data-go="4.1">ADD MORE</button>
-        <button class="btn btn-outline btn-lg" style="border-color:var(--c-storage);color:var(--c-storage)" data-go="6.1">CLAIM</button>
-      </div>`,
+        <button class="btn btn-lg" style="background:var(--color-primary)" data-go="4.1" ${canAdd ? '' : 'disabled'}>ADD MORE</button>
+        <button class="btn btn-outline btn-lg" style="border-color:var(--color-primary-strong);color:var(--color-primary-strong)" data-go="6.1" ${S.items.length ? '' : 'disabled'}>CLAIM</button>
+      </div>`;
+    },
 
     '6.1': () => {
       const a = DB.machines.availability(machine());
