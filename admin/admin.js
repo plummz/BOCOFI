@@ -188,13 +188,13 @@
       if (filters.vStatus) vs = vs.filter((v) => DB.vouchers.status(v) === filters.vStatus);
       return `
       <div class="filters">
-        <select class="select" id="fVStatus"><option value="">All statuses</option>${['active', 'used', 'expired'].map((s) => `<option value="${s}" ${filters.vStatus === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
+        <select class="select" id="fVStatus"><option value="">All statuses</option>${['active', 'used', 'expired', 'revoked'].map((s) => `<option value="${s}" ${filters.vStatus === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
         <span class="spacer"></span><span class="muted">${vs.length} vouchers</span>
       </div>
       <div class="card table-wrap"><table class="table"><thead><tr><th>Code</th><th class="num">Minutes</th><th>User</th><th>Source</th><th>Created</th><th>Expires</th><th>Status</th><th></th></tr></thead>
       <tbody>${vs.map((v) => { const st = DB.vouchers.status(v); return `<tr>
         <td class="mono"><b>${esc(v.code)}</b></td><td class="num">${v.minutes}</td><td>${esc(userName(v.userId))}</td><td>${esc(machineName(v.machineId))}</td><td>${fmtDate(v.createdAt)}</td><td>${fmtDate(v.expiresAt)}</td>
-        <td><span class="badge ${{ active: 'ok', used: '', expired: 'danger' }[st]}">${st}</span></td>
+        <td><span class="badge ${{ active: 'ok', used: '', expired: 'danger', revoked: 'danger' }[st]}">${st}</span></td>
         <td>${st === 'active' ? `<button class="btn btn-ghost btn-sm" data-revoke="${esc(v.code)}">Revoke</button>` : ''}</td></tr>`; }).join('') || '<tr><td colspan="8" class="muted">No vouchers.</td></tr>'}</tbody></table></div>`;
     },
 
@@ -364,7 +364,7 @@
     },
     vouchers() {
       $('#fVStatus').onchange = (e) => { filters.vStatus = e.target.value; route(); };
-      $$('[data-revoke]').forEach((b) => b.onclick = () => { DB.vouchers.redeem(b.dataset.revoke); toast('Voucher revoked'); route(); });
+      $$('[data-revoke]').forEach((b) => b.onclick = () => { DB.vouchers.revoke(b.dataset.revoke); toast('Voucher revoked', 'ok'); route(); });
     },
     cashouts() { $('#fCashoutStatus').onchange = (e) => { filters.cStatus = e.target.value; route(); }; },
     settings() {
