@@ -92,6 +92,7 @@
         voucherTtlHours: 24,
         voucherDisplaySeconds: 30,   // wireframe 6.5 "Disappears in 30 seconds"
         idleTimeoutSeconds: 90,
+        supportEmail: 'support@bocofi.ph',
         adminUser: 'admin',
         adminPass: 'admin123',
         orgName: 'BOCO-FI Recycling Rewards',
@@ -120,6 +121,7 @@
     if (!Array.isArray(d.config.wifiTopupOptions)) d.config.wifiTopupOptions = [10, 30, 60];
     if (!Array.isArray(d.config.tiers)) d.config.tiers = seed().config.tiers;
     if (!Array.isArray(d.config.rewardBundles)) d.config.rewardBundles = seed().config.rewardBundles;
+    if (typeof d.config.supportEmail !== 'string') d.config.supportEmail = 'support@bocofi.ph';
     (d.users || []).forEach((u) => {
       if (typeof u.coins !== 'number') u.coins = 0;
       if (typeof u.wifiMinutes !== 'number') u.wifiMinutes = 0;

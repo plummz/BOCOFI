@@ -469,16 +469,16 @@
       <div class="page-title"><h2>Help</h2></div>
       <div class="card">
         <details class="faq" open><summary>What are stacked points?</summary><p>When you choose <b>SAVE</b> at a kiosk, the value of your items is stored as points: ${cfg().pointsPerPeso} pts per ₱1. Points never expire and can be converted to coins or Wi-Fi time in your wallet.</p></details>
-        <details class="faq"><summary>How do I get my coin balance as real coins?</summary><p>In <b>Wallet → Cash out coins</b>, generate a code. At any kiosk choose <b>COINS</b>, enter the code and the machine dispenses the amount. Unused codes expire after 24 hours and you can cancel them anytime.</p></details>
+        <details class="faq"><summary>How do I get my coin balance as real coins?</summary><p>In <b>Wallet → Cash out coins</b>, generate a code. Cash-out code redemption is not connected to kiosk payout in this demo yet, so don't rely on a code for a physical payout. Unused codes expire after ${cfg().cashoutTtlHours} hours and you can cancel them to return the balance.</p></details>
         <details class="faq"><summary>How does Wi-Fi time work?</summary><p>Your Wi-Fi time only counts down while you're connected. Join the <b>BOCO-FI Free Wi-Fi</b> network near a kiosk, tap <b>Connect</b> in the app, and tap <b>Disconnect</b> when you're done. Vouchers from kiosks can be added to your time bank.</p></details>
-        <details class="faq"><summary>Which items are accepted?</summary><p>Empty, uncrushed PET plastic bottles (Sakto up to 1.5 L) and aluminium cans. Glass, tetra packs and other plastics are returned through the drawer.</p></details>
+        <details class="faq"><summary>Which items are accepted?</summary><p>${cfg().rewardTable.length ? `Configured reward types: ${cfg().rewardTable.map((r) => `<b>${esc(r.label)}</b> (${esc(r.hint)})`).join(' · ')}. Items should be empty and uncrushed.` : 'No item types are configured yet. Check back after the operator updates the reward table.'}</p></details>
         <details class="faq"><summary>The machine said no rewards are available</summary><p>The kiosk checks its coin hopper and Wi-Fi signal before each session. If a reward isn't available you can still choose the others, or <b>SAVE</b> to points and spend later.</p></details>
         <details class="faq"><summary>How do tiers work?</summary><p>${tiers().map((t) => `${t.emoji} ${t.name} from ${t.min} items`).join(' · ')}. Your tier tracks your recycled items.</p></details>
       </div>
       <div class="card">
         <h4>Contact</h4>
         <p class="muted">Kiosk problem? Note the machine name and time, then message the operator.</p>
-        <a class="btn btn-outline btn-block" href="mailto:support@bocofi.ph?subject=BOCO-FI%20app">Email support</a>
+        <a class="btn btn-outline btn-block" href="mailto:${encodeURIComponent(cfg().supportEmail || 'support@bocofi.ph').replace(/%40/gi, '@')}?subject=BOCO-FI%20app">Email support</a>
       </div>`,
   };
 
