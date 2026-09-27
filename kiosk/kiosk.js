@@ -24,7 +24,7 @@
   const machine = () => DB.machines.byId(machineId);
 
   /* ---------- session state ---------- */
-  const S = { screen: '1.1', mode: null, user: null, items: [], total: 0, pendingItem: null, rejectReason: null, crusherError: null, linkCode: null, alerted: false, reward: null };
+  const S = { screen: '1.1', mode: null, user: null, items: [], total: 0, pendingItem: null, rejectReason: null, crusherError: null, rewardError: null, linkCode: null, alerted: false, reward: null };
   let timers = [];
   let idleTimer = null;
   const later = (ms, fn) => { const t = setTimeout(fn, ms); timers.push(t); return t; };
@@ -68,7 +68,7 @@
 
   function resetSession() {
     if (S.linkCode) DB.links.cancel(S.linkCode);
-    Object.assign(S, { mode: null, user: null, items: [], total: 0, pendingItem: null, rejectReason: null, crusherError: null, linkCode: null, alerted: false, reward: null });
+    Object.assign(S, { mode: null, user: null, items: [], total: 0, pendingItem: null, rejectReason: null, crusherError: null, rewardError: null, linkCode: null, alerted: false, reward: null });
   }
 
   /* ---------- navigation ---------- */
@@ -337,17 +337,24 @@
     },
 
     '6.1': () => {
-      const a = DB.machines.availability(machine());
+      const m = machine();
+      const a = m ? DB.machines.availability(m) : { online: false, coins: false, wifi: false };
       const c = DB.config.get();
+      const user = S.user && DB.users.byId(S.user.id);
+      const hasItems = S.items.length > 0 && S.total > 0;
+      const hasReward = a.coins || a.wifi || !!user;
+      const status = S.rewardError || (!m ? 'No recycling machine is configured.' : !hasItems ? 'No accepted items are available to claim.' : !hasReward ? `No reward is currently available at ${esc(m.name)}.` : !a.coins && !a.wifi ? 'Coin and Wi-Fi payouts are unavailable; account saving is available.' : `Choose a reward for ${esc(m.name)}.`);
       return `
       <h1>Choose your reward</h1>
-      <div class="chip">Session total <b>${fmtPeso(S.total)}</b></div>
+      <div class="chip" role="status">Session total <b>${fmtPeso(S.total)}</b> · ${S.items.length} item${S.items.length === 1 ? '' : 's'}</div>
       <div class="reward-grid">
-        <button class="reward-card" data-reward="coins" ${a.coins ? '' : 'disabled'}>${ICON.coins}COINS<small>${a.coins ? fmtPeso(S.total) + ' in coins' : 'Not available'}</small></button>
-        <button class="reward-card" data-reward="wifi" ${a.wifi ? '' : 'disabled'}>${ICON.wifi}WI-FI<small>${a.wifi ? sessionMinutes() + ' min voucher' : 'Not available'}</small></button>
-        <button class="reward-card" data-reward="save" ${S.user ? '' : 'disabled'}>${ICON.save}SAVE<small>${S.user ? '+' + sessionPoints() + ' pts to account' : 'Log in to save'}</small></button>
+        <button class="reward-card" data-reward="coins" ${a.coins && hasItems ? '' : 'disabled'}>${ICON.coins}COINS<small>${a.coins ? fmtPeso(S.total) + ' in coins' : 'Not available'}</small></button>
+        <button class="reward-card" data-reward="wifi" ${a.wifi && hasItems ? '' : 'disabled'}>${ICON.wifi}WI-FI<small>${a.wifi ? sessionMinutes() + ' min voucher' : 'Not available'}</small></button>
+        <button class="reward-card" data-reward="save" ${user && hasItems ? '' : 'disabled'}>${ICON.save}SAVE<small>${user ? '+' + sessionPoints() + ' pts to account' : 'Log in to save'}</small></button>
       </div>
-      <p class="sub muted">${c.pointsPerPeso} pts = ₱1 · ${c.wifiMinutesPerPeso} min Wi-Fi = ₱1</p>`;
+      <p class="sub ${S.rewardError || !hasItems || !hasReward ? 'start-status' : 'muted'}" role="${S.rewardError || !hasItems || !hasReward ? 'alert' : 'status'}">${esc(status)}</p>
+      <p class="sub muted">${c.pointsPerPeso} pts = ₱1 · ${c.wifiMinutesPerPeso} min Wi-Fi = ₱1</p>
+      <div class="actions"><button class="btn btn-ghost" data-go="5.3">BACK</button></div>`;
     },
 
     '6.2': () => `
@@ -688,6 +695,21 @@
 
   function chooseReward(kind) {
     const m = machine(); const c = DB.config.get();
+    const a = m && DB.machines.availability(m);
+    const user = S.user && DB.users.byId(S.user.id);
+    if (!m || !S.items.length || S.total <= 0) {
+      S.rewardError = !m ? 'No recycling machine is configured.' : 'There are no accepted items to claim.';
+      go('6.1');
+      return;
+    }
+    S.rewardError = null;
+    if (kind === 'coins' && !a.coins) S.rewardError = 'Coins are no longer available. Choose another reward.';
+    else if (kind === 'wifi' && !a.wifi) S.rewardError = 'Wi-Fi vouchers are no longer available. Choose another reward.';
+    else if (kind === 'save' && !user) S.rewardError = 'This account is no longer available. Link an account or choose another reward.';
+    else if (!['coins', 'wifi', 'save'].includes(kind)) S.rewardError = 'Choose a reward from the available options.';
+    if (S.rewardError) { go('6.1'); return; }
+    S.rewardError = null;
+    if (user) S.user = user;
     const base = { machineId, userId: S.user ? S.user.id : null, items: S.items.slice(), total: S.total, reward: kind };
     if (kind === 'coins') {
       const tx = DB.transactions.add(base);
@@ -706,14 +728,13 @@
       if (S.user) DB.users.addPoints(S.user.id, 0, S.items.length);
       go('6.4');
     } else if (kind === 'save') {
-      if (!S.user) return;
       const pts = sessionPoints();
       const tx = DB.transactions.add(Object.assign({}, base, { points: pts }));
       S.reward = tx;
       DB.users.addPoints(S.user.id, pts, S.items.length);
       DB.machines.patch(machineId, { totalBottles: m.totalBottles + S.items.length });
-      go('6.6');
       S.user = DB.users.byId(S.user.id); // refresh balance for later screens
+      go('6.6');
     }
     void c;
   }
