@@ -26,7 +26,7 @@
   const machine = () => DB.machines.byId(machineId);
 
   /* ---------- session state ---------- */
-  const S = { screen: '1.1', mode: null, user: null, items: [], total: 0, pendingItem: null, rejectReason: null, crusherError: null, rewardError: null, linkCode: null, alerted: false, reward: null };
+  const S = { screen: '1.1', mode: null, user: null, items: [], total: 0, pendingItem: null, rejectReason: null, crusherError: null, rewardError: null, linkCode: null, cashoutCode: '', alerted: false, reward: null };
   let timers = [];
   let idleTimer = null;
   const later = (ms, fn) => { const t = setTimeout(fn, ms); timers.push(t); return t; };
@@ -70,7 +70,7 @@
 
   function resetSession() {
     if (S.linkCode) DB.links.cancel(S.linkCode);
-    Object.assign(S, { mode: null, user: null, items: [], total: 0, pendingItem: null, rejectReason: null, crusherError: null, rewardError: null, linkCode: null, alerted: false, reward: null });
+    Object.assign(S, { mode: null, user: null, items: [], total: 0, pendingItem: null, rejectReason: null, crusherError: null, rewardError: null, linkCode: null, cashoutCode: '', alerted: false, reward: null });
   }
 
   /* ---------- navigation ---------- */
@@ -345,7 +345,7 @@
       const user = S.user && DB.users.byId(S.user.id);
       const hasItems = S.items.length > 0 && S.total > 0;
       const hasReward = a.coins || a.wifi || !!user;
-      const status = S.rewardError || (!m ? 'No recycling machine is configured.' : !hasItems ? 'No accepted items are available to claim.' : !hasReward ? `No reward is currently available at ${esc(m.name)}.` : !a.coins && !a.wifi ? 'Coin and Wi-Fi payouts are unavailable; account saving is available.' : `Choose a reward for ${esc(m.name)}.`);
+      const status = S.rewardError || (!m ? 'No recycling machine is configured.' : !hasItems ? 'No accepted items are available to claim. You can still redeem a cash-out code.' : !hasReward ? `No reward is currently available at ${esc(m.name)}.` : !a.coins && !a.wifi ? 'Coin and Wi-Fi payouts are unavailable; account saving is available.' : `Choose a reward for ${esc(m.name)}.`);
       return `
       <h1>Choose your reward</h1>
       <div class="chip" role="status">Session total <b>${fmtPeso(S.total)}</b> · ${S.items.length} item${S.items.length === 1 ? '' : 's'}</div>
@@ -355,27 +355,32 @@
         <button class="reward-card" data-reward="save" ${user && hasItems ? '' : 'disabled'}>${ICON.save}SAVE<small>${user ? '+' + sessionPoints() + ' pts to account' : 'Log in to save'}</small></button>
       </div>
       <p class="sub ${S.rewardError || !hasItems || !hasReward ? 'start-status' : 'muted'}" role="${S.rewardError || !hasItems || !hasReward ? 'alert' : 'status'}">${esc(status)}</p>
+      <form class="panel" id="formCashout" novalidate>
+        <div class="field"><label for="inpCashoutCode">Have a cash-out code?</label><input class="input" id="inpCashoutCode" name="cashoutCode" type="text" value="${esc(S.cashoutCode)}" maxlength="7" placeholder="CO-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="cashoutHelp"></div>
+        <div class="actions"><button class="btn" id="btnRedeemCashout" type="submit" ${a.coins ? '' : 'disabled'}>${a.coins ? 'REDEEM CASH-OUT' : 'COIN PAYOUT UNAVAILABLE'}</button></div>
+        <small class="help" id="cashoutHelp">Redeem an active code issued from your BOCO-FI wallet.</small>
+      </form>
       <p class="sub muted">${c.pointsPerPeso} pts = ₱1 · ${c.wifiMinutesPerPeso} min Wi-Fi = ₱1</p>
       <div class="actions"><button class="btn btn-ghost" data-go="5.3">BACK</button></div>`;
     },
 
-    '6.2': () => S.reward && S.reward.kind === 'coins' ? `
+    '6.2': () => S.reward && (S.reward.kind === 'coins' || S.reward.kind === 'cashout') ? `
       <h2>Dispensing coins</h2>
-      <div class="big-value">${fmtPeso(S.reward.total)}</div>
+      <div class="big-value">${fmtPeso(S.reward.total || S.reward.amount)}</div>
       <div class="panel" aria-busy="true"><div class="bar" style="--accent:var(--color-primary)"><i id="dispBar" style="width:0%;background:var(--color-primary)"></i></div>
-        <p class="muted" role="status">Dispensing at ${esc(machine() ? machine().name : 'this machine')}. Please wait.</p></div>` : `
+        <p class="muted" role="status">${S.reward.kind === 'cashout' ? `Redeeming ${esc(S.reward.code)} at` : 'Dispensing at'} ${esc(machine() ? machine().name : 'this machine')}. Please wait.</p></div>` : `
       <div class="icon-circle pop" style="--accent:var(--color-danger)">${ICON.x}</div>
       <h1>Coin payout unavailable</h1>
       <p class="sub" role="alert">There is no active coin payout to complete.</p>
       <div class="actions"><button class="btn btn-blue" data-go="6.1">BACK TO REWARDS</button></div>`,
 
     '6.3': () => {
-      const tx = S.reward && S.reward.reward === 'coins' ? DB.transactions.all().find((t) => t.id === S.reward.id) : null;
+      const tx = S.reward && ['coins', 'cashout'].includes(S.reward.reward) ? DB.transactions.all().find((t) => t.id === S.reward.id) : null;
       return tx ? `
         <div class="icon-circle pop" style="--accent:var(--color-ok)">${ICON.check}</div>
-        <h1>Coins dispensed</h1>
+        <h1>${tx.reward === 'cashout' ? 'Cash-out redeemed' : 'Coins dispensed'}</h1>
         <div class="big-value">${fmtPeso(tx.total)}</div>
-        <p class="sub" role="status">Collect your coins from the tray below.</p>
+        <p class="sub" role="status">${tx.reward === 'cashout' ? `Code ${esc(tx.code)} · collect your coins from the tray below.` : 'Collect your coins from the tray below.'}</p>
         <div class="actions"><button class="btn btn-blue" id="btnCoinsDone">CONTINUE</button></div>` : `
         <div class="icon-circle pop" style="--accent:var(--color-danger)">${ICON.x}</div>
         <h1>Coin confirmation unavailable</h1>
@@ -447,11 +452,11 @@
       const tx = S.reward && S.reward.id ? DB.transactions.all().find((t) => t.id === S.reward.id) : null;
       const m = tx && DB.machines.byId(tx.machineId);
       const user = tx && tx.userId ? DB.users.byId(tx.userId) : null;
-      const reward = tx ? tx.reward === 'coins' ? `${fmtPeso(tx.total)} in coins dispensed` : tx.reward === 'wifi' ? `${tx.minutes} minutes of Wi-Fi generated` : tx.reward === 'save' ? `${fmtPts(tx.points)} saved to the account` : 'Reward recorded' : null;
+      const reward = tx ? tx.reward === 'coins' ? `${fmtPeso(tx.total)} in coins dispensed` : tx.reward === 'cashout' ? `cash-out ${esc(tx.code)} redeemed · ${fmtPeso(tx.total)} paid out` : tx.reward === 'wifi' ? `${tx.minutes} minutes of Wi-Fi generated` : tx.reward === 'save' ? `${fmtPts(tx.points)} saved to the account` : 'Reward recorded' : null;
       return `
       <div class="icon-circle pop" style="--accent:var(--color-ok)">${ICON.leaf}</div>
-      <h1>${tx ? 'Thank you for recycling' : 'Session complete'}</h1>
-      ${tx ? `<p class="sub" role="status">${tx.items.length} item${tx.items.length === 1 ? '' : 's'} · ${fmtPeso(tx.total)} at ${esc(m ? m.name : 'the machine')}. ${esc(reward)}${user ? ` for ${esc(user.name.split(' ')[0])}` : ''}.</p>` : `<p class="sub" role="alert">${S.items.length} item${S.items.length === 1 ? '' : 's'} · ${fmtPeso(S.total)}. The reward transaction is unavailable; check your app balance before claiming again.</p>`}
+      <h1>${tx ? tx.reward === 'cashout' ? 'Cash-out complete' : 'Thank you for recycling' : 'Session complete'}</h1>
+      ${tx ? `<p class="sub" role="status">${tx.reward === 'cashout' ? `${esc(reward)} at ${esc(m ? m.name : 'the machine')}${user ? ` for ${esc(user.name.split(' ')[0])}` : ''}.` : `${tx.items.length} item${tx.items.length === 1 ? '' : 's'} · ${fmtPeso(tx.total)} at ${esc(m ? m.name : 'the machine')}. ${esc(reward)}${user ? ` for ${esc(user.name.split(' ')[0])}` : ''}.`}</p>` : `<p class="sub" role="alert">${S.items.length} item${S.items.length === 1 ? '' : 's'} · ${fmtPeso(S.total)}. The reward transaction is unavailable; check your app balance before claiming again.</p>`}
       <div class="actions"><button class="btn btn-lg" style="background:var(--color-primary)" id="btnDone">DONE</button></div>`;
     },
 
@@ -724,12 +729,56 @@
 
     '6.1': (el) => {
       el.querySelectorAll('[data-reward]').forEach((b) => b.addEventListener('click', () => chooseReward(b.dataset.reward)));
+      const form = $('#formCashout', el);
+      const input = $('#inpCashoutCode', el);
+      const button = $('#btnRedeemCashout', el);
+      input.addEventListener('input', () => { input.value = input.value.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 7); S.cashoutCode = input.value; });
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        if (button.disabled) return;
+        const code = input.value.trim().toUpperCase();
+        S.cashoutCode = code;
+        if (!/^CO-[A-F0-9]{4}$/.test(code)) { S.rewardError = 'Enter the four-character cash-out code shown in your wallet.'; go('6.1'); return; }
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+        button.textContent = 'CHECKING CODE…';
+        input.disabled = true;
+        later(300, () => {
+          try {
+            const cashout = DB.cashouts.byCode(code);
+            if (!cashout) throw new Error('Cash-out code not found. Check the code and try again.');
+            const status = DB.cashouts.status(cashout);
+            if (status !== 'pending') throw new Error(status === 'expired' ? 'This cash-out code has expired. Cancel it in your wallet to return the balance.' : status === 'paid' ? 'This cash-out code has already been used.' : 'This cash-out code is no longer active.');
+            const m = machine();
+            const a = m && DB.machines.availability(m);
+            if (!a || !a.coins) throw new Error('Coin payout is unavailable at this kiosk. Choose another reward or kiosk.');
+            S.reward = { kind: 'cashout', amount: cashout.amount, code };
+            S.rewardError = null;
+            go('6.2');
+          } catch (error) {
+            S.rewardError = error && error.message ? error.message : 'Cash-out could not be completed. Check the code and try again.';
+            go('6.1');
+          }
+        });
+      });
     },
     '6.2': (el) => {
-      if (!S.reward || S.reward.kind !== 'coins') return;
+      if (!S.reward || !['coins', 'cashout'].includes(S.reward.kind)) return;
       const bar = $('#dispBar', el);
       requestAnimationFrame(() => { bar.style.transition = 'width 2.4s ease'; bar.style.width = '100%'; });
       later(2700, () => {
+        if (S.reward.kind === 'cashout') {
+          try {
+            S.reward = DB.cashouts.redeemAtKiosk(S.reward.code, machineId);
+            S.cashoutCode = '';
+            go('6.3');
+          } catch (error) {
+            S.rewardError = error && error.message ? error.message : 'Cash-out could not be completed. Check the code and try again.';
+            S.reward = null;
+            go('6.1');
+          }
+          return;
+        }
         const m = machine();
         const a = m && DB.machines.availability(m);
         if (!m || !a || !a.coins) {
@@ -747,7 +796,7 @@
       });
     },
     '6.3': (el) => {
-      const tx = S.reward && S.reward.reward === 'coins' && DB.transactions.all().some((t) => t.id === S.reward.id);
+      const tx = S.reward && ['coins', 'cashout'].includes(S.reward.reward) && DB.transactions.all().some((t) => t.id === S.reward.id);
       if (!tx) return;
       const button = $('#btnCoinsDone', el);
       button.addEventListener('click', (event) => {
