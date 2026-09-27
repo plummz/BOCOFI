@@ -270,10 +270,16 @@
       <div class="actions"><button class="btn btn-blue" data-go="4.1">TRY AGAIN</button></div>`;
     },
 
-    '4.4': () => `
-      <div class="icon-circle pop" style="--accent:var(--c-close)">${ICON.x}</div>
+    '4.4': () => {
+      const m = machine();
+      const a = m && DB.machines.availability(m);
+      const canRetry = !!a && a.online && !a.binFull;
+      return `
+      <div class="icon-circle pop" style="--accent:var(--color-danger)">${ICON.x}</div>
       <h1>Item not recognised</h1>
-      <p class="sub">Please take it from the drawer</p>`,
+      <p class="sub" role="alert">${esc(S.rejectReason || 'Please take the item from the drawer.')}</p>
+      <div class="actions"><button class="btn btn-blue" id="btnRejectContinue">CONTINUE</button><button class="btn btn-outline" data-go="4.1" ${canRetry ? '' : 'disabled'}>${canRetry ? 'TRY AGAIN' : 'RETRY UNAVAILABLE'}</button></div>`;
+    },
 
     '4.5': () => `
       <h1>Try another item?</h1>
@@ -560,7 +566,18 @@
       });
       later(2200, next);
     },
-    '4.4': () => later(2600, () => go('4.5')),
+    '4.4': (el) => {
+      const button = $('#btnRejectContinue', el);
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+        button.textContent = 'Continuing…';
+        later(300, () => go('4.5'));
+      });
+      later(2600, () => go('4.5'));
+    },
     '4.5': (el) => { $('#btnNoMore', el).addEventListener('click', () => go(S.items.length ? '6.1' : '7.2')); },
 
     '5.1': () => later(2200, () => go('5.2')),
