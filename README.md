@@ -4,7 +4,7 @@ A reverse vending machine system for the Philippines. Users insert plastic bottl
 
 | Surface | Path | Who uses it |
 |---|---|---|
-| **Machine kiosk** | `kiosk/` | The touchscreen on the vending machine. Implements all 27 screens of the wireframe site map (1.1 Idle → 7.2 Session ended), including one-time app cash-out code redemption at the coin tray. |
+| **Machine kiosk** | `kiosk/` | The touchscreen on the vending machine. Implements all 27 screens of the Figma kiosk flow, numbered as in Figma (1.0 Display Page → 7.1 Resetting Machine), including one-time app cash-out code redemption at the coin tray. |
 | **User app** | `app/` | Recyclers. Dashboard with three balances (stacked points · coin balance ₱ · Wi-Fi time remaining), ☰ drawer menu + bottom tab bar, wallet (convert points → coins / Wi-Fi, cash-out codes for the kiosk), Wi-Fi countdown session + top-ups + kiosk vouchers, rewards bundles, machine finder, history filters, notifications, leaderboard & tiers, profile/settings, help. Mobile-first PWA. |
 | **Owner / admin** | `admin/` | The machine owner. Dashboard, machines (sensor state + controls), owner alerts, all transaction types (CSV export), users, Wi-Fi vouchers, cash-out code status and reward settings. |
 | Launcher | `index.html` | Links to the three surfaces + demo instructions. |
@@ -26,11 +26,15 @@ Serving over http(s) also enables the user app's service worker.
 
 **Full loop:** open the kiosk and the user app in two tabs. On the kiosk tap *Log in*; in the app go to *Link* and type the 4-letter code shown on the kiosk. The kiosk continues automatically. Use the kiosk's sensor simulator (buttons on the *Insert* screen or the ☰ service menu) to "insert" items, then pick a reward. To test cash-out, create a code under *Wallet → Cash out coins*, enter it on the kiosk reward screen, and collect the simulated payout. Everything shows up live in the admin dashboard, including the Cash-outs view.
 
+## Design source
+
+Colours, logo, background and screen numbering follow the Figma high-fidelity file (STUDENT-TYPE-FIGDESIGN): BOCOFI green `#3F5523`, BOCOFI blue `#3FADED`, white background, and the original BOCOFI logo exported from Figma (`assets/img/logo.svg`). All values live in `assets/tokens.css`. The kiosk deliberately keeps features the Figma screens leave out (Guest option, live session totals and values), per the owner's decision.
+
 ## How it maps to the design board
 
 - **Flowchart** → `kiosk/kiosk.js` state machine. Every decision diamond is implemented: log in vs guest, reward availability (both / no coins / no Wi-Fi / none → owner notified), valid item?, bin at 80% → crusher, add more vs claim, logged in → extra *Save to account* option, coins / Wi-Fi / save branches, guest keeps physical reward only.
-- **Wireframe site map** → one template per screen id (`SCREENS['4.3']` etc.), with the section colours 1.0–7.0 used as the accent for each phase and the copy taken from the wireframes ("Item accepted +₱0.25 · Session total", "Disappears in 30 seconds", "+140 pts · New balance", …).
-- **Storyboard** → kiosk chrome: ☰ · logo · 🔔 · avatar header, leafy green/blue background, big round *Recycle Today — Tap to Start* button, 7-step progress bar in the footer.
+- **Wireframe site map** → one template per screen id (`SCREENS['4.2']` etc.), numbered and titled like the Figma frames (1.0 → 7.1), in BOCOFI green on white and the copy taken from the wireframes ("Item accepted +₱0.25 · Session total", "Disappears in 30 seconds", "+140 pts · New balance", …).
+- **Storyboard** → kiosk chrome: ☰ · logo · 🔔 · avatar header, plain white background, big round *Recycle Today — Tap to Start* button, 7-step progress bar in the footer.
 - **Reward table** (Sakto ₱0.05, 500 ml ₱0.10, can ₱0.20–0.30) → editable in *Admin → Settings*. Points = ₱ × 100 (so ₱1.40 → 140 pts as on the board); Wi-Fi = 10 min per ₱1.
 
 ## Architecture

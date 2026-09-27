@@ -1,13 +1,13 @@
 /* ==========================================================================
    BOCO-FI · kiosk state machine
-   Implements every screen of the wireframe site map:
-     1.1 Idle · 1.2 Interact · 2.1 Log in/Guest · 2.2 QR scan · 2.3 Account linked · 2.4 Guest mode
-     3.1 Wi-Fi sync · 3.2 Coin sync · 3.3 Reward availability · 3.4 Reward not available
-     4.1 Insert · 4.2 Scanning · 4.3 Accepted · 4.4 Rejected · 4.5 Try another
-     5.1 Bin at 80% · 5.2 Crushing · 5.3 Add more / Claim
-     6.1 Reward options · 6.2 Dispensing · 6.3 Coins dispensed · 6.4 Wi-Fi generating
-     6.5 Wi-Fi confirmation · 6.6 Store to account · 6.7 Store confirmation
-     7.1 Thank you · 7.2 Session ended
+   Implements every screen of the Figma kiosk flow (numbering 1.0 → 7.1):
+     1.0 Display Page · 1.1 Start
+     2.0 Access Page · 2.1 QR Code · 2.2 Account Linking · 2.3 Guest Limits
+     3.0 Check WiFi Status · 3.1 Check Coin Status · 3.2 Check Reward Status · 3.3 No Reward Status
+     4.0 Insert Item · 4.1 Scan Item · 4.2 Item Accepted · 4.3 Decline Item · 4.4 Add Item?
+     5.0 Bin Status · 5.1 Crusher Status · 5.2 Session Status
+     6.0 Reward Choice · 6.1 Coin Dispense · 6.2 Coin Reward Release · 6.3 Generate WiFi Voucher · 6.4 WiFi Voucher Release · 6.5 Keep Reward As Balance · 6.6 Reward Balance Saved
+     7.0 Thank You Page · 7.1 Resetting Machine
    ========================================================================== */
 (function () {
   'use strict';
@@ -26,20 +26,21 @@
   const machine = () => DB.machines.byId(machineId);
 
   /* ---------- session state ---------- */
-  const S = { screen: '1.1', mode: null, user: null, items: [], total: 0, pendingItem: null, rejectReason: null, crusherError: null, rewardError: null, linkCode: null, cashoutCode: '', alerted: false, reward: null };
+  const S = { screen: '1.0', mode: null, user: null, items: [], total: 0, pendingItem: null, rejectReason: null, crusherError: null, rewardError: null, linkCode: null, cashoutCode: '', alerted: false, reward: null };
   let timers = [];
   let idleTimer = null;
   const later = (ms, fn) => { const t = setTimeout(fn, ms); timers.push(t); return t; };
   const clearTimers = () => { timers.forEach(clearTimeout); timers = []; };
 
   const PHASE_COLOR = { 1: 'var(--c-startup)', 2: 'var(--c-identify)', 3: 'var(--c-check)', 4: 'var(--c-deposit)', 5: 'var(--c-storage)', 6: 'var(--c-rewards)', 7: 'var(--c-close)' };
-  const TITLES = {
-    '1.1': 'Idle', '1.2': 'Interact prompt', '2.1': 'Log in or guest', '2.2': 'QR scan', '2.3': 'Account linked', '2.4': 'Guest mode',
-    '3.1': 'Wi-Fi sync', '3.2': 'Coin sync', '3.3': 'Reward availability', '3.4': 'Reward not available',
-    '4.1': 'Insert prompt', '4.2': 'Scanning', '4.3': 'Item accepted', '4.4': 'Item rejected', '4.5': 'Try another item',
-    '5.1': 'Bin at 80%', '5.2': 'Crushing', '5.3': 'Add more or claim',
-    '6.1': 'Reward options', '6.2': 'Coin dispense', '6.3': 'Coin confirmation', '6.4': 'Wi-Fi generating', '6.5': 'Wi-Fi confirmation', '6.6': 'Store to account', '6.7': 'Store confirmation',
-    '7.1': 'Thank you', '7.2': 'Session ended',
+  const TITLES = { // Figma frame names (STUDENT-TYPE-FIGDESIGN 3:4 = BOCOFI low-fi)
+    '1.0': 'Display Page', '1.1': 'Start',
+    '2.0': 'Access Page', '2.1': 'QR Code', '2.2': 'Account Linking', '2.3': 'Guest Limits',
+    '3.0': 'Check WiFi Status', '3.1': 'Check Coin Status', '3.2': 'Check Reward Status', '3.3': 'No Reward Status',
+    '4.0': 'Insert Item', '4.1': 'Scan Item', '4.2': 'Item Accepted', '4.3': 'Decline Item', '4.4': 'Add Item?',
+    '5.0': 'Bin Status', '5.1': 'Crusher Status', '5.2': 'Session Status',
+    '6.0': 'Reward Choice', '6.1': 'Coin Dispense', '6.2': 'Coin Reward Release', '6.3': 'Generate WiFi Voucher', '6.4': 'WiFi Voucher Release', '6.5': 'Keep Reward As Balance', '6.6': 'Reward Balance Saved',
+    '7.0': 'Thank You Page', '7.1': 'Resetting Machine',
   };
 
   const ICON = {
@@ -62,7 +63,7 @@
   const sessionPoints = () => Math.round(S.total * DB.config.get().pointsPerPeso);
 
   function publishSession() {
-    DB.machines.setSession(machineId, S.screen === '1.1' ? null : {
+    DB.machines.setSession(machineId, S.screen === '1.0' ? null : {
       screen: S.screen, title: TITLES[S.screen], mode: S.mode, userId: S.user ? S.user.id : null, userName: S.user ? S.user.name : null,
       items: S.items.length, total: S.total, updatedAt: Date.now(),
     });
@@ -75,7 +76,7 @@
 
   /* ---------- navigation ---------- */
   function go(screen) {
-    if (S.screen === '2.2' && screen !== '2.2' && S.linkCode) {
+    if (S.screen === '2.1' && screen !== '2.1' && S.linkCode) {
       DB.links.cancel(S.linkCode);
       S.linkCode = null;
     }
@@ -99,14 +100,14 @@
 
   function armIdle() {
     clearTimeout(idleTimer);
-    if (S.screen === '1.1') return;
-    idleTimer = setTimeout(() => { resetSession(); go('1.1'); toast('Session timed out'); }, DB.config.get().idleTimeoutSeconds * 1000);
+    if (S.screen === '1.0') return;
+    idleTimer = setTimeout(() => { resetSession(); go('1.0'); toast('Session timed out'); }, DB.config.get().idleTimeoutSeconds * 1000);
   }
   ['pointerdown', 'keydown', 'touchstart'].forEach((ev) => document.addEventListener(ev, armIdle, { passive: true }));
 
   /* ---------- screen templates ---------- */
   const SCREENS = {
-    '1.1': () => {
+    '1.0': () => {
       const m = machine();
       const unavailable = !m || m.status !== 'online';
       const reason = m ? `This machine is ${m.status}. Please choose an available machine or ask for help.` : 'No recycling machine is configured.';
@@ -115,46 +116,46 @@
       ${unavailable ? `<p class="start-status" id="startStatus" role="status">${esc(reason)}</p>` : ''}`;
     },
 
-    '1.2': () => {
+    '1.1': () => {
       const m = machine();
       const available = m && m.status === 'online';
       return `
       <div class="icon-circle pop" ${available ? '' : 'style="--accent:var(--color-danger)"'}>${available ? ICON.check : ICON.x}</div>
       <h1>${available ? 'Ready when you are' : 'Machine unavailable'}</h1>
       <p class="sub" role="${available ? 'status' : 'alert'}">${available ? `Connected to ${esc(m.name)}. Press start to begin.` : `This machine is ${esc(m ? m.status : 'unavailable')}. Choose another machine or ask for help.`}</p>
-      <div class="actions"><button class="btn btn-lg" id="btnContinue" ${available ? '' : 'data-go="1.1"'}>${available ? 'START' : 'BACK TO IDLE'}</button>${available ? '<button class="btn btn-ghost" data-go="1.1">BACK</button>' : ''}</div>`;
+      <div class="actions"><button class="btn btn-lg" id="btnContinue" ${available ? '' : 'data-go="1.0"'}>${available ? 'START' : 'BACK TO IDLE'}</button>${available ? '<button class="btn btn-ghost" data-go="1.0">BACK</button>' : ''}</div>`;
     },
 
-    '2.1': () => {
+    '2.0': () => {
       const m = machine();
       const available = !!m && m.status === 'online';
       return `
       <h1>How do you want to continue?</h1>
       <p class="sub" role="status">${available ? `At ${esc(m.name)}, log in to save credits to your account or continue as a guest.` : 'Login and guest sessions are unavailable until this machine is online.'}</p>
       <div class="actions">
-        <button class="btn btn-blue btn-lg" data-go="2.2" ${available ? '' : 'disabled'}>LOG IN</button>
-        <button class="btn btn-outline btn-lg" data-go="2.4" ${available ? '' : 'disabled'}>GUEST</button>
-        <button class="btn btn-ghost" data-go="1.2">BACK</button>
+        <button class="btn btn-blue btn-lg" data-go="2.1" ${available ? '' : 'disabled'}>LOG IN</button>
+        <button class="btn btn-outline btn-lg" data-go="2.3" ${available ? '' : 'disabled'}>GUEST</button>
+        <button class="btn btn-ghost" data-go="1.1">BACK</button>
       </div>
       ${available ? '' : `<p class="start-status" role="alert">${esc(m ? `This machine is ${m.status}. Select an available machine in the service menu.` : 'No recycling machine is configured.')}</p>`}`;
     },
 
-    '2.2': () => {
+    '2.1': () => {
       const m = machine();
       if (!m || m.status !== 'online') return `
         <div class="icon-circle pop" style="--accent:var(--color-danger)">${ICON.x}</div>
         <h2>Machine unavailable</h2>
         <p class="sub" role="alert">${esc(m ? `This machine is ${m.status}; account linking is paused.` : 'No recycling machine is configured.')}</p>
-        <div class="actions"><button class="btn btn-ghost" data-go="2.1">BACK</button></div>`;
+        <div class="actions"><button class="btn btn-ghost" data-go="2.0">BACK</button></div>`;
       return `
       <h2>Link your account in the BOCO-FI app</h2>
       <div class="qr-box"><canvas id="qr" width="29" height="29" aria-label="Decorative QR preview; use the code below"></canvas></div>
       <p class="sub" id="linkStatus" role="status">Open Link to Machine and enter this one-time code.</p>
       <div class="qr-code" id="qrCode">Preparing…</div>
-      <div class="actions"><button class="btn btn-ghost" data-go="2.1">BACK</button></div>`;
+      <div class="actions"><button class="btn btn-ghost" data-go="2.0">BACK</button></div>`;
     },
 
-    '2.3': () => S.user ? `
+    '2.2': () => S.user ? `
       <div class="icon-circle pop" style="--accent:var(--color-ok)">${ICON.check}</div>
       <h1>Welcome back, ${esc(S.user.name.split(' ')[0])}</h1>
       <p class="sub" role="status">Your balance is <b>${fmtPts(S.user.points)}</b>.</p>
@@ -162,9 +163,9 @@
       <div class="icon-circle pop" style="--accent:var(--color-danger)">${ICON.x}</div>
       <h1>Account could not be linked</h1>
       <p class="sub" role="alert">The linked account is no longer available. Please try again.</p>
-      <div class="actions"><button class="btn btn-blue btn-lg" data-go="2.1">TRY AGAIN</button></div>`,
+      <div class="actions"><button class="btn btn-blue btn-lg" data-go="2.0">TRY AGAIN</button></div>`,
 
-    '2.4': () => {
+    '2.3': () => {
       const m = machine();
       const online = !!m && m.status === 'online';
       const a = m ? DB.machines.availability(m) : { coins: false, wifi: false };
@@ -176,10 +177,10 @@
         <div class="status-row"><span class="lbl"><i class="dot danger"></i>Saving credits</span><span class="val bad">Not available</span></div>
       </div>
       ${online ? '<p class="sub">Log in with the app next time to save credits to your account.</p>' : '<p class="start-status" role="alert">Select an available machine in the service menu to continue.</p>'}
-      <div class="actions"><button class="btn btn-blue" id="btnGuestContinue" ${online ? '' : 'disabled'}>CONTINUE</button><button class="btn btn-ghost" data-go="2.1">BACK</button></div>`;
+      <div class="actions"><button class="btn btn-blue" id="btnGuestContinue" ${online ? '' : 'disabled'}>CONTINUE</button><button class="btn btn-ghost" data-go="2.0">BACK</button></div>`;
     },
 
-    '3.1': () => {
+    '3.0': () => {
       const m = machine();
       const online = !!m && m.status === 'online';
       const ok = online && m.wifiSignal === 'strong', weak = online && m.wifiSignal === 'weak';
@@ -189,10 +190,10 @@
         <div class="status-row"><span class="lbl"><i class="dot ${ok ? 'ok' : weak ? 'warn' : 'danger'}"></i>Wi-Fi signal</span><span class="val ${ok ? 'ok' : weak ? 'warn' : 'bad'}">${esc(m ? wifiLabel(m.wifiSignal) : 'Unavailable')}</span></div>
       </div>
       <p class="sub" role="${online ? 'status' : 'alert'}">${online ? `Checking connection for ${esc(m.name)}…` : 'Machine unavailable. System check cannot continue.'}</p>
-      <div class="actions"><button class="btn btn-blue" id="btnWifiContinue" ${online ? '' : 'disabled'}>CONTINUE</button><button class="btn btn-ghost" data-go="${S.mode === 'guest' ? '2.4' : '2.1'}">BACK</button></div>`;
+      <div class="actions"><button class="btn btn-blue" id="btnWifiContinue" ${online ? '' : 'disabled'}>CONTINUE</button><button class="btn btn-ghost" data-go="${S.mode === 'guest' ? '2.3' : '2.0'}">BACK</button></div>`;
     },
 
-    '3.2': () => {
+    '3.1': () => {
       const m = machine();
       const online = !!m && m.status === 'online';
       const a = m ? DB.machines.availability(m) : { coins: false };
@@ -204,10 +205,10 @@
         <div class="bar ${a.coins ? '' : 'danger'}"><i style="width:${hopper}%"></i></div>
         <div class="muted" role="${online ? 'status' : 'alert'}">${online ? `${hopper}% · ${a.coins ? 'Enough for this session' : 'Coins are running out'}` : 'Machine unavailable'}</div>
       </div>
-      <div class="actions"><button class="btn btn-blue" id="btnCoinsContinue" ${online ? '' : 'disabled'}>CONTINUE</button><button class="btn btn-ghost" data-go="3.1">BACK</button></div>`;
+      <div class="actions"><button class="btn btn-blue" id="btnCoinsContinue" ${online ? '' : 'disabled'}>CONTINUE</button><button class="btn btn-ghost" data-go="3.0">BACK</button></div>`;
     },
 
-    '3.3': () => {
+    '3.2': () => {
       const m = machine();
       const a = m ? DB.machines.availability(m) : { online: false, binFull: false, coins: false, wifi: false };
       const row = (label, ok) => `<div class="status-row"><span class="lbl"><i class="dot ${ok ? 'ok' : 'danger'}"></i>${label}</span><span class="val ${ok ? 'ok' : 'bad'}">${ok ? 'Available' : 'Not available'}</span></div>`;
@@ -215,10 +216,10 @@
       <h2>Rewards available today</h2>
       <div class="panel">${row('Coins', a.coins)}${row('Wi-Fi voucher', a.wifi)}${S.user ? row('Save to account', true) : ''}</div>
       <p class="sub" role="${a.online && !a.binFull && (a.coins || a.wifi || S.user) ? 'status' : 'alert'}">${a.online && !a.binFull ? `Checked for ${esc(m.name)}.` : !a.online ? 'This machine is offline.' : 'The recycling bin is full.'}</p>
-      <div class="actions"><button class="btn btn-blue" id="btnRewardsContinue" ${a.online && !a.binFull && (a.coins || a.wifi || S.user) ? '' : 'disabled'}>CONTINUE</button><button class="btn btn-ghost" data-go="3.2">BACK</button></div>`;
+      <div class="actions"><button class="btn btn-blue" id="btnRewardsContinue" ${a.online && !a.binFull && (a.coins || a.wifi || S.user) ? '' : 'disabled'}>CONTINUE</button><button class="btn btn-ghost" data-go="3.1">BACK</button></div>`;
     },
 
-    '3.4': () => {
+    '3.3': () => {
       const m = machine();
       const a = m ? DB.machines.availability(m) : { online: false, binFull: false, coins: false, wifi: false };
       const reason = !m ? 'No recycling machine is configured.' : !a.online ? `Machine ${esc(m.name)} is ${esc(m.status)}.` : a.binFull ? `The bin at ${esc(m.name)} is full.` : !a.coins && !a.wifi ? 'Coins and Wi-Fi vouchers are unavailable.' : 'Reward availability changed during the system check.';
@@ -229,7 +230,7 @@
       <div class="actions"><button class="btn btn-blue" id="btnNoRewardRestart">START OVER</button><button class="btn btn-ghost" id="btnNoRewardOptions">ACCOUNT CHOICES</button></div>`;
     },
 
-    '4.1': () => {
+    '4.0': () => {
       const m = machine();
       const a = m ? DB.machines.availability(m) : { online: false, binFull: false };
       const table = DB.config.get().rewardTable;
@@ -241,23 +242,23 @@
       <h1>Insert your bottle or can</h1>
       <p class="sub" role="${ready ? 'status' : 'alert'}">${ready ? `Plastic bottles and aluminium cans · ${esc(m.name)}` : esc(notice)}</p>
       ${S.items.length ? `<div class="chip" role="status">Session total <b>${fmtPeso(S.total)}</b> · ${S.items.length} item${S.items.length > 1 ? 's' : ''}</div>
-        <div class="actions"><button class="btn btn-outline" data-go="6.1" ${a.online ? '' : 'disabled'}>CLAIM REWARDS</button></div>` : ''}
+        <div class="actions"><button class="btn btn-outline" data-go="6.0" ${a.online ? '' : 'disabled'}>CLAIM REWARDS</button></div>` : ''}
       <div class="sim">
         <div class="sim-title">Demo · sensor simulator — insert an item</div>
         ${table.length ? `<div class="sim-btns">
           ${table.map((r) => `<button class="btn btn-outline" data-insert="${esc(r.id)}" ${disabledItems}>${esc(r.label)} <small>${fmtPeso(r.value)}</small></button>`).join('')}
           <button class="btn btn-danger" data-insert="invalid" ${disabledItems}>Unknown item</button>
         </div>` : '<p class="sub" role="alert">No recyclable item types are configured.</p>'}
-        ${S.items.length ? '' : `<div class="actions"><button class="btn btn-ghost" data-go="7.2">CANCEL</button></div>`}
+        ${S.items.length ? '' : `<div class="actions"><button class="btn btn-ghost" data-go="7.1">CANCEL</button></div>`}
       </div>`;
     },
 
-    '4.2': () => `
+    '4.1': () => `
       <div class="scan-frame" aria-hidden="true"><div class="bottle"></div></div>
       <h2>Scanning…</h2>
       <p class="sub" role="status" aria-live="polite">Checking ${esc(S.pendingItem ? S.pendingItem.label : 'the item')} for material and weight.</p>`,
 
-    '4.3': () => {
+    '4.2': () => {
       const last = S.items[S.items.length - 1];
       return last ? `
       <div class="icon-circle pop" style="--accent:var(--color-ok)">${ICON.check}</div>
@@ -269,10 +270,10 @@
       <div class="icon-circle pop" style="--accent:var(--color-danger)">${ICON.x}</div>
       <h1>Item details unavailable</h1>
       <p class="sub" role="alert">No accepted item is available for this session. Please try again.</p>
-      <div class="actions"><button class="btn btn-blue" data-go="4.1">TRY AGAIN</button></div>`;
+      <div class="actions"><button class="btn btn-blue" data-go="4.0">TRY AGAIN</button></div>`;
     },
 
-    '4.4': () => {
+    '4.3': () => {
       const m = machine();
       const a = m && DB.machines.availability(m);
       const canRetry = !!a && a.online && !a.binFull;
@@ -280,10 +281,10 @@
       <div class="icon-circle pop" style="--accent:var(--color-danger)">${ICON.x}</div>
       <h1>Item not recognised</h1>
       <p class="sub" role="alert">${esc(S.rejectReason || 'Please take the item from the drawer.')}</p>
-      <div class="actions"><button class="btn btn-blue" id="btnRejectContinue">CONTINUE</button><button class="btn btn-outline" data-go="4.1" ${canRetry ? '' : 'disabled'}>${canRetry ? 'TRY AGAIN' : 'RETRY UNAVAILABLE'}</button></div>`;
+      <div class="actions"><button class="btn btn-blue" id="btnRejectContinue">CONTINUE</button><button class="btn btn-outline" data-go="4.0" ${canRetry ? '' : 'disabled'}>${canRetry ? 'TRY AGAIN' : 'RETRY UNAVAILABLE'}</button></div>`;
     },
 
-    '4.5': () => {
+    '4.4': () => {
       const m = machine();
       const a = m && DB.machines.availability(m);
       const canInsert = !!a && a.online && !a.binFull;
@@ -291,12 +292,12 @@
       <h1>${S.items.length ? 'Add another item?' : 'Try another item?'}</h1>
       <p class="sub" role="${canInsert ? 'status' : 'alert'}">${S.items.length ? `${S.items.length} accepted item${S.items.length === 1 ? '' : 's'} · session total ${fmtPeso(S.total)}.` : 'No valid items have been accepted yet.'}${canInsert ? '' : ' Intake is unavailable on this machine.'}</p>
       <div class="actions">
-        <button class="btn btn-lg" data-go="4.1" ${canInsert ? '' : 'disabled'}>YES</button>
+        <button class="btn btn-lg" data-go="4.0" ${canInsert ? '' : 'disabled'}>YES</button>
         <button class="btn btn-outline btn-lg" id="btnNoMore">${S.items.length ? 'FINISH AND CLAIM' : 'END SESSION'}</button>
       </div>`;
     },
 
-    '5.1': () => {
+    '5.0': () => {
       const m = machine();
       const config = DB.config.get();
       const level = m ? clamp(Number(m.binLevel) || 0, 0, 100) : 0;
@@ -312,7 +313,7 @@
       <div class="actions"><button class="btn btn-blue" id="btnCapacityContinue">${online && high ? 'START CRUSHING' : 'CONTINUE TO REWARDS'}</button></div>`;
     },
 
-    '5.2': () => {
+    '5.1': () => {
       const m = machine();
       const level = m ? clamp(Number(m.binLevel) || 0, 0, 100) : 0;
       return `
@@ -323,7 +324,7 @@
       </div>`;
     },
 
-    '5.3': () => {
+    '5.2': () => {
       const m = machine();
       const a = m && DB.machines.availability(m);
       const canAdd = !!a && a.online && !a.binFull;
@@ -333,12 +334,12 @@
       <p class="sub" role="${S.items.length && a && a.online ? 'status' : 'alert'}">${S.items.length ? a && a.online ? 'Your accepted items are ready for another item or a reward.' : 'The machine is unavailable. You can still review available account rewards.' : 'There are no accepted items to claim yet.'}</p>
       ${S.crusherError ? `<p class="start-status" role="alert">${esc(S.crusherError)}</p>` : ''}
       <div class="actions">
-        <button class="btn btn-lg" style="background:var(--color-primary)" data-go="4.1" ${canAdd ? '' : 'disabled'}>ADD MORE</button>
-        <button class="btn btn-outline btn-lg" style="border-color:var(--color-primary-strong);color:var(--color-primary-strong)" data-go="6.1" ${S.items.length ? '' : 'disabled'}>CLAIM</button>
+        <button class="btn btn-lg" style="background:var(--color-primary)" data-go="4.0" ${canAdd ? '' : 'disabled'}>ADD MORE</button>
+        <button class="btn btn-outline btn-lg" style="border-color:var(--color-primary-strong);color:var(--color-primary-strong)" data-go="6.0" ${S.items.length ? '' : 'disabled'}>CLAIM</button>
       </div>`;
     },
 
-    '6.1': () => {
+    '6.0': () => {
       const m = machine();
       const a = m ? DB.machines.availability(m) : { online: false, coins: false, wifi: false };
       const c = DB.config.get();
@@ -361,10 +362,10 @@
         <small class="help" id="cashoutHelp">Redeem an active code issued from your BOCO-FI wallet.</small>
       </form>
       <p class="sub muted">${c.pointsPerPeso} pts = ₱1 · ${c.wifiMinutesPerPeso} min Wi-Fi = ₱1</p>
-      <div class="actions"><button class="btn btn-ghost" data-go="5.3">BACK</button></div>`;
+      <div class="actions"><button class="btn btn-ghost" data-go="5.2">BACK</button></div>`;
     },
 
-    '6.2': () => S.reward && (S.reward.kind === 'coins' || S.reward.kind === 'cashout') ? `
+    '6.1': () => S.reward && (S.reward.kind === 'coins' || S.reward.kind === 'cashout') ? `
       <h2>Dispensing coins</h2>
       <div class="big-value">${fmtPeso(S.reward.total || S.reward.amount)}</div>
       <div class="panel" aria-busy="true"><div class="bar" style="--accent:var(--color-primary)"><i id="dispBar" style="width:0%;background:var(--color-primary)"></i></div>
@@ -372,9 +373,9 @@
       <div class="icon-circle pop" style="--accent:var(--color-danger)">${ICON.x}</div>
       <h1>Coin payout unavailable</h1>
       <p class="sub" role="alert">There is no active coin payout to complete.</p>
-      <div class="actions"><button class="btn btn-blue" data-go="6.1">BACK TO REWARDS</button></div>`,
+      <div class="actions"><button class="btn btn-blue" data-go="6.0">BACK TO REWARDS</button></div>`,
 
-    '6.3': () => {
+    '6.2': () => {
       const tx = S.reward && ['coins', 'cashout'].includes(S.reward.reward) ? DB.transactions.all().find((t) => t.id === S.reward.id) : null;
       return tx ? `
         <div class="icon-circle pop" style="--accent:var(--color-ok)">${ICON.check}</div>
@@ -385,31 +386,31 @@
         <div class="icon-circle pop" style="--accent:var(--color-danger)">${ICON.x}</div>
         <h1>Coin confirmation unavailable</h1>
         <p class="sub" role="alert">The completed coin transaction could not be found.</p>
-        <div class="actions"><button class="btn btn-blue" data-go="6.1">BACK TO REWARDS</button></div>`;
+        <div class="actions"><button class="btn btn-blue" data-go="6.0">BACK TO REWARDS</button></div>`;
     },
 
-    '6.4': () => S.reward && S.reward.kind === 'wifi' ? `
+    '6.3': () => S.reward && S.reward.kind === 'wifi' ? `
       <h2>Generating your voucher</h2>
       <p class="sub" role="status">Creating ${S.reward.minutes} minutes of Wi-Fi for ${esc(machine() ? machine().name : 'this machine')}.</p>
       <div class="panel" aria-busy="true"><div class="bar"><i id="genBar" style="width:0%;background:var(--color-primary)"></i></div><div class="muted">Please wait</div></div>` : `
       <div class="icon-circle pop" style="--accent:var(--color-danger)">${ICON.x}</div>
       <h1>Voucher generation unavailable</h1>
       <p class="sub" role="alert">There is no active Wi-Fi reward to generate.</p>
-      <div class="actions"><button class="btn btn-blue" data-go="6.1">BACK TO REWARDS</button></div>`,
+      <div class="actions"><button class="btn btn-blue" data-go="6.0">BACK TO REWARDS</button></div>`,
 
-    '6.5': () => {
+    '6.4': () => {
       const voucher = S.reward && S.reward.voucherCode ? DB.vouchers.byCode(S.reward.voucherCode) : null;
       if (!voucher) return `
         <div class="icon-circle pop" style="--accent:var(--color-danger)">${ICON.x}</div>
         <h1>Voucher details unavailable</h1>
         <p class="sub" role="alert">The generated voucher could not be found. Choose another reward.</p>
-        <div class="actions"><button class="btn btn-blue" data-go="6.1">BACK TO REWARDS</button></div>`;
+        <div class="actions"><button class="btn btn-blue" data-go="6.0">BACK TO REWARDS</button></div>`;
       const status = DB.vouchers.status(voucher);
       if (status !== 'active') return `
         <div class="icon-circle pop" style="--accent:var(--color-danger)">${ICON.x}</div>
         <h1>Voucher ${status === 'used' ? 'already used' : 'expired'}</h1>
         <p class="sub" role="alert">This code is ${esc(status)}. Check your app for its current Wi-Fi balance.</p>
-        <div class="actions"><button class="btn btn-blue" data-go="7.1">CONTINUE</button></div>`;
+        <div class="actions"><button class="btn btn-blue" data-go="7.0">CONTINUE</button></div>`;
       return `
         <h2>Your Wi-Fi voucher · ${voucher.minutes} minutes</h2>
         <div class="voucher" id="voucherCode">${esc(voucher.code)}</div>
@@ -418,7 +419,7 @@
         <div class="actions"><button class="btn" style="background:var(--color-primary)" id="btnVoucherDone">DONE</button></div>`;
     },
 
-    '6.6': () => {
+    '6.5': () => {
       const pending = S.reward && S.reward.kind === 'save' ? S.reward : null;
       const user = pending && DB.users.byId(pending.userId);
       return pending && user ? `
@@ -430,10 +431,10 @@
         <div class="icon-circle pop" style="--accent:var(--color-danger)">${ICON.x}</div>
         <h1>Account save unavailable</h1>
         <p class="sub" role="alert">The active save request or linked account could not be found.</p>
-        <div class="actions"><button class="btn btn-blue" data-go="6.1">BACK TO REWARDS</button></div>`;
+        <div class="actions"><button class="btn btn-blue" data-go="6.0">BACK TO REWARDS</button></div>`;
     },
 
-    '6.7': () => {
+    '6.6': () => {
       const tx = S.reward && S.reward.reward === 'save' ? DB.transactions.all().find((t) => t.id === S.reward.id) : null;
       const user = tx && DB.users.byId(tx.userId);
       return tx ? `
@@ -448,7 +449,7 @@
         <div class="actions"><button class="btn btn-blue" id="btnSavedContinue">FINISH</button></div>`;
     },
 
-    '7.1': () => {
+    '7.0': () => {
       const tx = S.reward && S.reward.id ? DB.transactions.all().find((t) => t.id === S.reward.id) : null;
       const m = tx && DB.machines.byId(tx.machineId);
       const user = tx && tx.userId ? DB.users.byId(tx.userId) : null;
@@ -460,7 +461,7 @@
       <div class="actions"><button class="btn btn-lg" style="background:var(--color-primary)" id="btnDone">DONE</button></div>`;
     },
 
-    '7.2': () => {
+    '7.1': () => {
       const m = machine();
       const reason = S.rejectReason || (S.items.length ? 'The session could not be completed. Your accepted items remain in this session until reset.' : 'No valid items were inserted.');
       return `
@@ -473,7 +474,7 @@
 
   /* ---------- per-screen behaviour ---------- */
   const AFTER = {
-    '1.1': (el) => {
+    '1.0': (el) => {
       const button = $('#btnStart', el);
       if (!button || button.disabled) return;
       button.addEventListener('click', () => {
@@ -481,10 +482,10 @@
         button.classList.add('is-loading');
         button.setAttribute('aria-busy', 'true');
         button.innerHTML = `Starting…<small>${esc(machine().name)}</small>`;
-        later(450, () => go('1.2'));
+        later(450, () => go('1.1'));
       });
     },
-    '1.2': (el) => {
+    '1.1': (el) => {
       if (machine()?.status !== 'online') return;
       const button = $('#btnContinue', el);
       button.addEventListener('click', (event) => {
@@ -493,22 +494,22 @@
         button.disabled = true;
         button.setAttribute('aria-busy', 'true');
         button.textContent = 'Checking machine…';
-        later(350, () => go(machine()?.status === 'online' ? '2.1' : '1.2'));
+        later(350, () => go(machine()?.status === 'online' ? '2.0' : '1.1'));
       });
-      later(2500, () => go(machine()?.status === 'online' ? '2.1' : '1.2'));
+      later(2500, () => go(machine()?.status === 'online' ? '2.0' : '1.1'));
     },
 
-    '2.2': (el) => {
+    '2.1': (el) => {
       if (machine()?.status !== 'online') return;
       S.linkCode = DB.links.create(machineId);
       $('#qrCode', el).textContent = S.linkCode;
       drawQR($('#qr', el), `BOCOFI:${machineId}:${S.linkCode}`);
       const poll = () => {
-        if (S.screen !== '2.2' || !S.linkCode) return;
+        if (S.screen !== '2.1' || !S.linkCode) return;
         if (machine()?.status !== 'online') {
           if (S.linkCode) DB.links.cancel(S.linkCode);
           S.linkCode = null;
-          go('2.2');
+          go('2.1');
           return;
         }
         const l = DB.links.get(S.linkCode);
@@ -521,7 +522,7 @@
             return;
           }
           S.mode = 'user';
-          go('2.3');
+          go('2.2');
         } else if (!l || Date.now() - l.createdAt >= 5 * 60 * 1000) {
           if (S.linkCode) DB.links.cancel(S.linkCode);
           S.linkCode = null;
@@ -531,7 +532,7 @@
       };
       later(700, poll);
     },
-    '2.3': (el) => {
+    '2.2': (el) => {
       if (!S.user) return;
       const button = $('#btnLinkedContinue', el);
       button.addEventListener('click', (event) => {
@@ -540,11 +541,11 @@
         button.disabled = true;
         button.setAttribute('aria-busy', 'true');
         button.textContent = 'Continuing…';
-        later(350, () => go('3.1'));
+        later(350, () => go('3.0'));
       });
-      later(2400, () => go('3.1'));
+      later(2400, () => go('3.0'));
     },
-    '2.4': (el) => {
+    '2.3': (el) => {
       S.mode = 'guest';
       if (machine()?.status !== 'online') return;
       const button = $('#btnGuestContinue', el);
@@ -554,12 +555,12 @@
         button.disabled = true;
         button.setAttribute('aria-busy', 'true');
         button.textContent = 'Checking rewards…';
-        later(350, () => go(machine()?.status === 'online' ? '3.1' : '2.4'));
+        later(350, () => go(machine()?.status === 'online' ? '3.0' : '2.3'));
       });
-      later(3500, () => go(machine()?.status === 'online' ? '3.1' : '2.4'));
+      later(3500, () => go(machine()?.status === 'online' ? '3.0' : '2.3'));
     },
 
-    '3.1': (el) => {
+    '3.0': (el) => {
       if (machine()?.status !== 'online') return;
       const button = $('#btnWifiContinue', el);
       button.addEventListener('click', (event) => {
@@ -568,16 +569,16 @@
         button.disabled = true;
         button.setAttribute('aria-busy', 'true');
         button.textContent = 'Checking…';
-        later(300, () => go(machine()?.status === 'online' ? '3.2' : '3.4'));
+        later(300, () => go(machine()?.status === 'online' ? '3.1' : '3.3'));
       });
-      later(1800, () => go(machine()?.status === 'online' ? '3.2' : '3.4'));
+      later(1800, () => go(machine()?.status === 'online' ? '3.1' : '3.3'));
     },
-    '3.2': (el) => {
+    '3.1': (el) => {
       if (machine()?.status !== 'online') return;
       const continueCheck = () => {
         const current = machine();
         const available = current && DB.machines.availability(current);
-        go(!available || !available.online || available.binFull || (!available.coins && !available.wifi && !S.user) ? '3.4' : '3.3');
+        go(!available || !available.online || available.binFull || (!available.coins && !available.wifi && !S.user) ? '3.3' : '3.2');
       };
       const button = $('#btnCoinsContinue', el);
       button.addEventListener('click', (event) => {
@@ -590,7 +591,7 @@
       });
       later(1800, continueCheck);
     },
-    '3.3': (el) => {
+    '3.2': (el) => {
       const current = machine();
       const a = current ? DB.machines.availability(current) : { online: false, binFull: true, coins: false, wifi: false };
       if (!S.alerted && a.online && !a.binFull && ((!a.coins && !a.wifi) || !a.coins || !a.wifi)) {
@@ -602,7 +603,7 @@
       const continueCheck = () => {
         const m = machine();
         const availability = m && DB.machines.availability(m);
-        go(!availability || !availability.online || availability.binFull || (!availability.coins && !availability.wifi && !S.user) ? '3.4' : '4.1');
+        go(!availability || !availability.online || availability.binFull || (!availability.coins && !availability.wifi && !S.user) ? '3.3' : '4.0');
       };
       const button = $('#btnRewardsContinue', el);
       if (button && !button.disabled) button.addEventListener('click', (event) => {
@@ -615,9 +616,9 @@
       });
       later(2600, continueCheck);
     },
-    '3.4': (el) => {
+    '3.3': (el) => {
       if (!S.alerted && machine()) { DB.alerts.add(machineId, 'rewards', 'critical', 'No rewards available — user was turned away.'); S.alerted = true; }
-      const restart = () => { resetSession(); go('1.1'); };
+      const restart = () => { resetSession(); go('1.0'); };
       const restartButton = $('#btnNoRewardRestart', el);
       restartButton.addEventListener('click', (event) => {
         event.preventDefault();
@@ -631,33 +632,33 @@
         event.preventDefault();
         event.stopPropagation();
         resetSession();
-        go('2.1');
+        go('2.0');
       });
       later(4000, restart);
     },
 
-    '4.1': (el) => {
+    '4.0': (el) => {
       el.querySelectorAll('[data-insert]').forEach((b) => b.addEventListener('click', () => insertItem(b.dataset.insert)));
     },
-    '4.2': () => later(1700, () => {
+    '4.1': () => later(1700, () => {
       const pending = S.pendingItem; S.pendingItem = null;
       const m = machine();
       const availability = m && DB.machines.availability(m);
-      if (!pending) { S.rejectReason = 'We could not identify this item type.'; go('4.4'); return; }
-      if (!availability || !availability.online) { S.rejectReason = 'The machine became unavailable during the scan. Keep the item and try another machine.'; go('4.4'); return; }
-      if (availability.binFull) { S.rejectReason = 'The bin became full during the scan. Keep the item and try again later.'; go('4.4'); return; }
+      if (!pending) { S.rejectReason = 'We could not identify this item type.'; go('4.3'); return; }
+      if (!availability || !availability.online) { S.rejectReason = 'The machine became unavailable during the scan. Keep the item and try another machine.'; go('4.3'); return; }
+      if (availability.binFull) { S.rejectReason = 'The bin became full during the scan. Keep the item and try again later.'; go('4.3'); return; }
       S.items.push(pending); S.total = round2(S.total + pending.value);
       S.rejectReason = null;
       // fill-level sensor: each item adds ~1.5% to the bin
       DB.machines.patch(machineId, { binLevel: clamp(round2(m.binLevel + 1.5), 0, 100) });
-      go('4.3');
+      go('4.2');
     }),
-    '4.3': (el) => {
+    '4.2': (el) => {
       if (!S.items.length) return;
       const next = () => {
         const m = machine();
         const a = m && DB.machines.availability(m);
-        go(a && a.binHigh ? '5.1' : '5.3');
+        go(a && a.binHigh ? '5.0' : '5.2');
       };
       const button = $('#btnAcceptedContinue', el);
       button.addEventListener('click', (event) => {
@@ -670,7 +671,7 @@
       });
       later(2200, next);
     },
-    '4.4': (el) => {
+    '4.3': (el) => {
       const button = $('#btnRejectContinue', el);
       button.addEventListener('click', (event) => {
         event.preventDefault();
@@ -678,17 +679,17 @@
         button.disabled = true;
         button.setAttribute('aria-busy', 'true');
         button.textContent = 'Continuing…';
-        later(300, () => go('4.5'));
+        later(300, () => go('4.4'));
       });
-      later(2600, () => go('4.5'));
+      later(2600, () => go('4.4'));
     },
-    '4.5': (el) => { $('#btnNoMore', el).addEventListener('click', () => go(S.items.length ? '6.1' : '7.2')); },
+    '4.4': (el) => { $('#btnNoMore', el).addEventListener('click', () => go(S.items.length ? '6.0' : '7.1')); },
 
-    '5.1': (el) => {
+    '5.0': (el) => {
       const continueCapacity = () => {
         const m = machine();
         const a = m && DB.machines.availability(m);
-        go(a && a.online && a.binHigh ? '5.2' : '5.3');
+        go(a && a.online && a.binHigh ? '5.1' : '5.2');
       };
       const button = $('#btnCapacityContinue', el);
       button.addEventListener('click', (event) => {
@@ -701,12 +702,12 @@
       });
       later(2200, continueCapacity);
     },
-    '5.2': (el) => {
+    '5.1': (el) => {
       const initial = machine();
       const initialAvailability = initial && DB.machines.availability(initial);
       if (!initialAvailability || !initialAvailability.online || !initialAvailability.binHigh) {
         S.crusherError = !initialAvailability || !initialAvailability.online ? 'The crusher could not start because the machine is unavailable. Your accepted items are still in this session.' : 'The bin is below its crusher threshold. Your accepted items are still in this session.';
-        go('5.1');
+        go('5.0');
         return;
       }
       const bar = $('#crushBar', el);
@@ -715,7 +716,7 @@
         const m = machine();
         if (!m || m.status !== 'online') {
           S.crusherError = 'The machine became unavailable before the crusher cycle finished. Your accepted items are still in this session.';
-          go('5.1');
+          go('5.0');
           return;
         }
         // crusher compacts the contents: fill level drops, owner is notified
@@ -723,11 +724,11 @@
         DB.alerts.add(machineId, 'bin', 'warning', `Bin reached ${Math.round(m.binLevel)}% — crusher cycle ran. Schedule a collection soon.`);
         S.crusherError = null;
         toast('Crusher cycle complete');
-        go('5.3');
+        go('5.2');
       });
     },
 
-    '6.1': (el) => {
+    '6.0': (el) => {
       el.querySelectorAll('[data-reward]').forEach((b) => b.addEventListener('click', () => chooseReward(b.dataset.reward)));
       const form = $('#formCashout', el);
       const input = $('#inpCashoutCode', el);
@@ -738,7 +739,7 @@
         if (button.disabled) return;
         const code = input.value.trim().toUpperCase();
         S.cashoutCode = code;
-        if (!/^CO-[A-F0-9]{4}$/.test(code)) { S.rewardError = 'Enter the four-character cash-out code shown in your wallet.'; go('6.1'); return; }
+        if (!/^CO-[A-F0-9]{4}$/.test(code)) { S.rewardError = 'Enter the four-character cash-out code shown in your wallet.'; go('6.0'); return; }
         button.disabled = true;
         button.setAttribute('aria-busy', 'true');
         button.textContent = 'CHECKING CODE…';
@@ -754,15 +755,15 @@
             if (!a || !a.coins) throw new Error('Coin payout is unavailable at this kiosk. Choose another reward or kiosk.');
             S.reward = { kind: 'cashout', amount: cashout.amount, code };
             S.rewardError = null;
-            go('6.2');
+            go('6.1');
           } catch (error) {
             S.rewardError = error && error.message ? error.message : 'Cash-out could not be completed. Check the code and try again.';
-            go('6.1');
+            go('6.0');
           }
         });
       });
     },
-    '6.2': (el) => {
+    '6.1': (el) => {
       if (!S.reward || !['coins', 'cashout'].includes(S.reward.kind)) return;
       const bar = $('#dispBar', el);
       requestAnimationFrame(() => { bar.style.transition = 'width 2.4s ease'; bar.style.width = '100%'; });
@@ -771,11 +772,11 @@
           try {
             S.reward = DB.cashouts.redeemAtKiosk(S.reward.code, machineId);
             S.cashoutCode = '';
-            go('6.3');
+            go('6.2');
           } catch (error) {
             S.rewardError = error && error.message ? error.message : 'Cash-out could not be completed. Check the code and try again.';
             S.reward = null;
-            go('6.1');
+            go('6.0');
           }
           return;
         }
@@ -784,7 +785,7 @@
         if (!m || !a || !a.coins) {
           S.reward = null;
           S.rewardError = 'Coin payout became unavailable before it completed. No coin transaction was recorded; choose another reward.';
-          go('6.1');
+          go('6.0');
           return;
         }
         const user = S.user && DB.users.byId(S.user.id);
@@ -792,10 +793,10 @@
         DB.machines.patch(machineId, { totalBottles: m.totalBottles + S.reward.items.length, totalPaidOut: round2(m.totalPaidOut + S.reward.total), coinHopper: clamp(round2(m.coinHopper - S.reward.total * 2), 0, 100) });
         if (user) { DB.users.addPoints(user.id, 0, S.reward.items.length); S.user = DB.users.byId(user.id); }
         S.reward = tx;
-        go('6.3');
+        go('6.2');
       });
     },
-    '6.3': (el) => {
+    '6.2': (el) => {
       const tx = S.reward && ['coins', 'cashout'].includes(S.reward.reward) && DB.transactions.all().some((t) => t.id === S.reward.id);
       if (!tx) return;
       const button = $('#btnCoinsDone', el);
@@ -805,11 +806,11 @@
         button.disabled = true;
         button.setAttribute('aria-busy', 'true');
         button.textContent = 'Finishing…';
-        later(300, () => go('7.1'));
+        later(300, () => go('7.0'));
       });
-      later(2400, () => go('7.1'));
+      later(2400, () => go('7.0'));
     },
-    '6.4': (el) => {
+    '6.3': (el) => {
       if (!S.reward || S.reward.kind !== 'wifi') return;
       const bar = $('#genBar', el);
       requestAnimationFrame(() => { bar.style.transition = 'width 1.8s ease'; bar.style.width = '100%'; });
@@ -819,7 +820,7 @@
         if (!m || !a || !a.wifi) {
           S.reward = null;
           S.rewardError = 'Wi-Fi became unavailable before the voucher was generated. No voucher transaction was recorded; choose another reward.';
-          go('6.1');
+          go('6.0');
           return;
         }
         const user = S.user && DB.users.byId(S.user.id);
@@ -829,10 +830,10 @@
         DB.machines.patch(machineId, { totalBottles: m.totalBottles + S.reward.items.length });
         if (user) { DB.users.addPoints(user.id, 0, S.reward.items.length); S.user = DB.users.byId(user.id); }
         S.reward = Object.assign({}, tx, { voucherCode: voucher.code, expiresAt: voucher.expiresAt });
-        go('6.5');
+        go('6.4');
       });
     },
-    '6.5': (el) => {
+    '6.4': (el) => {
       let voucher = S.reward && S.reward.voucherCode ? DB.vouchers.byCode(S.reward.voucherCode) : null;
       if (!voucher || DB.vouchers.status(voucher) !== 'active') return;
       let n = DB.config.get().voucherDisplaySeconds;
@@ -843,18 +844,18 @@
         button.disabled = true;
         button.setAttribute('aria-busy', 'true');
         button.textContent = 'Finishing…';
-        later(300, () => go('7.1'));
+        later(300, () => go('7.0'));
       });
       const tick = () => {
         voucher = DB.vouchers.byCode(S.reward.voucherCode);
-        if (!voucher || DB.vouchers.status(voucher) !== 'active') { go('6.5'); return; }
+        if (!voucher || DB.vouchers.status(voucher) !== 'active') { go('6.4'); return; }
         n -= 1;
         $('#cd', el).textContent = n;
-        if (n <= 0) go('7.1'); else later(1000, tick);
+        if (n <= 0) go('7.0'); else later(1000, tick);
       };
       later(1000, tick);
     },
-    '6.6': (el) => {
+    '6.5': (el) => {
       const pending = S.reward && S.reward.kind === 'save' ? S.reward : null;
       if (!pending) return;
       const bar = $('#saveBar', el);
@@ -865,7 +866,7 @@
         if (!user || !m) {
           S.reward = null;
           S.rewardError = !user ? 'The linked account is no longer available. Link an account again or choose another reward.' : 'The machine record is unavailable. Try another reward.';
-          go('6.1');
+          go('6.0');
           return;
         }
         const tx = DB.transactions.add({ machineId, userId: user.id, items: pending.items, total: pending.total, reward: 'save', points: pending.points });
@@ -873,10 +874,10 @@
         DB.machines.patch(machineId, { totalBottles: m.totalBottles + pending.items.length });
         S.user = DB.users.byId(user.id);
         S.reward = tx;
-        go('6.7');
+        go('6.6');
       });
     },
-    '6.7': (el) => {
+    '6.6': (el) => {
       const button = $('#btnSavedContinue', el);
       button.addEventListener('click', (event) => {
         event.preventDefault();
@@ -884,13 +885,13 @@
         button.disabled = true;
         button.setAttribute('aria-busy', 'true');
         button.textContent = 'Finishing…';
-        later(300, () => go('7.1'));
+        later(300, () => go('7.0'));
       });
-      later(2400, () => go('7.1'));
+      later(2400, () => go('7.0'));
     },
 
-    '7.1': (el) => {
-      const finish = () => { resetSession(); go('1.1'); };
+    '7.0': (el) => {
+      const finish = () => { resetSession(); go('1.0'); };
       const button = $('#btnDone', el);
       button.addEventListener('click', (event) => {
         event.preventDefault();
@@ -902,8 +903,8 @@
       });
       later(8000, finish);
     },
-    '7.2': (el) => {
-      const restart = () => { resetSession(); go('1.1'); };
+    '7.1': (el) => {
+      const restart = () => { resetSession(); go('1.0'); };
       const button = $('#btnSessionRestart', el);
       button.addEventListener('click', (event) => {
         event.preventDefault();
@@ -921,11 +922,11 @@
   function insertItem(typeId) {
     const m = machine();
     const a = m && DB.machines.availability(m);
-    if (!a || !a.online || a.binFull) { toast(!a || !a.online ? 'Machine unavailable — cannot scan items' : 'Bin is full — cannot accept more items', 'danger'); go('4.1'); return; }
+    if (!a || !a.online || a.binFull) { toast(!a || !a.online ? 'Machine unavailable — cannot scan items' : 'Bin is full — cannot accept more items', 'danger'); go('4.0'); return; }
     const r = DB.config.rewardFor(typeId);
     S.rejectReason = r ? null : 'We could not identify this item type.';
     S.pendingItem = r ? { type: r.id, label: r.label, value: r.value } : null;
-    go('4.2');
+    go('4.1');
   }
 
   function chooseReward(kind) {
@@ -934,7 +935,7 @@
     const user = S.user && DB.users.byId(S.user.id);
     if (!m || !S.items.length || S.total <= 0) {
       S.rewardError = !m ? 'No recycling machine is configured.' : 'There are no accepted items to claim.';
-      go('6.1');
+      go('6.0');
       return;
     }
     S.rewardError = null;
@@ -942,20 +943,20 @@
     else if (kind === 'wifi' && !a.wifi) S.rewardError = 'Wi-Fi vouchers are no longer available. Choose another reward.';
     else if (kind === 'save' && !user) S.rewardError = 'This account is no longer available. Link an account or choose another reward.';
     else if (!['coins', 'wifi', 'save'].includes(kind)) S.rewardError = 'Choose a reward from the available options.';
-    if (S.rewardError) { go('6.1'); return; }
+    if (S.rewardError) { go('6.0'); return; }
     S.rewardError = null;
     if (user) S.user = user;
     if (kind === 'coins') {
       S.reward = { kind: 'coins', total: S.total, items: S.items.slice() };
-      go('6.2');
+      go('6.1');
     } else if (kind === 'wifi') {
       const minutes = sessionMinutes();
       S.reward = { kind: 'wifi', total: S.total, minutes, items: S.items.slice() };
-      go('6.4');
+      go('6.3');
     } else if (kind === 'save') {
       const points = sessionPoints();
       S.reward = { kind: 'save', total: S.total, points, items: S.items.slice(), userId: user.id };
-      go('6.6');
+      go('6.5');
     }
   }
 
@@ -1023,15 +1024,15 @@
   $('#btnMenu').addEventListener('click', () => openDrawer(true));
   $('#btnCloseDrawer').addEventListener('click', () => openDrawer(false));
   $('#scrim').addEventListener('click', () => openDrawer(false));
-  $('#selMachine').addEventListener('change', (e) => { machineId = e.target.value; localStorage.setItem(MKEY, machineId); resetSession(); go('1.1'); syncDrawer(); });
+  $('#selMachine').addEventListener('change', (e) => { machineId = e.target.value; localStorage.setItem(MKEY, machineId); resetSession(); go('1.0'); syncDrawer(); });
   $('#rngBin').addEventListener('input', (e) => { $('#outBin').textContent = e.target.value + '%'; DB.machines.patch(machineId, { binLevel: Number(e.target.value) }); renderHeader(); });
   $('#rngCoins').addEventListener('input', (e) => { $('#outCoins').textContent = e.target.value + '%'; DB.machines.patch(machineId, { coinHopper: Number(e.target.value) }); renderHeader(); });
   $('#selWifi').addEventListener('change', (e) => { DB.machines.patch(machineId, { wifiSignal: e.target.value }); renderHeader(); });
   $('#btnSimScan').addEventListener('click', () => {
-    if (S.screen !== '2.2' || !S.linkCode) { toast('Go to the Log in screen first (2.2)', 'danger'); return; }
+    if (S.screen !== '2.1' || !S.linkCode) { toast('Go to the Log in screen first (2.1)', 'danger'); return; }
     DB.links.resolve(S.linkCode, DB.users.all()[0].id); openDrawer(false);
   });
-  $('#btnResetSession').addEventListener('click', () => { resetSession(); go('1.1'); openDrawer(false); });
+  $('#btnResetSession').addEventListener('click', () => { resetSession(); go('1.0'); openDrawer(false); });
 
   // generic [data-go] navigation
   $('#stage').addEventListener('click', (e) => { const b = e.target.closest('[data-go]'); if (b) go(b.dataset.go); });
@@ -1041,5 +1042,5 @@
 
   /* ---------- progress ticks + boot ---------- */
   $('#progressTicks').innerHTML = '<i></i>'.repeat(7);
-  go('1.1');
+  go('1.0');
 })();
