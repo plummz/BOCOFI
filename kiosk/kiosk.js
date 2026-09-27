@@ -24,7 +24,7 @@
   const machine = () => DB.machines.byId(machineId);
 
   /* ---------- session state ---------- */
-  const S = { screen: '1.1', mode: null, user: null, items: [], total: 0, pendingItem: null, rejectReason: null, linkCode: null, alerted: false, reward: null };
+  const S = { screen: '1.1', mode: null, user: null, items: [], total: 0, pendingItem: null, rejectReason: null, crusherError: null, linkCode: null, alerted: false, reward: null };
   let timers = [];
   let idleTimer = null;
   const later = (ms, fn) => { const t = setTimeout(fn, ms); timers.push(t); return t; };
@@ -68,7 +68,7 @@
 
   function resetSession() {
     if (S.linkCode) DB.links.cancel(S.linkCode);
-    Object.assign(S, { mode: null, user: null, items: [], total: 0, pendingItem: null, rejectReason: null, linkCode: null, alerted: false, reward: null });
+    Object.assign(S, { mode: null, user: null, items: [], total: 0, pendingItem: null, rejectReason: null, crusherError: null, linkCode: null, alerted: false, reward: null });
   }
 
   /* ---------- navigation ---------- */
@@ -306,16 +306,20 @@
         <div class="bar warn"><i style="width:${level}%"></i></div>
         <div class="muted" role="${online ? 'status' : 'alert'}">${m ? `${esc(m.name)} · bin at ${level}% (crusher threshold ${config.binAlertThreshold}%).` : 'No recycling machine is configured.'}</div>
       </div>
-      <p class="sub" role="${online ? 'status' : 'alert'}">${online ? high ? 'The bin is ready for a crusher cycle.' : 'The bin is below the crusher threshold.' : `Machine ${esc(m ? m.status : 'unavailable')}; the crusher cannot run.`}</p>
+      <p class="sub" role="${online ? 'status' : 'alert'}">${S.crusherError ? esc(S.crusherError) : online ? high ? 'The bin is ready for a crusher cycle.' : 'The bin is below the crusher threshold.' : `Machine ${esc(m ? m.status : 'unavailable')}; the crusher cannot run.`}</p>
       <div class="actions"><button class="btn btn-blue" id="btnCapacityContinue">${online && high ? 'START CRUSHING' : 'CONTINUE TO REWARDS'}</button></div>`;
     },
 
-    '5.2': () => `
+    '5.2': () => {
+      const m = machine();
+      const level = m ? clamp(Number(m.binLevel) || 0, 0, 100) : 0;
+      return `
       <h2>Crushing</h2>
-      <div class="panel">
+      <div class="panel" aria-busy="true">
         <div class="bar warn"><i id="crushBar" style="width:0%"></i></div>
-        <div class="muted">Please wait a moment</div>
-      </div>`,
+        <div class="muted" role="status">${m ? `Compacting the ${level}% bin at ${esc(m.name)}. Please wait.` : 'Machine data is unavailable; the cycle cannot start.'}</div>
+      </div>`;
+    },
 
     '5.3': () => `
       <h1>What would you like to do?</h1>
@@ -613,15 +617,28 @@
       later(2200, continueCapacity);
     },
     '5.2': (el) => {
+      const initial = machine();
+      const initialAvailability = initial && DB.machines.availability(initial);
+      if (!initialAvailability || !initialAvailability.online || !initialAvailability.binHigh) {
+        S.crusherError = !initialAvailability || !initialAvailability.online ? 'The crusher could not start because the machine is unavailable. Your accepted items are still in this session.' : 'The bin is below its crusher threshold. Your accepted items are still in this session.';
+        go('5.1');
+        return;
+      }
       const bar = $('#crushBar', el);
       requestAnimationFrame(() => { bar.style.transition = 'width 2.8s linear'; bar.style.width = '100%'; });
       later(3000, () => {
         const m = machine();
+        if (!m || m.status !== 'online') {
+          S.crusherError = 'The machine became unavailable before the crusher cycle finished. Your accepted items are still in this session.';
+          go('5.1');
+          return;
+        }
         // crusher compacts the contents: fill level drops, owner is notified
         DB.machines.patch(machineId, { binLevel: clamp(Math.round(m.binLevel * 0.55), 0, 100), lastCrush: Date.now() });
         DB.alerts.add(machineId, 'bin', 'warning', `Bin reached ${Math.round(m.binLevel)}% — crusher cycle ran. Schedule a collection soon.`);
+        S.crusherError = null;
         toast('Crusher cycle complete');
-        go('6.1');
+        go('5.3');
       });
     },
 
