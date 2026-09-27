@@ -4,9 +4,9 @@ A reverse vending machine system for the Philippines. Users insert plastic bottl
 
 | Surface | Path | Who uses it |
 |---|---|---|
-| **Machine kiosk** | `kiosk/` | The touchscreen on the vending machine. Implements all 25 screens of the wireframe site map (1.1 Idle → 7.2 Session ended). |
+| **Machine kiosk** | `kiosk/` | The touchscreen on the vending machine. Implements all 27 screens of the wireframe site map (1.1 Idle → 7.2 Session ended), including one-time app cash-out code redemption at the coin tray. |
 | **User app** | `app/` | Recyclers. Dashboard with three balances (stacked points · coin balance ₱ · Wi-Fi time remaining), ☰ drawer menu + bottom tab bar, wallet (convert points → coins / Wi-Fi, cash-out codes for the kiosk), Wi-Fi countdown session + top-ups + kiosk vouchers, rewards bundles, machine finder, history filters, notifications, leaderboard & tiers, profile/settings, help. Mobile-first PWA. |
-| **Owner / admin** | `admin/` | The machine owner. Dashboard, machines (sensor state + controls), owner alerts, transactions (CSV export), users, vouchers, reward settings. |
+| **Owner / admin** | `admin/` | The machine owner. Dashboard, machines (sensor state + controls), owner alerts, all transaction types (CSV export), users, Wi-Fi vouchers, cash-out code status and reward settings. |
 | Launcher | `index.html` | Links to the three surfaces + demo instructions. |
 
 ## Run it
@@ -24,7 +24,7 @@ Serving over http(s) also enables the user app's service worker.
 - User app: `maria@example.com` / PIN `1234` (also `jose@example.com` / `1234`)
 - Admin: `admin` / `admin123`
 
-**Full loop:** open the kiosk and the user app in two tabs. On the kiosk tap *Log in*; in the app go to *Link* and type the 4-letter code shown on the kiosk. The kiosk continues automatically. Use the kiosk's sensor simulator (buttons on the *Insert* screen or the ☰ service menu) to "insert" items, then pick a reward. Everything shows up live in the admin dashboard.
+**Full loop:** open the kiosk and the user app in two tabs. On the kiosk tap *Log in*; in the app go to *Link* and type the 4-letter code shown on the kiosk. The kiosk continues automatically. Use the kiosk's sensor simulator (buttons on the *Insert* screen or the ☰ service menu) to "insert" items, then pick a reward. To test cash-out, create a code under *Wallet → Cash out coins*, enter it on the kiosk reward screen, and collect the simulated payout. Everything shows up live in the admin dashboard, including the Cash-outs view.
 
 ## How it maps to the design board
 
@@ -43,13 +43,13 @@ app/                 index.html · app.css · app.js · manifest.json · sw.js  
 admin/               index.html · admin.css · admin.js
 ```
 
-`db.js` exposes `BocofiDB` with namespaces `users`, `machines`, `transactions`, `vouchers`, `alerts`, `links` (QR-login handshake), `config`, `admin`, plus `on(fn)` for change events. All three surfaces read and write through it only, so replacing localStorage with HTTP calls is a single-file change.
+`db.js` exposes `BocofiDB` with namespaces `users`, `machines`, `transactions`, `vouchers`, `alerts`, `cashouts`, `links` (QR-login handshake), `config`, `admin`, plus `on(fn)` for change events. All three surfaces read and write through it only, so replacing localStorage with HTTP calls is a single-file change.
 
 ### Data model (summary)
 
 - `machines[]` — `id, name, location, status, binLevel, coinHopper, wifiSignal, coinsEnabled, wifiEnabled, totalBottles, totalPaidOut, session`
 - `users[]` — `id, name, email, pin, points, coins (₱), wifiMinutes, wifiSession{startedAt,minutesAtStart,code}|null, bottles, notifRead[], prefs`
-- `transactions[]` — `id, machineId, userId|null, items[{type,label,value}], total, reward: coins|wifi|save|claim|convert-coins|convert-wifi|cashout|cashout-cancel|wifi-use|voucher-add|bundle, points?, minutes?, voucherCode?, code?, label?`
+- `transactions[]` — `id, machineId, userId|null, items[{type,label,value}], total, reward: coins|wifi|save|adjust|convert-coins|convert-wifi|cashout|cashout-cancel|wifi-use|voucher-add|bundle, points?, minutes?, voucherCode?, code?, label?, note?`; `adjust` records owner point changes and `cashout` records code creation or kiosk payout (see `note`).
 - `vouchers[]` — `code, minutes, userId, machineId, expiresAt, redeemed`
 - `cashouts[]` — app cash-out codes redeemed at a kiosk: `code, userId, amount, status: pending|paid|cancelled, expiresAt`
 - `alerts[]` — owner notifications raised by machines (`bin`, `coins`, `wifi`, `rewards`)
