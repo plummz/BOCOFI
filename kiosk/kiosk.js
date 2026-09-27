@@ -67,11 +67,16 @@
   }
 
   function resetSession() {
+    if (S.linkCode) DB.links.cancel(S.linkCode);
     Object.assign(S, { mode: null, user: null, items: [], total: 0, linkCode: null, alerted: false, reward: null });
   }
 
   /* ---------- navigation ---------- */
   function go(screen) {
+    if (S.screen === '2.2' && screen !== '2.2' && S.linkCode) {
+      DB.links.cancel(S.linkCode);
+      S.linkCode = null;
+    }
     clearTimers();
     S.screen = screen;
     const phase = Number(screen.split('.')[0]);
@@ -132,12 +137,20 @@
       ${available ? '' : `<p class="start-status" role="alert">${esc(m ? `This machine is ${m.status}. Select an available machine in the service menu.` : 'No recycling machine is configured.')}</p>`}`;
     },
 
-    '2.2': () => `
-      <h2>Scan this in the BOCO-FI app</h2>
-      <div class="qr-box"><canvas id="qr" width="29" height="29" aria-label="Login QR code"></canvas></div>
-      <p class="sub">Or enter this code in the app under <b>Link to machine</b></p>
-      <div class="qr-code" id="qrCode">····</div>
-      <div class="actions"><button class="btn btn-ghost" data-go="2.1">Back</button></div>`,
+    '2.2': () => {
+      const m = machine();
+      if (!m || m.status !== 'online') return `
+        <div class="icon-circle pop" style="--accent:var(--color-danger)">${ICON.x}</div>
+        <h2>Machine unavailable</h2>
+        <p class="sub" role="alert">${esc(m ? `This machine is ${m.status}; account linking is paused.` : 'No recycling machine is configured.')}</p>
+        <div class="actions"><button class="btn btn-ghost" data-go="2.1">BACK</button></div>`;
+      return `
+      <h2>Link your account in the BOCO-FI app</h2>
+      <div class="qr-box"><canvas id="qr" width="29" height="29" aria-label="Decorative QR preview; use the code below"></canvas></div>
+      <p class="sub" id="linkStatus" role="status">Open Link to Machine and enter this one-time code.</p>
+      <div class="qr-code" id="qrCode">Preparing…</div>
+      <div class="actions"><button class="btn btn-ghost" data-go="2.1">BACK</button></div>`;
+    },
 
     '2.3': () => `
       <div class="icon-circle pop">${ICON.check}</div>
@@ -340,15 +353,34 @@
     },
 
     '2.2': (el) => {
+      if (machine()?.status !== 'online') return;
       S.linkCode = DB.links.create(machineId);
       $('#qrCode', el).textContent = S.linkCode;
       drawQR($('#qr', el), `BOCOFI:${machineId}:${S.linkCode}`);
       const poll = () => {
+        if (S.screen !== '2.2' || !S.linkCode) return;
+        if (machine()?.status !== 'online') {
+          if (S.linkCode) DB.links.cancel(S.linkCode);
+          S.linkCode = null;
+          go('2.2');
+          return;
+        }
         const l = DB.links.get(S.linkCode);
         if (l && l.status === 'linked') {
-          S.user = DB.users.byId(l.userId); S.mode = 'user';
-          DB.links.cancel(S.linkCode);
+          S.user = DB.users.byId(l.userId);
+          if (!S.user) {
+            DB.links.cancel(S.linkCode); S.linkCode = null;
+            $('#linkStatus', el).textContent = 'That account is no longer available. Go back and try again.';
+            $('#qrCode', el).textContent = 'EXPIRED';
+            return;
+          }
+          S.mode = 'user';
           go('2.3');
+        } else if (!l || Date.now() - l.createdAt >= 5 * 60 * 1000) {
+          if (S.linkCode) DB.links.cancel(S.linkCode);
+          S.linkCode = null;
+          $('#linkStatus', el).textContent = 'This link code has expired. Go back and choose LOG IN again.';
+          $('#qrCode', el).textContent = 'EXPIRED';
         } else later(700, poll);
       };
       later(700, poll);
