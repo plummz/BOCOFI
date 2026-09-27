@@ -72,6 +72,7 @@
         cashoutDenominations: [1, 5, 10, 20],
         cashoutMinAmount: 1,
         cashoutTtlHours: 24,
+        wifiTopupOptions: [10, 30, 60],
         binAlertThreshold: 80,       // % — crusher runs, owner notified
         binFullThreshold: 95,        // % — machine refuses new items
         coinLowThreshold: 10,        // % — coins unavailable below this
@@ -103,6 +104,7 @@
     if (!Array.isArray(d.config.cashoutDenominations)) d.config.cashoutDenominations = [1, 5, 10, 20];
     if (typeof d.config.cashoutMinAmount !== 'number') d.config.cashoutMinAmount = 1;
     if (typeof d.config.cashoutTtlHours !== 'number') d.config.cashoutTtlHours = 24;
+    if (!Array.isArray(d.config.wifiTopupOptions)) d.config.wifiTopupOptions = [10, 30, 60];
     (d.users || []).forEach((u) => {
       if (typeof u.coins !== 'number') u.coins = 0;
       if (typeof u.wifiMinutes !== 'number') u.wifiMinutes = 0;

@@ -315,7 +315,7 @@
     wifi: (u) => {
       const on = !!u.wifiSession; const rem = wifiRemaining(u); const total = on ? u.wifiSession.minutesAtStart : Math.max(u.wifiMinutes, 1);
       const vs = DB.vouchers.forUser(u.id);
-      const opts = [10, 30, 60].map((m) => ({ m, pts: m * ptsPerMin() }));
+      const opts = (cfg().wifiTopupOptions || []).map((m) => ({ m, pts: m * ptsPerMin() }));
       return `
       <div class="page-title"><h2>Wi-Fi</h2></div>
       <div class="card">
@@ -567,20 +567,44 @@
     },
 
     wifi(u) {
-      const on = $('#btnWifiOn'); if (on) on.onclick = () => { wifiConnect(u); render(); };
-      const off = $('#btnWifiOff'); if (off) off.onclick = () => { wifiDisconnect(u); render(); };
+      const on = $('#btnWifiOn'); if (on) on.onclick = () => {
+        if (on.disabled) return;
+        on.disabled = true; on.setAttribute('aria-busy', 'true'); on.textContent = 'Connecting…';
+        setTimeout(() => {
+          const latest = DB.users.byId(u.id);
+          if (!latest || latest.wifiSession || (latest.wifiMinutes || 0) <= 0.05) { toast(latest && latest.wifiSession ? 'A Wi-Fi session is already active.' : 'No Wi-Fi time is available. Top up your balance to connect.', 'danger'); render(); return; }
+          wifiConnect(latest); render();
+        }, 200);
+      };
+      const off = $('#btnWifiOff'); if (off) off.onclick = () => {
+        if (off.disabled) return;
+        off.disabled = true; off.setAttribute('aria-busy', 'true'); off.textContent = 'Disconnecting…';
+        setTimeout(() => { const latest = DB.users.byId(u.id); if (latest && latest.wifiSession) wifiDisconnect(latest); render(); }, 200);
+      };
       $$('[data-topup]').forEach((b) => b.addEventListener('click', () => {
         const m = Number(b.dataset.topup), pts = m * ptsPerMin();
-        if (u.points < pts) { toast('Not enough points', 'danger'); return; }
-        DB.users.addPoints(u.id, -pts); addWifiTime(u, m);
-        DB.transactions.add({ machineId: null, userId: u.id, items: [], total: pesos(pts), reward: 'convert-wifi', points: -pts, minutes: m });
-        toast(`+${m} min added`, 'ok'); render();
+        if (b.disabled || u.points < pts) { toast('Not enough points for this top-up.', 'danger'); return; }
+        b.disabled = true; b.setAttribute('aria-busy', 'true'); b.textContent = 'Adding…';
+        setTimeout(() => {
+          const latest = DB.users.byId(u.id);
+          if (!latest || pts > latest.points) { toast('Your points changed. Review the updated balance and try again.', 'danger'); render(); return; }
+          DB.users.addPoints(u.id, -pts); addWifiTime(latest, m);
+          DB.transactions.add({ machineId: null, userId: u.id, items: [], total: pesos(pts), reward: 'convert-wifi', points: -pts, minutes: m });
+          toast(`+${m} min added`, 'ok'); render();
+        }, 200);
       }));
       $$('[data-add-voucher]').forEach((b) => b.addEventListener('click', () => {
-        const v = DB.vouchers.byCode(b.dataset.addVoucher); if (!v || DB.vouchers.status(v) !== 'active') return;
-        DB.vouchers.redeem(v.code); addWifiTime(u, v.minutes);
-        DB.transactions.add({ machineId: v.machineId, userId: u.id, items: [], total: 0, reward: 'voucher-add', points: 0, minutes: v.minutes, voucherCode: v.code });
-        toast(`+${v.minutes} min added from ${v.code}`, 'ok'); render();
+        if (b.disabled) return;
+        const code = b.dataset.addVoucher; b.disabled = true; b.setAttribute('aria-busy', 'true'); b.textContent = 'Adding…';
+        setTimeout(() => {
+          const v = DB.vouchers.byCode(code);
+          if (!v || DB.vouchers.status(v) !== 'active') { toast('This voucher is no longer active.', 'danger'); render(); return; }
+          const latest = DB.users.byId(u.id);
+          if (!latest) { toast('Account unavailable. Sign in again before using this voucher.', 'danger'); render(); return; }
+          DB.vouchers.redeem(v.code); addWifiTime(latest, v.minutes);
+          DB.transactions.add({ machineId: v.machineId, userId: u.id, items: [], total: 0, reward: 'voucher-add', points: 0, minutes: v.minutes, voucherCode: v.code });
+          toast(`+${v.minutes} min added from ${v.code}`, 'ok'); render();
+        }, 200);
       }));
     },
 
