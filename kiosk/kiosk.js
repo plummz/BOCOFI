@@ -357,11 +357,15 @@
       <div class="actions"><button class="btn btn-ghost" data-go="5.3">BACK</button></div>`;
     },
 
-    '6.2': () => `
-      <p class="sub">Dispensing</p>
-      <div class="big-value">${fmtPeso(S.total)}</div>
-      <div class="panel"><div class="bar" style="--accent:var(--c-rewards)"><i id="dispBar" style="width:0%;background:var(--c-rewards)"></i></div></div>
-      <div class="chip">Collect from the tray below</div>`,
+    '6.2': () => S.reward && S.reward.kind === 'coins' ? `
+      <h2>Dispensing coins</h2>
+      <div class="big-value">${fmtPeso(S.reward.total)}</div>
+      <div class="panel" aria-busy="true"><div class="bar" style="--accent:var(--color-primary)"><i id="dispBar" style="width:0%;background:var(--color-primary)"></i></div>
+        <p class="muted" role="status">Dispensing at ${esc(machine() ? machine().name : 'this machine')}. Please wait.</p></div>` : `
+      <div class="icon-circle pop" style="--accent:var(--color-danger)">${ICON.x}</div>
+      <h1>Coin payout unavailable</h1>
+      <p class="sub" role="alert">There is no active coin payout to complete.</p>
+      <div class="actions"><button class="btn btn-blue" data-go="6.1">BACK TO REWARDS</button></div>`,
 
     '6.3': () => `
       <div class="icon-circle pop">${ICON.check}</div>
@@ -660,9 +664,25 @@
       el.querySelectorAll('[data-reward]').forEach((b) => b.addEventListener('click', () => chooseReward(b.dataset.reward)));
     },
     '6.2': (el) => {
+      if (!S.reward || S.reward.kind !== 'coins') return;
       const bar = $('#dispBar', el);
       requestAnimationFrame(() => { bar.style.transition = 'width 2.4s ease'; bar.style.width = '100%'; });
-      later(2700, () => go('6.3'));
+      later(2700, () => {
+        const m = machine();
+        const a = m && DB.machines.availability(m);
+        if (!m || !a || !a.coins) {
+          S.reward = null;
+          S.rewardError = 'Coin payout became unavailable before it completed. No coin transaction was recorded; choose another reward.';
+          go('6.1');
+          return;
+        }
+        const user = S.user && DB.users.byId(S.user.id);
+        const tx = DB.transactions.add({ machineId, userId: user ? user.id : null, items: S.reward.items, total: S.reward.total, reward: 'coins' });
+        DB.machines.patch(machineId, { totalBottles: m.totalBottles + S.reward.items.length, totalPaidOut: round2(m.totalPaidOut + S.reward.total), coinHopper: clamp(round2(m.coinHopper - S.reward.total * 2), 0, 100) });
+        if (user) { DB.users.addPoints(user.id, 0, S.reward.items.length); S.user = DB.users.byId(user.id); }
+        S.reward = tx;
+        go('6.3');
+      });
     },
     '6.3': () => later(2400, () => go('7.1')),
     '6.4': (el) => {
@@ -712,11 +732,7 @@
     if (user) S.user = user;
     const base = { machineId, userId: S.user ? S.user.id : null, items: S.items.slice(), total: S.total, reward: kind };
     if (kind === 'coins') {
-      const tx = DB.transactions.add(base);
-      S.reward = tx;
-      // hopper drains roughly 2% per peso paid out
-      DB.machines.patch(machineId, { totalBottles: m.totalBottles + S.items.length, totalPaidOut: round2(m.totalPaidOut + S.total), coinHopper: clamp(round2(m.coinHopper - S.total * 2), 0, 100) });
-      if (S.user) DB.users.addPoints(S.user.id, 0, S.items.length);
+      S.reward = { kind: 'coins', total: S.total, items: S.items.slice() };
       go('6.2');
     } else if (kind === 'wifi') {
       const minutes = sessionMinutes();
