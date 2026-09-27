@@ -113,7 +113,13 @@
   /** Fill in fields added after a store was first seeded (safe on every load). */
   function migrate(d) {
     if (!d || typeof d !== 'object') return seed();
+    if (!Array.isArray(d.users)) d.users = [];
+    if (!Array.isArray(d.machines)) d.machines = [];
+    if (!Array.isArray(d.transactions)) d.transactions = [];
+    if (!Array.isArray(d.vouchers)) d.vouchers = [];
+    if (!Array.isArray(d.alerts)) d.alerts = [];
     if (!Array.isArray(d.cashouts)) d.cashouts = [];
+    if (!d.links || typeof d.links !== 'object') d.links = {};
     if (!d.config || typeof d.config !== 'object') d.config = seed().config;
     if (!Array.isArray(d.config.cashoutDenominations)) d.config.cashoutDenominations = [1, 5, 10, 20];
     if (typeof d.config.cashoutMinAmount !== 'number') d.config.cashoutMinAmount = 1;
@@ -129,6 +135,7 @@
       if (!Array.isArray(u.notifRead)) u.notifRead = [];
       if (!u.prefs) u.prefs = { notifs: true };
     });
+    d.vouchers.forEach((v) => { if (typeof v.revoked !== 'boolean') v.revoked = false; });
     return d;
   }
   function load() {
@@ -158,7 +165,7 @@
   function on(fn) { listeners.add(fn); return () => listeners.delete(fn); }
   global.addEventListener('storage', (e) => {
     if (e.key !== KEY) return;
-    try { db = JSON.parse(e.newValue); } catch { return; }
+    try { db = migrate(JSON.parse(e.newValue)); } catch { return; }
     emit('remote');
   });
 
@@ -227,7 +234,8 @@
       return v;
     },
     redeem(code) { update((d) => { const v = d.vouchers.find((x) => x.code === code); if (v) { v.redeemed = true; v.redeemedAt = now(); } }); },
-    status(v) { if (v.redeemed) return 'used'; if (v.expiresAt < now()) return 'expired'; return 'active'; },
+    revoke(code) { update((d) => { const v = d.vouchers.find((x) => x.code === String(code).trim().toUpperCase()); if (v && !v.redeemed && !v.revoked) { v.revoked = true; v.revokedAt = now(); } }); },
+    status(v) { if (v.revoked) return 'revoked'; if (v.redeemed) return 'used'; if (v.expiresAt < now()) return 'expired'; return 'active'; },
   };
 
   const alerts = {
@@ -260,6 +268,30 @@
     },
     cancel(code) { update((d) => { const c = d.cashouts.find((x) => x.code === code); if (c && c.status === 'pending') { c.status = 'cancelled'; const u = d.users.find((x) => x.id === c.userId); if (u) u.coins = round2(u.coins + c.amount); } }); },
     markPaid(code, machineId = null) { update((d) => { const c = d.cashouts.find((x) => x.code === code); if (c && c.status === 'pending') { c.status = 'paid'; c.paidAt = now(); c.machineId = machineId; } }); },
+    redeemAtKiosk(code, machineId) {
+      const normalized = String(code || '').trim().toUpperCase();
+      let payout = null;
+      update((d) => {
+        const c = d.cashouts.find((x) => x.code === normalized);
+        if (!c) throw new Error('Cash-out code not found. Check the code and try again.');
+        if (c.status !== 'pending') throw new Error(c.status === 'paid' ? 'This cash-out code has already been used.' : 'This cash-out code is no longer active.');
+        if (c.expiresAt <= now()) throw new Error('This cash-out code has expired. Cancel it in your wallet to return the balance.');
+        const m = d.machines.find((x) => x.id === machineId);
+        if (!m || m.status !== 'online' || !m.coinsEnabled) throw new Error('Coin payout is unavailable at this kiosk. Choose another reward or kiosk.');
+        const drain = round2(c.amount * 2);
+        const hopper = Number(m.coinHopper);
+        const lowThreshold = Number(d.config.coinLowThreshold) || 0;
+        if (!Number.isFinite(hopper) || hopper < Math.max(lowThreshold, drain)) throw new Error('This kiosk does not have enough coins for that cash-out.');
+        const usr = d.users.find((x) => x.id === c.userId);
+        if (!usr) throw new Error('The account for this cash-out code no longer exists. Contact the operator.');
+        c.status = 'paid'; c.paidAt = now(); c.machineId = machineId;
+        m.coinHopper = clamp(round2(hopper - drain), 0, 100);
+        m.totalPaidOut = round2((m.totalPaidOut || 0) + c.amount);
+        payout = { id: uid('TX-'), ts: now(), machineId, userId: c.userId, items: [], total: c.amount, reward: 'cashout', points: 0, code: c.code, note: 'Redeemed at kiosk' };
+        d.transactions.push(payout);
+      });
+      return payout;
+    },
     status(c) { if (c.status !== 'pending') return c.status; if (c.expiresAt < now()) return 'expired'; return 'pending'; },
   };
 
@@ -307,14 +339,15 @@
   function stats() {
     const d = get();
     const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0);
-    const today = d.transactions.filter((t) => t.ts >= dayStart.getTime());
-    const bottles = (list) => list.reduce((n, t) => n + t.items.length, 0);
-    const value = (list) => round2(list.reduce((n, t) => n + t.total, 0));
+    const recycling = d.transactions.filter((t) => t.machineId && ['coins', 'wifi', 'save'].includes(t.reward));
+    const today = recycling.filter((t) => t.ts >= dayStart.getTime());
+    const bottles = (list) => list.reduce((n, t) => n + (Array.isArray(t.items) ? t.items.length : 0), 0);
+    const value = (list) => round2(list.reduce((n, t) => n + Number(t.total || 0), 0));
     return {
       bottlesToday: bottles(today),
       valueToday: value(today),
-      bottlesAll: bottles(d.transactions),
-      valueAll: value(d.transactions),
+      bottlesAll: bottles(recycling),
+      valueAll: value(recycling),
       sessionsToday: today.length,
       machinesOnline: d.machines.filter((m) => m.status === 'online').length,
       machinesTotal: d.machines.length,
