@@ -96,8 +96,6 @@
     DB.cashouts.forUser(u.id).forEach((c) => { if (c.status === 'paid') list.push({ id: 'co-' + c.code, ts: c.paidAt, title: 'Cash-out collected', body: `${fmtPeso(c.amount)} paid out${c.machineId ? ' at ' + c.machineId : ''}`, color: C.coins, icon: ICON.cash, view: 'wallet' }); });
     if (!u.wifiSession && u.wifiMinutes > 0 && u.wifiMinutes < 5) list.push({ id: 'wifi-low', ts: Date.now() - 5 * 60e3, title: 'Wi-Fi time running low', body: `Only ${fmtMin(u.wifiMinutes)} left. Convert points to top up.`, color: C.warn, icon: ICON.wifi, view: 'wifi' });
     DB.machines.all().forEach((m) => { if (m.status !== 'online') list.push({ id: 'm-' + m.id + '-' + m.status, ts: Date.now() - 2 * 3600e3, title: `${m.name} is under ${m.status}`, body: 'Try another BOCO-FI machine nearby.', color: C.info, icon: ICON.pin, view: 'machines' }); });
-    const tier = tierOf(u.bottles || 0);
-    list.push({ id: 'tier-' + tier.t.name, ts: u.createdAt, title: `${tier.t.emoji} You're a ${tier.t.name}!`, body: tier.next ? `${tier.next.min - (u.bottles || 0)} more items to reach ${tier.next.name}.` : 'You reached the top tier. Amazing!', color: C.tier, icon: ICON.trophy, view: 'leaderboard' });
     return list.sort((a, b) => b.ts - a.ts).map((n) => ({ ...n, read: (u.notifRead || []).includes(n.id) }));
   }
   const unreadCount = (u) => notifsFor(u).filter((n) => !n.read).length;
@@ -421,7 +419,7 @@
       const ns = notifsFor(u);
       return `
       <div class="page-title"><h2>Notifications</h2>${ns.some((n) => !n.read) ? '<button class="btn btn-ghost btn-sm" id="btnReadAll">Mark all read</button>' : ''}</div>
-      <div class="card">${ns.length ? ns.map((n) => `<div class="notif ${n.read ? 'read' : ''}" data-notif="${esc(n.id)}" data-go="${n.view}" role="button" tabindex="0"><span class="n-dot"></span><div class="tile" style="background:${n.color}">${n.icon}</div><div class="n-body"><b>${esc(n.title)}</b><small>${esc(n.body)}</small></div><span class="n-time">${ago(n.ts)}</span></div>`).join('') : '<div class="empty">You\'re all caught up.</div>'}</div>`;
+      <div class="card">${ns.length ? ns.map((n) => `<div class="notif ${n.read ? 'read' : ''}" data-notif="${esc(n.id)}" data-go="${n.view}" aria-label="${esc(n.title)}. ${esc(n.body)} Open ${TITLES[n.view] || 'details'}." aria-pressed="false" role="button" tabindex="0"><span class="n-dot"></span><div class="tile" style="background:${n.color}">${n.icon}</div><div class="n-body"><b>${esc(n.title)}</b><small>${esc(n.body)}</small></div><span class="n-time">${ago(n.ts)}</span></div>`).join('') : '<div class="empty" role="status">No notifications yet. Account activity and kiosk updates will appear here.</div>'}</div>`;
     },
 
     leaderboard: (u) => {
@@ -679,9 +677,9 @@
     history() { $$('#histChips .chip').forEach((b) => b.addEventListener('click', () => { histFilter = b.dataset.filter; render(); })); },
 
     notifications(u) {
-      const markRead = (id) => { if (!(u.notifRead || []).includes(id)) DB.users.patch(u.id, { notifRead: [...(u.notifRead || []), id] }); };
-      $$('[data-notif]').forEach((el) => { const go = () => { markRead(el.dataset.notif); goto(el.dataset.go || 'home'); }; el.addEventListener('click', go); el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }); });
-      const all = $('#btnReadAll'); if (all) all.onclick = () => { DB.users.patch(u.id, { notifRead: notifsFor(u).map((n) => n.id) }); render(); };
+      const markRead = (id) => { const latest = DB.users.byId(u.id); if (latest && !(latest.notifRead || []).includes(id)) DB.users.patch(u.id, { notifRead: [...(latest.notifRead || []), id] }); };
+      $$('[data-notif]').forEach((el) => { const go = () => { if (el.getAttribute('aria-busy') === 'true') return; el.setAttribute('aria-busy', 'true'); el.setAttribute('aria-pressed', 'true'); markRead(el.dataset.notif); goto(el.dataset.go || 'home'); }; el.addEventListener('click', go); el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }); });
+      const all = $('#btnReadAll'); if (all) all.onclick = () => { if (all.disabled) return; all.disabled = true; all.setAttribute('aria-busy', 'true'); all.textContent = 'Marking read…'; const latest = DB.users.byId(u.id); if (latest) DB.users.patch(u.id, { notifRead: [...new Set([...(latest.notifRead || []), ...notifsFor(latest).map((n) => n.id)])] }); toast('All notifications marked as read', 'ok'); render(); };
     },
 
     profile(u) {
