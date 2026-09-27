@@ -69,6 +69,9 @@
         ],
         pointsPerPeso: 100,          // ₱1.40 → 140 pts (matches wireframe 6.6)
         wifiMinutesPerPeso: 10,      // ₱1.40 → 14 min of Wi-Fi
+        cashoutDenominations: [1, 5, 10, 20],
+        cashoutMinAmount: 1,
+        cashoutTtlHours: 24,
         binAlertThreshold: 80,       // % — crusher runs, owner notified
         binFullThreshold: 95,        // % — machine refuses new items
         coinLowThreshold: 10,        // % — coins unavailable below this
@@ -96,6 +99,10 @@
   function migrate(d) {
     if (!d || typeof d !== 'object') return seed();
     if (!Array.isArray(d.cashouts)) d.cashouts = [];
+    if (!d.config || typeof d.config !== 'object') d.config = seed().config;
+    if (!Array.isArray(d.config.cashoutDenominations)) d.config.cashoutDenominations = [1, 5, 10, 20];
+    if (typeof d.config.cashoutMinAmount !== 'number') d.config.cashoutMinAmount = 1;
+    if (typeof d.config.cashoutTtlHours !== 'number') d.config.cashoutTtlHours = 24;
     (d.users || []).forEach((u) => {
       if (typeof u.coins !== 'number') u.coins = 0;
       if (typeof u.wifiMinutes !== 'number') u.wifiMinutes = 0;
@@ -227,7 +234,8 @@
       const u = users.byId(userId);
       if (!u || amount <= 0 || amount > (u.coins || 0)) throw new Error('Not enough coin balance.');
       const code = 'CO-' + Math.random().toString(16).slice(2, 6).toUpperCase();
-      const c = { code, userId, amount, status: 'pending', createdAt: now(), expiresAt: now() + 24 * 3600 * 1000 };
+      const ttlHours = Number(get().config.cashoutTtlHours) || 24;
+      const c = { code, userId, amount, status: 'pending', createdAt: now(), expiresAt: now() + ttlHours * 3600 * 1000 };
       update((d) => { const usr = d.users.find((x) => x.id === userId); usr.coins = round2(usr.coins - amount); d.cashouts.push(c); });
       return c;
     },

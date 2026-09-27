@@ -280,7 +280,10 @@
     wallet: (u) => {
       const c = cfg(); const codes = DB.cashouts.forUser(u.id);
       const tx = DB.transactions.forUser(u.id).filter((t) => /coins|cashout|convert|save|bundle/.test(t.reward)).slice(0, 5);
-      const amts = [1, 5, 10, 20].filter((a) => a <= u.coins); const all = Math.floor(u.coins); if (all > 0 && !amts.includes(all)) amts.push(all);
+      const minCashout = c.cashoutMinAmount || 1;
+      const all = Math.floor(u.coins);
+      const amts = (c.cashoutDenominations || []).filter((a) => a >= minCashout && a <= u.coins);
+      if (all >= minCashout && !amts.includes(all)) amts.push(all);
       return `
       <div class="page-title"><h2>Wallet</h2></div>
       <div class="card"><div class="bal-row"><div class="tile pts">${ICON.pts}</div><div class="bal"><small>Stacked points</small><b>${u.points.toLocaleString()} pts</b></div><span class="muted">≈ ${fmtPeso(pesos(u.points))}</span></div></div>
@@ -299,10 +302,10 @@
 
       <div class="section-title"><h3>Cash out coins</h3></div>
       <div class="card">
-        <p class="help">Generate a code, then choose <b>COINS</b> at any BOCO-FI kiosk and enter it. The machine dispenses your coins. Codes last 24 h and can be cancelled to get the balance back.</p>
+        <p class="help">Generate a code, then choose <b>COINS</b> at any BOCO-FI kiosk and enter it. The machine dispenses your coins. Codes last ${c.cashoutTtlHours} h and can be cancelled to get the balance back.</p>
         ${amts.length ? `<div class="chips" id="cashAmt">${amts.map((a, i) => `<button class="chip ${i === 0 ? 'active' : ''}" data-amt="${a}">${a === all && all !== amts[0] ? 'All ' : ''}₱${a}</button>`).join('')}</div>
         <button class="btn btn-block mt" id="btnCashout" style="background:var(--coin)">${ICON.cash} Generate cash-out code</button>` : '<div class="empty">You need at least ₱1 in coin balance. Convert points above.</div>'}
-        ${codes.length ? `<div class="section-title"><h4>Your codes</h4></div>${codes.map((co) => { const st = DB.cashouts.status(co); return `<div class="code-card ${st === 'pending' ? '' : 'dim'} mb"><div class="body"><div class="code">${esc(co.code)}</div><small>${fmtPeso(co.amount)} · ${st === 'pending' ? 'expires ' + fmtDate(co.expiresAt) : st}</small></div>${st === 'pending' ? `<button class="btn btn-outline btn-sm" data-cancel-cash="${esc(co.code)}">Cancel</button>` : `<span class="badge">${st}</span>`}</div>`; }).join('')}` : ''}
+        ${codes.length ? `<div class="section-title"><h4>Your codes</h4></div>${codes.map((co) => { const st = DB.cashouts.status(co); return `<div class="code-card ${st === 'pending' ? '' : 'dim'} mb"><div class="body"><div class="code">${esc(co.code)}</div><small>${fmtPeso(co.amount)} · ${st === 'pending' ? 'expires ' + fmtDate(co.expiresAt) : st}</small></div>${st === 'pending' ? `<button class="btn btn-outline btn-sm" data-cancel-cash="${esc(co.code)}">Cancel</button>` : `<span class="badge">${st}</span>`}</div>`; }).join('')}` : '<div class="empty">No cash-out codes yet.</div>'}
       </div>
 
       <div class="section-title"><h3>Recent wallet activity</h3><a href="#" data-view="history">See all</a></div>
@@ -539,18 +542,28 @@
       $('#btnConvert').onclick = () => {
         const pts = Number(inp.value); const err = $('#cvErr'); err.textContent = '';
         if (pts <= 0 || pts > u.points) { err.textContent = 'Not enough points.'; return; }
-        DB.users.addPoints(u.id, -pts);
-        if (mode === 'coins') { const p = pesos(pts); DB.users.addCoins(u.id, p); DB.transactions.add({ machineId: null, userId: u.id, items: [], total: p, reward: 'convert-coins', points: -pts }); toast(`+${fmtPeso(p)} added to coin balance`, 'ok'); }
-        else { const m = minutesFor(pts); addWifiTime(u, m); DB.transactions.add({ machineId: null, userId: u.id, items: [], total: pesos(pts), reward: 'convert-wifi', points: -pts, minutes: m }); toast(`+${fmtMin(m)} of Wi-Fi added`, 'ok'); }
-        render();
+        const button = $('#btnConvert'); if (button.disabled) return;
+        button.disabled = true; button.setAttribute('aria-busy', 'true'); button.textContent = 'Converting…';
+        setTimeout(() => {
+          const latest = DB.users.byId(u.id);
+          if (!latest || pts > latest.points) { $('#cvErr').textContent = 'Your points changed. Review the updated balance and try again.'; render(); return; }
+          DB.users.addPoints(u.id, -pts);
+          if (mode === 'coins') { const p = pesos(pts); DB.users.addCoins(u.id, p); DB.transactions.add({ machineId: null, userId: u.id, items: [], total: p, reward: 'convert-coins', points: -pts }); toast(`+${fmtPeso(p)} added to coin balance`, 'ok'); }
+          else { const m = minutesFor(pts); addWifiTime(latest, m); DB.transactions.add({ machineId: null, userId: u.id, items: [], total: pesos(pts), reward: 'convert-wifi', points: -pts, minutes: m }); toast(`+${fmtMin(m)} of Wi-Fi added`, 'ok'); }
+          render();
+        }, 200);
       };
       let amt = null; const chips = $$('#cashAmt .chip'); if (chips.length) amt = Number(chips[0].dataset.amt);
       chips.forEach((b) => b.addEventListener('click', () => { amt = Number(b.dataset.amt); chips.forEach((x) => x.classList.toggle('active', x === b)); }));
       const bc = $('#btnCashout'); if (bc) bc.onclick = () => {
-        try { const co = DB.cashouts.create(u.id, amt); DB.transactions.add({ machineId: null, userId: u.id, items: [], total: co.amount, reward: 'cashout', points: 0, code: co.code }); toast(`Code ${co.code} ready · show it at a kiosk`, 'ok'); render(); }
-        catch (ex) { toast(ex.message, 'danger'); }
+        if (bc.disabled) return;
+        bc.disabled = true; bc.setAttribute('aria-busy', 'true'); bc.textContent = 'Generating code…';
+        setTimeout(() => {
+          try { const latest = DB.users.byId(u.id); if (!latest || !amt || amt > latest.coins) throw new Error('Your coin balance changed. Refresh and choose an available amount.'); const co = DB.cashouts.create(u.id, amt); DB.transactions.add({ machineId: null, userId: u.id, items: [], total: co.amount, reward: 'cashout', points: 0, code: co.code }); toast(`Code ${co.code} ready · show it at a kiosk`, 'ok'); render(); }
+          catch (ex) { toast(ex.message, 'danger'); render(); }
+        }, 200);
       };
-      $$('[data-cancel-cash]').forEach((b) => b.addEventListener('click', () => { const co = DB.cashouts.byCode(b.dataset.cancelCash); DB.cashouts.cancel(b.dataset.cancelCash); if (co) DB.transactions.add({ machineId: null, userId: u.id, items: [], total: co.amount, reward: 'cashout-cancel', points: 0, code: co.code }); toast('Cash-out cancelled · balance returned'); render(); }));
+      $$('[data-cancel-cash]').forEach((b) => b.addEventListener('click', () => { if (b.disabled) return; b.disabled = true; b.setAttribute('aria-busy', 'true'); b.textContent = 'Cancelling…'; setTimeout(() => { const co = DB.cashouts.byCode(b.dataset.cancelCash); if (co && DB.cashouts.status(co) === 'pending') { DB.cashouts.cancel(b.dataset.cancelCash); DB.transactions.add({ machineId: null, userId: u.id, items: [], total: co.amount, reward: 'cashout-cancel', points: 0, code: co.code }); toast('Cash-out cancelled · balance returned'); } render(); }, 200); }));
     },
 
     wifi(u) {
