@@ -152,10 +152,15 @@
       <div class="actions"><button class="btn btn-ghost" data-go="2.1">BACK</button></div>`;
     },
 
-    '2.3': () => `
-      <div class="icon-circle pop">${ICON.check}</div>
-      <h1>Welcome back${S.user ? ', ' + esc(S.user.name.split(' ')[0]) : ''}</h1>
-      <p class="sub">Balance <b>${fmtPts(S.user ? S.user.points : 0)}</b></p>`,
+    '2.3': () => S.user ? `
+      <div class="icon-circle pop" style="--accent:var(--color-ok)">${ICON.check}</div>
+      <h1>Welcome back, ${esc(S.user.name.split(' ')[0])}</h1>
+      <p class="sub" role="status">Your balance is <b>${fmtPts(S.user.points)}</b>.</p>
+      <div class="actions"><button class="btn btn-blue btn-lg" id="btnLinkedContinue">CONTINUE</button></div>` : `
+      <div class="icon-circle pop" style="--accent:var(--color-danger)">${ICON.x}</div>
+      <h1>Account could not be linked</h1>
+      <p class="sub" role="alert">The linked account is no longer available. Please try again.</p>
+      <div class="actions"><button class="btn btn-blue btn-lg" data-go="2.1">TRY AGAIN</button></div>`,
 
     '2.4': () => {
       const a = DB.machines.availability(machine());
@@ -385,7 +390,19 @@
       };
       later(700, poll);
     },
-    '2.3': () => later(2400, () => go('3.1')),
+    '2.3': (el) => {
+      if (!S.user) return;
+      const button = $('#btnLinkedContinue', el);
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+        button.textContent = 'Continuing…';
+        later(350, () => go('3.1'));
+      });
+      later(2400, () => go('3.1'));
+    },
     '2.4': () => { S.mode = 'guest'; later(3500, () => go('3.1')); },
 
     '3.1': () => later(1800, () => go('3.2')),
