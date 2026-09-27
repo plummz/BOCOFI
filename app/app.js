@@ -408,12 +408,13 @@
       };
       const tx = all.filter(F[histFilter] || F.all);
       const total = round2(all.reduce((n, t) => n + (t.machineId ? t.total : 0), 0));
-      const items = all.reduce((n, t) => n + t.items.length, 0);
+      const items = all.reduce((n, t) => n + (Array.isArray(t.items) ? t.items.length : 0), 0);
       return `
       <div class="page-title"><h2>History</h2></div>
       <div class="grid grid-2 mb"><div class="card"><small class="muted">Recycled value</small><h3>${fmtPeso(total)}</h3></div><div class="card"><small class="muted">Items recycled</small><h3>${items}</h3></div></div>
-      <div class="chips mb" id="histChips">${['all', 'recycling', 'coins', 'wifi', 'points'].map((f) => `<button class="chip ${histFilter === f ? 'active' : ''}" data-filter="${f}">${f === 'wifi' ? 'Wi-Fi' : f[0].toUpperCase() + f.slice(1)}</button>`).join('')}</div>
-      <div class="card">${tx.length ? `<ul class="list">${tx.map(txRow).join('')}</ul>` : '<div class="empty">Nothing here yet.</div>'}</div>`;
+      <div class="chips mb" id="histChips" role="group" aria-label="Filter transaction history">${['all', 'recycling', 'coins', 'wifi', 'points'].map((f) => `<button type="button" class="chip ${histFilter === f ? 'active' : ''}" data-filter="${f}" aria-pressed="${histFilter === f}">${f === 'wifi' ? 'Wi-Fi' : f[0].toUpperCase() + f.slice(1)}</button>`).join('')}</div>
+      <p class="muted" role="status">${tx.length} ${tx.length === 1 ? 'transaction' : 'transactions'}${histFilter === 'all' ? ' in total' : ' in ' + (histFilter === 'wifi' ? 'Wi-Fi' : histFilter)}</p>
+      <div class="card">${tx.length ? `<ul class="list">${tx.map(txRow).join('')}</ul>` : `<div class="empty" role="status">${all.length ? 'No transactions match this filter yet.' : 'No transactions yet. Your recycling and wallet activity will appear here.'}</div>`}</div>`;
     },
 
     notifications: (u) => {
