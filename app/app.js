@@ -442,13 +442,13 @@
         <div class="field"><label for="pName">Name</label><input class="input" id="pName" value="${esc(u.name)}" required></div>
         <div class="field"><label for="pEmail">Email</label><input class="input" id="pEmail" type="email" value="${esc(u.email)}" required></div>
         <div class="field"><label for="pPin">New PIN <small class="muted">(leave blank to keep)</small></label><input class="input" id="pPin" type="password" inputmode="numeric" maxlength="4" pattern="\\d{4}" autocomplete="new-password"></div>
-        <div class="error" id="profErr"></div>
+        <div class="error" id="profErr" role="alert" aria-live="polite"></div>
         <button class="btn btn-block" type="submit">Save changes</button>
       </form>
       <div class="card">
         <h4>Preferences</h4>
         <label class="toggle"><span>Notifications<br><small class="muted">Alerts for vouchers, Wi-Fi and machines</small></span><input type="checkbox" id="prefNotifs" ${!u.prefs || u.prefs.notifs !== false ? 'checked' : ''}></label>
-        <label class="toggle"><span>Auto-disconnect Wi-Fi<br><small class="muted">Stop the timer when time runs out</small></span><input type="checkbox" checked disabled></label>
+        <p class="help">Wi-Fi disconnects automatically when your time runs out.</p>
       </div>
       <div class="card">
         <h4>Account</h4>
@@ -686,17 +686,26 @@
       $('#formProfile').onsubmit = (e) => {
         e.preventDefault();
         const err = $('#profErr'); err.textContent = '';
+        const button = $('#formProfile').querySelector('[type="submit"]');
+        if (button.disabled) return;
         const name = $('#pName').value.trim(), email = $('#pEmail').value.trim().toLowerCase(), pin = $('#pPin').value.trim();
         try {
           if (name.length < 2) throw new Error('Enter your name.');
           if (!/^\S+@\S+\.\S+$/.test(email)) throw new Error('Enter a valid email address.');
           const other = DB.users.byEmail(email); if (other && other.id !== u.id) throw new Error('That email is used by another account.');
           if (pin && !/^\d{4}$/.test(pin)) throw new Error('PIN must be exactly 4 digits.');
-          DB.users.patch(u.id, Object.assign({ name, email }, pin ? { pin } : {}));
-          toast('Profile saved', 'ok'); render();
+          button.disabled = true; button.setAttribute('aria-busy', 'true'); button.textContent = 'Saving…';
+          setTimeout(() => {
+            try {
+              const latest = DB.users.byId(u.id); if (!latest) throw new Error('Your account is unavailable. Sign in again and retry.');
+              const conflict = DB.users.byEmail(email); if (conflict && conflict.id !== latest.id) throw new Error('That email is now used by another account.');
+              DB.users.patch(u.id, Object.assign({ name, email }, pin ? { pin } : {}));
+              toast('Profile saved', 'ok'); render();
+            } catch (ex) { err.textContent = ex.message; button.disabled = false; button.removeAttribute('aria-busy'); button.textContent = 'Save changes'; }
+          }, 200);
         } catch (ex) { err.textContent = ex.message; }
       };
-      $('#prefNotifs').addEventListener('change', (e) => { DB.users.patch(u.id, { prefs: { ...(u.prefs || {}), notifs: e.target.checked } }); toast(e.target.checked ? 'Notifications on' : 'Notifications off'); render(); });
+      $('#prefNotifs').addEventListener('change', (e) => { const latest = DB.users.byId(u.id); if (!latest) { toast('Account unavailable. Sign in again.', 'danger'); render(); return; } DB.users.patch(u.id, { prefs: { ...(latest.prefs || {}), notifs: e.target.checked } }); toast(e.target.checked ? 'Notifications on' : 'Notifications off', 'ok'); render(); });
       $('#btnLogout').onclick = logout;
       $('#btnInstall').onclick = () => { if (deferredInstall) { deferredInstall.prompt(); deferredInstall = null; } else toast(/iphone|ipad/i.test(navigator.userAgent) ? 'In Safari: Share → Add to Home Screen' : 'Use your browser menu → Install app / Add to Home screen'); };
       $('#btnResetDemo').onclick = () => { if (confirm('Reset all demo data (users, machines, history) on this device?')) { DB.reset(); authTab = 'login'; location.hash = '#/home'; render(); toast('Demo data reset'); } };
