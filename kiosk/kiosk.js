@@ -350,9 +350,9 @@
       <h1>Choose your reward</h1>
       <div class="chip" role="status">Session total <b>${fmtPeso(S.total)}</b> · ${S.items.length} item${S.items.length === 1 ? '' : 's'}</div>
       <div class="reward-grid">
-        <button class="reward-card" data-reward="coins" ${a.coins && hasItems ? '' : 'disabled'}>${ICON.coins}COINS<small>${a.coins ? fmtPeso(S.total) + ' in coins' : 'Not available'}</small></button>
-        <button class="reward-card" data-reward="wifi" ${a.wifi && hasItems ? '' : 'disabled'}>${ICON.wifi}WI-FI<small>${a.wifi ? sessionMinutes() + ' min voucher' : 'Not available'}</small></button>
-        <button class="reward-card" data-reward="save" ${user && hasItems ? '' : 'disabled'}>${ICON.save}SAVE<small>${user ? '+' + sessionPoints() + ' pts to account' : 'Log in to save'}</small></button>
+        <button class="reward-card" data-reward="coins" aria-label="Coins, ${a.coins ? fmtPeso(S.total) + ' payout' : 'not available'}" ${a.coins && hasItems ? '' : 'disabled'}>${ICON.coins}COINS<small>${a.coins ? fmtPeso(S.total) + ' in coins' : 'Not available'}</small></button>
+        <button class="reward-card" data-reward="wifi" aria-label="Wi-Fi, ${a.wifi ? sessionMinutes() + ' minute voucher' : 'not available'}" ${a.wifi && hasItems ? '' : 'disabled'}>${ICON.wifi}WI-FI<small>${a.wifi ? sessionMinutes() + ' min voucher' : 'Not available'}</small></button>
+        <button class="reward-card" data-reward="save" aria-label="Save ${user ? sessionPoints() + ' points to account' : 'requires a linked account'}" ${user && hasItems ? '' : 'disabled'}>${ICON.save}SAVE<small>${user ? '+' + sessionPoints() + ' pts to account' : 'Log in to save'}</small></button>
       </div>
       <p class="sub ${S.rewardError || !hasItems || !hasReward ? 'start-status' : 'muted'}" role="${S.rewardError || !hasItems || !hasReward ? 'alert' : 'status'}">${esc(status)}</p>
       <form class="panel" id="formCashout" novalidate>
@@ -995,11 +995,18 @@
   function togglePop(id) {
     const el = $(id); const open = el.hidden;
     ['#popNotices', '#popUser'].forEach((s) => { $(s).hidden = true; });
+    $('#btnBell').setAttribute('aria-expanded', 'false'); $('#btnUser').setAttribute('aria-expanded', 'false');
     el.hidden = !open;
+    if (open) (id === '#popNotices' ? $('#btnBell') : $('#btnUser')).setAttribute('aria-expanded', 'true');
   }
   $('#btnBell').addEventListener('click', () => togglePop('#popNotices'));
   $('#btnUser').addEventListener('click', () => togglePop('#popUser'));
-  $('#stage').addEventListener('pointerdown', () => { $('#popNotices').hidden = true; $('#popUser').hidden = true; });
+  $('#stage').addEventListener('pointerdown', () => { $('#popNotices').hidden = true; $('#popUser').hidden = true; $('#btnBell').setAttribute('aria-expanded', 'false'); $('#btnUser').setAttribute('aria-expanded', 'false'); });
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    $('#popNotices').hidden = true; $('#popUser').hidden = true;
+    $('#btnBell').setAttribute('aria-expanded', 'false'); $('#btnUser').setAttribute('aria-expanded', 'false');
+  });
 
   function openDrawer(open) {
     $('#drawer').hidden = !open; $('#scrim').hidden = !open; $('#btnMenu').setAttribute('aria-expanded', String(open));

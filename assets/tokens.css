@@ -46,7 +46,7 @@
   /* ---------- text & lines · base.css:27-30 ---------- */
   --color-ink: #1d2733;
   --color-ink-2: #4b5563;
-  --color-ink-3: #8a94a6;
+  --color-ink-3: #6b7280;       /* secondary text; passes AA on white and light surfaces */
   --color-line: #dfe5ec;
 
   /* ---------- status · base.css:36-39, badge colours base.css:130-133 ---------- */

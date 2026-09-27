@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="">
   <title>BOCO-FI · Machine Kiosk</title>
   <link rel="icon" href="../assets/img/mark.svg" type="image/svg+xml">
@@ -20,11 +20,11 @@
       </button>
       <img class="k-logo" src="../assets/img/logo.svg" alt="BOCO-FI">
       <div class="k-header-right">
-        <button class="k-iconbtn" id="btnBell" aria-label="Machine notices">
+        <button class="k-iconbtn" id="btnBell" aria-label="Machine notices" aria-haspopup="true" aria-expanded="false" aria-controls="popNotices">
           <svg class="ico" viewBox="0 0 24 24"><path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4l2-2z"/><path d="M10 21h4"/></svg>
           <span class="k-bell-count" id="bellCount" hidden>0</span>
         </button>
-        <button class="k-avatar" id="btnUser" aria-label="Current user">
+        <button class="k-avatar" id="btnUser" aria-label="Current user" aria-haspopup="true" aria-expanded="false" aria-controls="popUser">
           <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
         </button>
       </div>
@@ -44,12 +44,12 @@
     </footer>
 
     <!-- ===== notices popover ===== -->
-    <div class="k-pop" id="popNotices" hidden>
-      <h4>Machine notices</h4>
+    <div class="k-pop" id="popNotices" role="region" aria-labelledby="noticeTitle" hidden>
+      <h4 id="noticeTitle">Machine notices</h4>
       <ul id="noticeList"></ul>
     </div>
-    <div class="k-pop" id="popUser" hidden>
-      <h4>Session</h4>
+    <div class="k-pop" id="popUser" role="region" aria-labelledby="userTitle" hidden>
+      <h4 id="userTitle">Session</h4>
       <p id="userInfo" class="muted">No user linked.</p>
     </div>
 
