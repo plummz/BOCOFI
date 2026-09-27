@@ -33,7 +33,6 @@
   };
   const C = { coins: 'var(--coin)', wifi: 'var(--wifi)', pts: 'var(--green-500)', warn: 'var(--warn)', info: 'var(--info)', tier: 'var(--c-rewards)' };
   const tiers = () => cfg().tiers || [];
-  const DIST = { 'BCF-001': 0.4, 'BCF-002': 1.2, 'BCF-003': 2.8 }; // demo distances (km)
   /* ---------- helpers ---------- */
   function toast(msg, kind = '') { const el = document.createElement('div'); el.className = 'toast ' + kind; el.textContent = msg; $('#toasts').appendChild(el); setTimeout(() => el.remove(), 2800); }
   const me = () => DB.users.current();
@@ -386,11 +385,16 @@
     },
 
     machines: () => {
-      const ms = DB.machines.all().slice().sort((a, b) => (DIST[a.id] || 9) - (DIST[b.id] || 9));
+      const ms = DB.machines.all().slice().sort((a, b) => {
+        const avA = DB.machines.availability(a), avB = DB.machines.availability(b);
+        const readyA = avA.online && !avA.binFull ? 1 : 0, readyB = avB.online && !avB.binFull ? 1 : 0;
+        return readyB - readyA || a.binLevel - b.binLevel;
+      });
+      const ready = ms.filter((m) => { const av = DB.machines.availability(m); return av.online && !av.binFull; }).length;
       return `
       <div class="page-title"><h2>Find a machine</h2></div>
-      <p class="muted">${ms.filter((m) => m.status === 'online').length} of ${ms.length} kiosks online · distances are demo values.</p>
-      ${ms.map(machineCard).join('')}`;
+      <p class="muted">${ready} of ${ms.length} kiosks ready to accept items</p>
+      ${ms.length ? ms.map(machineCard).join('') : '<div class="card empty" role="status">No kiosks are listed yet.</div>'}`;
     },
 
     history: (u) => {
