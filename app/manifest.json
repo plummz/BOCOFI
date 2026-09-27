@@ -4,8 +4,8 @@
   "description": "Recycle bottles and cans, earn coins, Wi-Fi and points.",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#eef3ee",
-  "theme_color": "#2f6b3a",
+  "background_color": "#ffffff",
+  "theme_color": "#3F5523",
   "icons": [
     { "src": "../assets/img/mark.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ]

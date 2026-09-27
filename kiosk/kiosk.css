@@ -53,7 +53,7 @@ body { font-size: var(--text-size-35); }
   font-weight: var(--weight-heavy); font-size: var(--text-kiosk-h2); line-height: 1.1;
   animation: pulse 2.4s ease-in-out infinite;
 }
-.start-circle small { font-size: var(--text-2xs); font-weight: var(--weight-medium); opacity: .95; }
+.start-circle small { font-size: var(--text-2xs); font-weight: var(--weight-medium); color: inherit; opacity: .95; }
 .start-circle:active { transform: scale(.96); }
 @keyframes pulse { 0%,100% { box-shadow: 0 18px 40px color-mix(in srgb, var(--color-primary-ink) 28%, var(--color-transparent)), 0 0 0 0 color-mix(in srgb, var(--color-primary) 35%, var(--color-transparent)); } 50% { box-shadow: 0 18px 40px color-mix(in srgb, var(--color-primary-ink) 28%, var(--color-transparent)), 0 0 0 26px color-mix(in srgb, var(--color-primary) 0%, var(--color-transparent)); } }
 .start-circle:disabled { background: var(--color-line); border-color: var(--color-surface); color: var(--color-ink-2); box-shadow: none; animation: none; cursor: not-allowed; }

@@ -1,36 +1,40 @@
 /* ==========================================================================
-   BOCO-FI · design tokens (audit pass, 2026-09-28)
+   BOCO-FI · design tokens
    --------------------------------------------------------------------------
-   Every value below is taken from CSS that already exists in this repo.
-   The source is noted next to each group. Nothing here is new styling.
+   Brand colours follow the Figma high-fidelity file (STUDENT-TYPE-FIGDESIGN,
+   kiosk 3:4 and mobile 3:7, read 2026-09-28), per user decision D-A/D-B:
+     BOCOFI green #3F5523 · BOCOFI blue #3FADED · white #FFFFFF.
+   Figma builds its light fills as opacity of those two colours on white:
+     green 6% #F4F5F2 (header) · 10% #ECEEE9 (content box / card)
+     14% #E4E7E0 (status box) · blue 9% #EEF8FD (mobile nav).
+   Other tints below (green 35% #BCC4B2, blue 35% #BCE2F9) follow the same
+   rule. Status colours (ok / warn / danger) are kept for meaning only.
 
-   Status: linked before shared and surface styles on the kiosk, app and
-   admin. Shared aliases in base.css point back to this file.
-
-   Known gap: the Figma high-fidelity file uses a different green and blue
-   (see BUILD-PLAN.md, "Decision D-A"). Those values are NOT used here,
-   because this file only records what the code actually uses.
+   Linked before shared and surface styles on the kiosk, app and admin.
+   Shared aliases in base.css point back to this file.
    ========================================================================== */
 :root {
   /* ---------- BOCOFI green (primary) · base.css:6-11, logo.svg ---------- */
-  --bocofi-green-900: #1f4a28;   /* headings on kiosk (.screen h1/h2) */
-  --bocofi-green-700: #2f6b3a;   /* theme-color, logo, active nav, chips, text links on green */
-  --bocofi-green-500: #3f8f4f;   /* .btn default fill, bars, avatars, toggles */
-  --bocofi-green-300: #8fcf95;   /* chart bars, progress gradient end, leafy background */
-  --bocofi-green-100: #e3efe3;   /* admin active nav, points tile background */
-  --bocofi-green-050: #f2f7f2;   /* pressed / active row tint */
-  --bocofi-green-400-highlight: #5aa860; /* kiosk start circle + logo gradient only (kiosk.css:50) */
+  --bocofi-green-900: #3F5523;   /* headings on kiosk (.screen h1/h2) */
+  --bocofi-green-700: #3F5523;   /* theme-color, logo, active nav, chips, text links on green */
+  --bocofi-green-500: #3F5523;   /* .btn default fill, bars, avatars, toggles */
+  --bocofi-green-300: #BCC4B2;   /* chart bars, progress gradient end, leafy background */
+  --bocofi-green-100: #E4E7E0;   /* admin active nav, points tile background */
+  --bocofi-green-050: #F4F5F2;   /* pressed / active row tint */
+  --bocofi-green-400-highlight: #3F5523; /* kiosk start circle + logo gradient only (kiosk.css:50) */
+
+  --bocofi-green-010: #ECEEE9;   /* Figma content box / card: green 10% */
 
   --color-primary: var(--bocofi-green-500);
   --color-primary-strong: var(--bocofi-green-700);
   --color-primary-ink: var(--bocofi-green-900);
 
   /* ---------- BOCOFI blue (secondary / action) · base.css:12-15, logo.svg ---------- */
-  --bocofi-blue-700: #2f6fd8;    /* .btn-blue, links, Wi-Fi colour (app --wifi), kiosk QR code */
-  --bocofi-blue-500: #4a90d9;    /* focus ring, blue bar, logo letters */
-  --bocofi-blue-100: #dbe9f7;    /* info badge background */
-  --bocofi-blue-050: #e4eefb;    /* app --wifi-bg */
-  --bocofi-sky: #b9d4ea;         /* kiosk avatar, leafy background */
+  --bocofi-blue-700: #3FADED;    /* .btn-blue, links, Wi-Fi colour (app --wifi), kiosk QR code */
+  --bocofi-blue-500: #3FADED;    /* focus ring, blue bar, logo letters */
+  --bocofi-blue-100: #EEF8FD;    /* info badge background */
+  --bocofi-blue-050: #EEF8FD;    /* app --wifi-bg */
+  --bocofi-sky: #BCE2F9;         /* kiosk avatar, leafy background */
 
   --color-secondary: var(--bocofi-blue-700);
   --color-secondary-soft: var(--bocofi-blue-100);
@@ -41,7 +45,7 @@
   --color-surface-2: #f4f6f8;    /* --panel-2: tabs, converter boxes */
   /* Page backgrounds in use today are tinted, not white:
      base --bg #eef3ee · app body #dfe8df · admin body #eef1f4 · .leafy-bg gradient */
-  --color-page-bg-current: #eef3ee;
+  --color-page-bg-current: #ffffff;
 
   /* ---------- text & lines · base.css:27-30 ---------- */
   --color-ink: #1d2733;
@@ -54,24 +58,24 @@
   --color-warn: #e0a51e;
   --color-danger: #d43f55;
   --color-info: var(--bocofi-blue-700);
-  --color-coin: #d99a1e;
-  --color-coin-soft: #fff4dc;
-  --color-teal: #16979c;
-  --color-orange: #e07a22;
-  --color-purple: #7c4fd0;
+  --color-coin: #3F5523;
+  --color-coin-soft: #ECEEE9;
+  --color-teal: #3F5523;
+  --color-orange: #3F5523;
+  --color-purple: #3F5523;
   --color-green-ink: #1b7a44;
-  --color-blue-ink: #1d4f9f;
+  --color-blue-ink: #3F5523;
   --color-success-soft: #e2f5ea;
   --color-warning-soft: #fcf1d6;
   --color-warning-ink: #8a6207;
   --color-danger-soft: #fbe1e6;
   --color-danger-ink: #a5223a;
-  --color-page-app: #dfe8df;
-  --color-page-admin: #eef1f4;
-  --color-page-blue-soft: #dfeaf3;
+  --color-page-app: #ffffff;
+  --color-page-admin: #ffffff;
+  --color-page-blue-soft: #ffffff;
   --color-transparent: transparent;
-  --color-leaf-soft: #eaf3ea;
-  --color-green-highlight: #6cb872;
+  --color-leaf-soft: #ffffff;
+  --color-green-highlight: #3F5523;
   --color-white-88: rgba(255,255,255,.88);
   --color-white-96: rgba(255,255,255,.96);
   --color-white-95: rgba(255,255,255,.95);
@@ -91,21 +95,21 @@
   --color-black-25: rgba(0,0,0,.25);
   --color-black-35: rgba(0,0,0,.35);
   --color-overlay-drawer: rgba(20,30,25,.45);
-  --color-green-12: rgba(47,107,58,.12);
-  --color-green-40: rgba(47,107,58,.4);
-  --color-green-highlight-18: rgba(63,143,79,.18);
-  --color-green-30: rgba(143,207,149,.30);
-  --color-green-35: rgba(143,207,149,.35);
-  --color-sky-45: rgba(185,212,234,.45);
-  --color-sky-55: rgba(185,212,234,.55);
+  --color-green-12: rgba(63,85,35,.12);
+  --color-green-40: rgba(63,85,35,.4);
+  --color-green-highlight-18: rgba(63,85,35,.18);
+  --color-green-30: rgba(63,85,35,.10);
+  --color-green-35: rgba(63,85,35,.10);
+  --color-sky-45: rgba(63,173,237,.09);
+  --color-sky-55: rgba(63,173,237,.09);
   --color-warn-08: rgba(224,165,30,.08);
-  --color-blue-12: rgba(47,111,216,.12);
+  --color-blue-12: rgba(63,173,237,.12);
   --color-ink-06: rgba(29,39,51,.06);
   --color-ink-12: rgba(29,39,51,.12);
   --color-ink-25: rgba(29,39,51,.25);
   --color-ink-35: rgba(29,39,51,.35);
-  --color-primary-shadow-08: rgba(31, 74, 40, .08);
-  --color-primary-shadow-10: rgba(31, 74, 40, .10);
+  --color-primary-shadow-08: rgba(63, 85, 35, .08);
+  --color-primary-shadow-10: rgba(63, 85, 35, .10);
 
   /* ---------- spacing · most-used rem values in gap/margin/padding across
      base.css, kiosk.css, app.css, admin.css (count in brackets) ---------- */
@@ -228,7 +232,7 @@
   --font-launcher-title-max: 2.4rem;
   --font-launcher-lead: 1.1rem;
   --font-launcher-footer: .85rem;
-  --shadow-launcher-hover: 0 12px 32px rgba(31,74,40,.16);
+  --shadow-launcher-hover: 0 12px 32px rgba(63,85,35,.16);
 
   /* Literal responsive and fixed font-size declarations. */
   --text-size-01: .66rem;
