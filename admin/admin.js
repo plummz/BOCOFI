@@ -356,8 +356,10 @@
     users() {
       $$('[data-adjust]').forEach((b) => b.onclick = () => {
         const u = DB.users.byId(b.dataset.adjust); const v = prompt(`Adjust points for ${u.name} (current ${u.points}). Enter + or − amount:`, '100');
-        if (v === null) return; const n = Number(v); if (!Number.isFinite(n)) { toast('Enter a number', 'danger'); return; }
-        DB.users.addPoints(u.id, n); DB.transactions.add({ machineId: null, userId: u.id, items: [], total: 0, reward: 'save', points: n, note: 'Owner adjustment' }); toast('Points updated', 'ok'); route();
+        if (v === null) return; const n = Number(v); if (!Number.isFinite(n) || !Number.isInteger(n) || n === 0) { toast('Enter a non-zero whole number of points', 'danger'); return; }
+        const before = u.points; DB.users.addPoints(u.id, n); const latest = DB.users.byId(u.id); const applied = latest.points - before;
+        if (!applied) { toast('Points were not changed', 'danger'); return; }
+        DB.transactions.add({ machineId: null, userId: u.id, items: [], total: 0, reward: 'adjust', points: applied, note: 'Owner adjustment' }); toast(`${fmtPts(Math.abs(applied))} points ${applied > 0 ? 'added' : 'removed'}`, 'ok'); route();
       });
       $$('[data-resetpin]').forEach((b) => b.onclick = () => { DB.users.patch(b.dataset.resetpin, { pin: '0000' }); toast('PIN reset to 0000', 'ok'); });
       $$('[data-del]').forEach((b) => b.onclick = () => { const u = DB.users.byId(b.dataset.del); if (confirm(`Delete ${u.name}? Their history is kept but unlinked.`)) { DB.users.remove(u.id); route(); } });
