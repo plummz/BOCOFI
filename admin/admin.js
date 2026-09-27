@@ -91,9 +91,9 @@
   function txRows(list) {
     return list.map((t) => `<tr>
       <td class="mono">${esc(t.id)}</td><td>${fmtDate(t.ts)}</td><td>${esc(machineName(t.machineId))}</td><td>${esc(userName(t.userId))}</td>
-      <td class="num">${t.items.length}</td><td class="num">${fmtPeso(t.total)}</td>
-      <td><span class="badge ${{ coins: 'warn', wifi: 'info', save: 'ok', claim: 'info' }[t.reward] || ''}">${esc(t.reward)}</span></td>
-      <td>${t.reward === 'wifi' || t.reward === 'claim' ? `<span class="mono">${esc(t.voucherCode || '')}</span> · ${t.minutes || ''} min` : t.reward === 'save' ? `+${t.points} pts` : t.reward === 'claim' ? `${t.points} pts` : '—'}</td>
+      <td class="num">${(t.items || []).length}</td><td class="num">${fmtPeso(t.total || 0)}</td>
+      <td><span class="badge ${{ coins: 'warn', wifi: 'info', save: 'ok', cashout: 'warn', 'convert-coins': 'warn', 'convert-wifi': 'info', 'cashout-cancel': 'ok', 'wifi-use': 'info', 'voucher-add': 'info', bundle: 'ok', adjust: '' }[t.reward] || ''}">${esc(t.reward)}</span></td>
+      <td>${t.reward === 'wifi' ? `<span class="mono">${esc(t.voucherCode || '')}</span> · ${t.minutes || ''} min` : t.reward === 'save' || t.reward === 'adjust' ? `${Number(t.points) > 0 ? '+' : ''}${fmtPts(t.points || 0)} pts${t.note ? ` · ${esc(t.note)}` : ''}` : t.reward === 'cashout' || t.reward === 'cashout-cancel' ? `${fmtPeso(t.total || 0)} · <span class="mono">${esc(t.code || '')}</span>` : t.reward === 'convert-coins' ? `${fmtPeso(t.total || 0)} coins · ${fmtPts(Math.abs(t.points || 0))} pts` : t.reward === 'convert-wifi' ? `${t.minutes || 0} min · ${fmtPts(Math.abs(t.points || 0))} pts` : t.reward === 'wifi-use' || t.reward === 'voucher-add' ? `${t.minutes || 0} min${t.voucherCode ? ` · <span class="mono">${esc(t.voucherCode)}</span>` : ''}` : t.reward === 'bundle' ? `${esc(t.label || 'Reward bundle')} · ${fmtPts(Math.abs(t.points || 0))} pts` : '—'}</td>
     </tr>`).join('');
   }
 
@@ -161,11 +161,11 @@
       if (filters.txMachine) list = list.filter((t) => (t.machineId || 'app') === filters.txMachine);
       if (filters.txReward) list = list.filter((t) => t.reward === filters.txReward);
       const total = round2(list.reduce((n, t) => n + t.total, 0));
-      const items = list.reduce((n, t) => n + t.items.length, 0);
+      const items = list.reduce((n, t) => n + (t.items || []).length, 0);
       return `
       <div class="filters">
         <select class="select" id="fTxMachine"><option value="">All machines</option>${DB.machines.all().map((m) => `<option value="${esc(m.id)}" ${filters.txMachine === m.id ? 'selected' : ''}>${esc(m.id)} · ${esc(m.name)}</option>`).join('')}<option value="app" ${filters.txMachine === 'app' ? 'selected' : ''}>In app</option></select>
-        <select class="select" id="fTxReward"><option value="">All rewards</option>${['coins', 'wifi', 'save', 'claim'].map((r) => `<option value="${r}" ${filters.txReward === r ? 'selected' : ''}>${r}</option>`).join('')}</select>
+        <select class="select" id="fTxReward"><option value="">All rewards</option>${Array.from(new Set(DB.transactions.all().map((t) => t.reward))).sort().map((r) => `<option value="${esc(r)}" ${filters.txReward === r ? 'selected' : ''}>${esc(r)}</option>`).join('')}</select>
         <span class="spacer"></span>
         <span class="muted">${list.length} transactions · ${items} items · ${fmtPeso(total)}</span>
         <button class="btn btn-outline btn-sm" id="btnCsv">Export CSV</button>
@@ -339,7 +339,7 @@
         if (filters.txMachine) list = list.filter((t) => (t.machineId || 'app') === filters.txMachine);
         if (filters.txReward) list = list.filter((t) => t.reward === filters.txReward);
         const rows = [['id', 'timestamp', 'machine', 'user', 'items', 'value_php', 'reward', 'points', 'minutes', 'voucher']]
-          .concat(list.map((t) => [t.id, new Date(t.ts).toISOString(), t.machineId || 'app', userName(t.userId), t.items.length, t.total.toFixed(2), t.reward, t.points || '', t.minutes || '', t.voucherCode || '']));
+          .concat(list.map((t) => [t.id, new Date(t.ts).toISOString(), t.machineId || 'app', userName(t.userId), (t.items || []).length, Number(t.total || 0).toFixed(2), t.reward, t.points || '', t.minutes || '', t.voucherCode || t.code || '']));
         const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
         const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `bocofi-transactions-${new Date().toISOString().slice(0, 10)}.csv`; a.click(); URL.revokeObjectURL(a.href);
       };
