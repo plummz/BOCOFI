@@ -191,14 +191,18 @@
     },
 
     '3.2': () => {
-      const m = machine(); const a = DB.machines.availability(m);
+      const m = machine();
+      const online = !!m && m.status === 'online';
+      const a = m ? DB.machines.availability(m) : { coins: false };
+      const hopper = m ? clamp(Number(m.coinHopper) || 0, 0, 100) : 0;
       return `
       <h2>System check</h2>
       <div class="panel">
         <div class="lbl-top">Coin hopper level</div>
-        <div class="bar ${a.coins ? '' : 'danger'}"><i style="width:${m.coinHopper}%"></i></div>
-        <div class="muted">${a.coins ? 'Enough for this session' : 'Coins are running out'}</div>
-      </div>`;
+        <div class="bar ${a.coins ? '' : 'danger'}"><i style="width:${hopper}%"></i></div>
+        <div class="muted" role="${online ? 'status' : 'alert'}">${online ? `${hopper}% · ${a.coins ? 'Enough for this session' : 'Coins are running out'}` : 'Machine unavailable'}</div>
+      </div>
+      <div class="actions"><button class="btn btn-blue" id="btnCoinsContinue" ${online ? '' : 'disabled'}>CONTINUE</button><button class="btn btn-ghost" data-go="3.1">BACK</button></div>`;
     },
 
     '3.3': () => {
@@ -436,12 +440,24 @@
       });
       later(1800, () => go(machine()?.status === 'online' ? '3.2' : '3.4'));
     },
-    '3.2': () => later(1800, () => {
-      const m = machine(); const a = DB.machines.availability(m);
-      if (a.binFull || !a.online) { go('3.4'); $('#noRewardsWhy').textContent = a.online ? 'The bin is full — please come back later' : 'Machine is under maintenance'; return; }
-      if (!a.coins && !a.wifi) { go('3.4'); return; }
-      go('3.3');
-    }),
+    '3.2': (el) => {
+      if (machine()?.status !== 'online') return;
+      const continueCheck = () => {
+        const current = machine();
+        const available = current && DB.machines.availability(current);
+        go(!available || !available.online || available.binFull || (!available.coins && !available.wifi) ? '3.4' : '3.3');
+      };
+      const button = $('#btnCoinsContinue', el);
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+        button.textContent = 'Checking…';
+        later(300, continueCheck);
+      });
+      later(1800, continueCheck);
+    },
     '3.3': () => {
       const a = DB.machines.availability(machine());
       if (!S.alerted && (!a.coins || !a.wifi)) {
