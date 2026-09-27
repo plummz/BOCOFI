@@ -257,10 +257,17 @@
 
     '4.3': () => {
       const last = S.items[S.items.length - 1];
-      return `
-      <p class="sub">Item accepted · ${esc(last.label)}</p>
+      return last ? `
+      <div class="icon-circle pop" style="--accent:var(--color-ok)">${ICON.check}</div>
+      <h1>Item accepted</h1>
+      <p class="sub" role="status">${esc(last.label)}</p>
       <div class="big-value">+${fmtPeso(last.value)}</div>
-      <div class="chip">Session total <b>${fmtPeso(S.total)}</b></div>`;
+      <div class="chip" role="status">Session total <b>${fmtPeso(S.total)}</b> · ${S.items.length} item${S.items.length === 1 ? '' : 's'}</div>
+      <div class="actions"><button class="btn btn-blue" id="btnAcceptedContinue">CONTINUE</button></div>` : `
+      <div class="icon-circle pop" style="--accent:var(--color-danger)">${ICON.x}</div>
+      <h1>Item details unavailable</h1>
+      <p class="sub" role="alert">No accepted item is available for this session. Please try again.</p>
+      <div class="actions"><button class="btn btn-blue" data-go="4.1">TRY AGAIN</button></div>`;
     },
 
     '4.4': () => `
@@ -535,10 +542,24 @@
       DB.machines.patch(machineId, { binLevel: clamp(round2(m.binLevel + 1.5), 0, 100) });
       go('4.3');
     }),
-    '4.3': () => later(2200, () => {
-      const a = DB.machines.availability(machine());
-      go(a.binHigh ? '5.1' : '5.3');
-    }),
+    '4.3': (el) => {
+      if (!S.items.length) return;
+      const next = () => {
+        const m = machine();
+        const a = m && DB.machines.availability(m);
+        go(a && a.binHigh ? '5.1' : '5.3');
+      };
+      const button = $('#btnAcceptedContinue', el);
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+        button.textContent = 'Continuing…';
+        later(300, next);
+      });
+      later(2200, next);
+    },
     '4.4': () => later(2600, () => go('4.5')),
     '4.5': (el) => { $('#btnNoMore', el).addEventListener('click', () => go(S.items.length ? '6.1' : '7.2')); },
 
