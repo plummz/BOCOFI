@@ -99,8 +99,14 @@
 
   /* ---------- screen templates ---------- */
   const SCREENS = {
-    '1.1': () => `
-      <button class="start-circle" id="btnStart" aria-label="Recycle Today — tap to start">Recycle<br>Today<small>Tap to Start</small></button>`,
+    '1.1': () => {
+      const m = machine();
+      const unavailable = !m || m.status !== 'online';
+      const reason = m ? `This machine is ${m.status}. Please choose an available machine or ask for help.` : 'No recycling machine is configured.';
+      return `
+      <button class="start-circle" id="btnStart" aria-label="Recycle Today — tap to start" ${unavailable ? 'disabled aria-describedby="startStatus"' : ''}>Recycle<br>Today<small>${unavailable ? 'Unavailable' : 'Tap to Start'}</small></button>
+      ${unavailable ? `<p class="start-status" id="startStatus" role="status">${esc(reason)}</p>` : ''}`;
+    },
 
     '1.2': () => `
       <div class="icon-circle pop">${ICON.check}</div>
@@ -298,7 +304,17 @@
 
   /* ---------- per-screen behaviour ---------- */
   const AFTER = {
-    '1.1': (el) => { $('#btnStart', el).addEventListener('click', () => go('1.2')); },
+    '1.1': (el) => {
+      const button = $('#btnStart', el);
+      if (!button || button.disabled) return;
+      button.addEventListener('click', () => {
+        button.disabled = true;
+        button.classList.add('is-loading');
+        button.setAttribute('aria-busy', 'true');
+        button.innerHTML = `Starting…<small>${esc(machine().name)}</small>`;
+        later(450, () => go('1.2'));
+      });
+    },
     '1.2': () => later(2500, () => go('2.1')),
 
     '2.2': (el) => {

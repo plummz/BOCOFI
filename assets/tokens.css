@@ -1,0 +1,102 @@
+/* ==========================================================================
+   BOCO-FI · design tokens (audit pass, 2026-09-28)
+   --------------------------------------------------------------------------
+   Every value below is taken from CSS that already exists in this repo.
+   The source is noted next to each group. Nothing here is new styling.
+
+   Status: linked by the kiosk page for screen 1.1. base.css still defines
+   the shared live tokens. See BUILD-PLAN.md, step 2, for the remaining
+   adoption work.
+
+   Known gap: the Figma high-fidelity file uses a different green and blue
+   (see BUILD-PLAN.md, "Decision D-A"). Those values are NOT used here,
+   because this file only records what the code actually uses.
+   ========================================================================== */
+:root {
+  /* ---------- BOCOFI green (primary) · base.css:6-11, logo.svg ---------- */
+  --bocofi-green-900: #1f4a28;   /* headings on kiosk (.screen h1/h2) */
+  --bocofi-green-700: #2f6b3a;   /* theme-color, logo, active nav, chips, text links on green */
+  --bocofi-green-500: #3f8f4f;   /* .btn default fill, bars, avatars, toggles */
+  --bocofi-green-300: #8fcf95;   /* chart bars, progress gradient end, leafy background */
+  --bocofi-green-100: #e3efe3;   /* admin active nav, points tile background */
+  --bocofi-green-050: #f2f7f2;   /* pressed / active row tint */
+  --bocofi-green-400-highlight: #5aa860; /* kiosk start circle + logo gradient only (kiosk.css:50) */
+
+  --color-primary: var(--bocofi-green-500);
+  --color-primary-strong: var(--bocofi-green-700);
+  --color-primary-ink: var(--bocofi-green-900);
+
+  /* ---------- BOCOFI blue (secondary / action) · base.css:12-15, logo.svg ---------- */
+  --bocofi-blue-700: #2f6fd8;    /* .btn-blue, links, Wi-Fi colour (app --wifi), kiosk QR code */
+  --bocofi-blue-500: #4a90d9;    /* focus ring, blue bar, logo letters */
+  --bocofi-blue-100: #dbe9f7;    /* info badge background */
+  --bocofi-blue-050: #e4eefb;    /* app --wifi-bg */
+  --bocofi-sky: #b9d4ea;         /* kiosk avatar, leafy background */
+
+  --color-secondary: var(--bocofi-blue-700);
+  --color-secondary-soft: var(--bocofi-blue-100);
+
+  /* ---------- white & surfaces · base.css:31-33, app.css:10, admin.css:4 ---------- */
+  --color-white: #ffffff;        /* cards (--panel), popovers, buttons (.btn-outline), inputs */
+  --color-surface: var(--color-white);
+  --color-surface-2: #f4f6f8;    /* --panel-2: tabs, converter boxes */
+  /* Page backgrounds in use today are tinted, not white:
+     base --bg #eef3ee · app body #dfe8df · admin body #eef1f4 · .leafy-bg gradient */
+  --color-page-bg-current: #eef3ee;
+
+  /* ---------- text & lines · base.css:27-30 ---------- */
+  --color-ink: #1d2733;
+  --color-ink-2: #4b5563;
+  --color-ink-3: #8a94a6;
+  --color-line: #dfe5ec;
+
+  /* ---------- status · base.css:36-39, badge colours base.css:130-133 ---------- */
+  --color-ok: #2e9e5b;
+  --color-warn: #e0a51e;
+  --color-danger: #d43f55;
+  --color-info: var(--bocofi-blue-700);
+
+  /* ---------- spacing · most-used rem values in gap/margin/padding across
+     base.css, kiosk.css, app.css, admin.css (count in brackets) ---------- */
+  --space-1: .25rem;   /* [6] */
+  --space-2: .4rem;    /* [8] */
+  --space-3: .5rem;    /* [32] */
+  --space-4: .6rem;    /* [19] */
+  --space-5: .75rem;   /* [13] */
+  --space-6: .9rem;    /* [12] */
+  --space-7: 1rem;     /* [38] most used */
+  --space-8: 1.2rem;   /* [10] */
+  --space-9: 1.4rem;   /* [4] */
+  --tap-min: 48px;     /* base.css:46 --tap */
+
+  /* ---------- radius · base.css:41-42 + most-used literals ---------- */
+  --radius-sm: 12px;   /* [15] inputs, tiles, toasts */
+  --radius-md: 14px;   /* base --radius */
+  --radius-lg: 22px;   /* base --radius-lg */
+  --radius-pill: 999px;
+
+  /* ---------- type · base.css:45,54,62 + most-used font-size literals ---------- */
+  --font-family: "Inter", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --text-2xs: .7rem;    /* [9] captions, nav labels */
+  --text-xs: .75rem;    /* [4] badges, table headers */
+  --text-sm: .85rem;    /* [9] small buttons, meta */
+  --text-md: .9rem;     /* [3] */
+  --text-base: 16px;    /* body */
+  --text-lg: 1.1rem;    /* [4] h3 */
+  --text-xl: 1.35rem;   /* h2 */
+  --text-2xl: 1.75rem;  /* h1 */
+  --text-display: 2.5rem; /* app wallet balance */
+  /* Kiosk scales type with the viewport (kiosk.css:6,40,41,79): */
+  --text-kiosk-body: clamp(16px, 1.6vw, 22px);
+  --text-kiosk-h1: clamp(1.5rem, 3.4vw, 2.6rem);
+  --text-kiosk-h2: clamp(1.2rem, 2.4vw, 1.8rem);
+  --text-kiosk-value: clamp(2.6rem, 7vw, 4.6rem);
+
+  --weight-medium: 600;  /* [23] */
+  --weight-bold: 700;    /* [20] */
+  --weight-heavy: 800;   /* [23] headings, buttons */
+  --weight-black: 900;   /* [7] big numbers */
+  --line-height-body: 1.45;
+  --line-height-heading: 1.2;
+}
