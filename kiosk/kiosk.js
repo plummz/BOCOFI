@@ -206,11 +206,14 @@
     },
 
     '3.3': () => {
-      const a = DB.machines.availability(machine());
+      const m = machine();
+      const a = m ? DB.machines.availability(m) : { online: false, binFull: false, coins: false, wifi: false };
       const row = (label, ok) => `<div class="status-row"><span class="lbl"><i class="dot ${ok ? 'ok' : 'danger'}"></i>${label}</span><span class="val ${ok ? 'ok' : 'bad'}">${ok ? 'Available' : 'Not available'}</span></div>`;
       return `
       <h2>Rewards available today</h2>
-      <div class="panel">${row('Coins', a.coins)}${row('Wi-Fi voucher', a.wifi)}${S.user ? row('Save to account', true) : ''}</div>`;
+      <div class="panel">${row('Coins', a.coins)}${row('Wi-Fi voucher', a.wifi)}${S.user ? row('Save to account', true) : ''}</div>
+      <p class="sub" role="${a.online && !a.binFull && (a.coins || a.wifi || S.user) ? 'status' : 'alert'}">${a.online && !a.binFull ? `Checked for ${esc(m.name)}.` : !a.online ? 'This machine is offline.' : 'The recycling bin is full.'}</p>
+      <div class="actions"><button class="btn btn-blue" id="btnRewardsContinue" ${a.online && !a.binFull && (a.coins || a.wifi || S.user) ? '' : 'disabled'}>CONTINUE</button><button class="btn btn-ghost" data-go="3.2">BACK</button></div>`;
     },
 
     '3.4': () => `
@@ -445,7 +448,7 @@
       const continueCheck = () => {
         const current = machine();
         const available = current && DB.machines.availability(current);
-        go(!available || !available.online || available.binFull || (!available.coins && !available.wifi) ? '3.4' : '3.3');
+        go(!available || !available.online || available.binFull || (!available.coins && !available.wifi && !S.user) ? '3.4' : '3.3');
       };
       const button = $('#btnCoinsContinue', el);
       button.addEventListener('click', (event) => {
@@ -458,14 +461,30 @@
       });
       later(1800, continueCheck);
     },
-    '3.3': () => {
-      const a = DB.machines.availability(machine());
-      if (!S.alerted && (!a.coins || !a.wifi)) {
+    '3.3': (el) => {
+      const current = machine();
+      const a = current ? DB.machines.availability(current) : { online: false, binFull: true, coins: false, wifi: false };
+      if (!S.alerted && a.online && !a.binFull && ((!a.coins && !a.wifi) || !a.coins || !a.wifi)) {
         // flowchart: "Notifies OWNER — user told only COINS / only WIFI VOUCHER can be selected"
-        DB.alerts.add(machineId, !a.coins ? 'coins' : 'wifi', 'warning', !a.coins ? 'Coin hopper low — users are being offered Wi-Fi vouchers only.' : 'Wi-Fi unavailable — users are being offered coins only.');
+        const onlySave = !a.coins && !a.wifi;
+        DB.alerts.add(machineId, onlySave ? 'rewards' : !a.coins ? 'coins' : 'wifi', onlySave ? 'critical' : 'warning', onlySave ? S.user ? 'Coins and Wi-Fi are unavailable; logged-in users can still save credits.' : 'No rewards are currently available on this machine.' : !a.coins ? 'Coin hopper low — users are being offered Wi-Fi vouchers only.' : 'Wi-Fi unavailable — users are being offered coins only.');
         S.alerted = true;
       }
-      later(2600, () => go('4.1'));
+      const continueCheck = () => {
+        const m = machine();
+        const availability = m && DB.machines.availability(m);
+        go(!availability || !availability.online || availability.binFull || (!availability.coins && !availability.wifi && !S.user) ? '3.4' : '4.1');
+      };
+      const button = $('#btnRewardsContinue', el);
+      if (button && !button.disabled) button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+        button.textContent = 'Checking rewards…';
+        later(300, continueCheck);
+      });
+      later(2600, continueCheck);
     },
     '3.4': () => {
       if (!S.alerted) { DB.alerts.add(machineId, 'rewards', 'critical', 'No rewards available — user was turned away.'); S.alerted = true; }
