@@ -11,7 +11,7 @@
   const themeColor = $('meta[name="theme-color"]');
   if (themeColor) themeColor.content = getComputedStyle(document.documentElement).getPropertyValue('--color-primary-strong').trim();
   const page = $('#page');
-  const filters = { txMachine: '', txReward: '', alerts: 'unread', vStatus: '' };
+  const filters = { txMachine: '', txReward: '', alerts: 'unread', vStatus: '', cStatus: '' };
 
   function toast(msg, kind = '') {
     const el = document.createElement('div'); el.className = 'toast ' + kind; el.textContent = msg;
@@ -49,7 +49,7 @@
     closeSide();
   }
   window.addEventListener('hashchange', route);
-  const TITLES = { dashboard: 'Dashboard', machines: 'Machines', alerts: 'Owner alerts', transactions: 'Transactions', users: 'Users', vouchers: 'Wi-Fi vouchers', settings: 'Settings' };
+  const TITLES = { dashboard: 'Dashboard', machines: 'Machines', alerts: 'Owner alerts', transactions: 'Transactions', users: 'Users', vouchers: 'Wi-Fi vouchers', cashouts: 'Cash-out codes', settings: 'Settings' };
 
   function openSide() { $('#side').classList.add('open'); $('#scrim').hidden = false; }
   function closeSide() { $('#side').classList.remove('open'); $('#scrim').hidden = true; }
@@ -196,6 +196,15 @@
         <td class="mono"><b>${esc(v.code)}</b></td><td class="num">${v.minutes}</td><td>${esc(userName(v.userId))}</td><td>${esc(machineName(v.machineId))}</td><td>${fmtDate(v.createdAt)}</td><td>${fmtDate(v.expiresAt)}</td>
         <td><span class="badge ${{ active: 'ok', used: '', expired: 'danger' }[st]}">${st}</span></td>
         <td>${st === 'active' ? `<button class="btn btn-ghost btn-sm" data-revoke="${esc(v.code)}">Revoke</button>` : ''}</td></tr>`; }).join('') || '<tr><td colspan="8" class="muted">No vouchers.</td></tr>'}</tbody></table></div>`;
+    },
+
+    cashouts() {
+      let codes = DB.cashouts.all();
+      if (filters.cStatus) codes = codes.filter((c) => DB.cashouts.status(c) === filters.cStatus);
+      const pending = DB.cashouts.all().filter((c) => DB.cashouts.status(c) === 'pending').length;
+      return `
+      <div class="filters"><select class="select" id="fCashoutStatus"><option value="">All statuses</option>${['pending', 'paid', 'expired', 'cancelled'].map((s) => `<option value="${s}" ${filters.cStatus === s ? 'selected' : ''}>${s}</option>`).join('')}</select><span class="spacer"></span><span class="muted">${codes.length} codes · ${pending} pending · ${fmtPeso(DB.cashouts.all().filter((c) => DB.cashouts.status(c) === 'pending').reduce((n, c) => n + c.amount, 0))} awaiting payout</span></div>
+      <div class="card table-wrap"><table class="table"><thead><tr><th>Code</th><th>User</th><th class="num">Amount</th><th>Issued</th><th>Expires</th><th>Redeemed at</th><th>Status</th></tr></thead><tbody>${codes.map((c) => { const s = DB.cashouts.status(c); return `<tr><td class="mono"><b>${esc(c.code)}</b></td><td>${esc(userName(c.userId))}</td><td class="num">${fmtPeso(c.amount)}</td><td>${fmtDate(c.createdAt)}</td><td>${fmtDate(c.expiresAt)}</td><td>${c.status === 'paid' ? `${esc(machineName(c.machineId))}${c.paidAt ? ` · ${fmtDate(c.paidAt)}` : ''}` : '—'}</td><td><span class="badge ${{ pending: 'warn', paid: 'ok', expired: 'danger', cancelled: '' }[s] || ''}">${esc(s)}</span></td></tr>`; }).join('') || '<tr><td colspan="7" class="muted">No cash-out codes match this status.</td></tr>'}</tbody></table></div>`;
     },
 
     settings() {
@@ -357,6 +366,7 @@
       $('#fVStatus').onchange = (e) => { filters.vStatus = e.target.value; route(); };
       $$('[data-revoke]').forEach((b) => b.onclick = () => { DB.vouchers.redeem(b.dataset.revoke); toast('Voucher revoked'); route(); });
     },
+    cashouts() { $('#fCashoutStatus').onchange = (e) => { filters.cStatus = e.target.value; route(); }; },
     settings() {
       $('#btnAddRow').onclick = () => { $('#rewardRows').insertAdjacentHTML('beforeend', rewardRow()); };
       $('#rewardRows').addEventListener('click', (e) => { if (e.target.classList.contains('del')) e.target.closest('.reward-row').remove(); });
