@@ -216,10 +216,16 @@
       <div class="actions"><button class="btn btn-blue" id="btnRewardsContinue" ${a.online && !a.binFull && (a.coins || a.wifi || S.user) ? '' : 'disabled'}>CONTINUE</button><button class="btn btn-ghost" data-go="3.2">BACK</button></div>`;
     },
 
-    '3.4': () => `
-      <div class="icon-circle pop" style="--accent:var(--c-close)">${ICON.x}</div>
+    '3.4': () => {
+      const m = machine();
+      const a = m ? DB.machines.availability(m) : { online: false, binFull: false, coins: false, wifi: false };
+      const reason = !m ? 'No recycling machine is configured.' : !a.online ? `Machine ${esc(m.name)} is ${esc(m.status)}.` : a.binFull ? `The bin at ${esc(m.name)} is full.` : !a.coins && !a.wifi ? 'Coins and Wi-Fi vouchers are unavailable.' : 'Reward availability changed during the system check.';
+      return `
+      <div class="icon-circle pop" style="--accent:var(--color-danger)">${ICON.x}</div>
       <h1>No rewards available</h1>
-      <p class="sub" id="noRewardsWhy">Please come back later</p>`,
+      <p class="sub" id="noRewardsWhy" role="alert">${reason} Use the service menu to check another machine, or return to account choices.</p>
+      <div class="actions"><button class="btn btn-blue" id="btnNoRewardRestart">START OVER</button><button class="btn btn-ghost" id="btnNoRewardOptions">ACCOUNT CHOICES</button></div>`;
+    },
 
     '4.1': () => {
       const table = DB.config.get().rewardTable;
@@ -486,9 +492,25 @@
       });
       later(2600, continueCheck);
     },
-    '3.4': () => {
-      if (!S.alerted) { DB.alerts.add(machineId, 'rewards', 'critical', 'No rewards available — user was turned away.'); S.alerted = true; }
-      later(4000, () => { resetSession(); go('1.1'); });
+    '3.4': (el) => {
+      if (!S.alerted && machine()) { DB.alerts.add(machineId, 'rewards', 'critical', 'No rewards available — user was turned away.'); S.alerted = true; }
+      const restart = () => { resetSession(); go('1.1'); };
+      const restartButton = $('#btnNoRewardRestart', el);
+      restartButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        restartButton.disabled = true;
+        restartButton.setAttribute('aria-busy', 'true');
+        restartButton.textContent = 'Resetting…';
+        later(300, restart);
+      });
+      $('#btnNoRewardOptions', el).addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        resetSession();
+        go('2.1');
+      });
+      later(4000, restart);
     },
 
     '4.1': (el) => {
