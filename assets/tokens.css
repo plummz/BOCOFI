@@ -202,6 +202,33 @@
   --space-value-5px: 5px;
   --space-value-8px: 8px;
   --space-value-14px: 14px;
+  --space-launcher-hero-min: 2rem;
+  --space-launcher-hero-fluid: 6vw;
+  --space-launcher-hero-max: 4rem;
+  --space-launcher-inline: 1.25rem;
+  --space-launcher-footer: 3rem;
+  --space-launcher-section-gap: 2rem;
+  --space-value-2-5rem: 2.5rem;
+  --space-launcher-card-gap: 1.25rem;
+  --space-launcher-card: 1.4rem;
+  --space-launcher-small-gap: .6rem;
+  --space-launcher-code-y: .15em;
+  --space-launcher-code-x: .45em;
+  --space-launcher-code-radius: 6px;
+  --space-launcher-border: 6px;
+
+  /* Launcher page dimensions retained from index.html. */
+  --size-launcher-content: 1040px;
+  --size-launcher-logo: 320px;
+  --size-launcher-logo-responsive: 70vw;
+  --size-launcher-card-min: 260px;
+  --size-launcher-lead: 60ch;
+  --font-launcher-title-min: 1.6rem;
+  --font-launcher-title-fluid: 4vw;
+  --font-launcher-title-max: 2.4rem;
+  --font-launcher-lead: 1.1rem;
+  --font-launcher-footer: .85rem;
+  --shadow-launcher-hover: 0 12px 32px rgba(31,74,40,.16);
 
   /* Literal responsive and fixed font-size declarations. */
   --text-size-01: .66rem;
