@@ -79,10 +79,10 @@
     save: ['Points added', (t) => `+${t.points} pts saved from ${t.items.length} item${t.items.length === 1 ? '' : 's'}`, 'pts', ICON.pts],
     coins: ['Coins dispensed', (t) => `${fmtPeso(t.total)} in coins at the kiosk`, 'coins', ICON.coins],
     wifi: ['Wi-Fi voucher issued', (t) => `${t.minutes} min · code ${t.voucherCode || ''}`, 'wifi', ICON.wifi],
-    claim: ['Wi-Fi claimed', (t) => `${t.minutes} min voucher from ${Math.abs(t.points)} pts`, 'wifi', ICON.wifi],
+    adjust: ['Points adjusted', (t) => `${Number(t.points) > 0 ? '+' : '−'}${Math.abs(t.points || 0)} pts${t.note ? ` · ${t.note}` : ''}`, 'pts', ICON.pts],
     'convert-coins': ['Points converted to coins', (t) => `${Math.abs(t.points)} pts → ${fmtPeso(t.total)}`, 'coins', ICON.swap],
     'convert-wifi': ['Points converted to Wi-Fi', (t) => `${Math.abs(t.points)} pts → ${fmtMin(t.minutes)}`, 'wifi', ICON.swap],
-    cashout: ['Cash-out code created', (t) => `${fmtPeso(t.total)} · show ${t.code} at a kiosk`, 'coins', ICON.cash],
+    cashout: ['Cash-out code created', (t) => t.note === 'Redeemed at kiosk' ? `${fmtPeso(t.total)} paid out at ${t.machineId || 'a kiosk'} · code ${t.code}` : `${fmtPeso(t.total)} · show ${t.code} at a kiosk`, 'coins', ICON.cash],
     'cashout-cancel': ['Cash-out cancelled', (t) => `${fmtPeso(t.total)} returned to coin balance`, 'coins', ICON.cash],
     'wifi-use': ['Wi-Fi session ended', (t) => `${fmtMin(t.minutes)} used`, 'wifi', ICON.wifi],
     'voucher-add': ['Voucher added to your time', (t) => `+${t.minutes} min from ${t.voucherCode}`, 'wifi', ICON.wifi],
@@ -93,7 +93,7 @@
     DB.transactions.forUser(u.id).slice(0, 25).forEach((t) => { const n = TX_NOTE[t.reward]; if (n) list.push({ id: 'tx-' + t.id, ts: t.ts, title: n[0], body: n[1](t), color: C[n[2]], icon: n[3], view: 'history' }); });
     if (u.prefs && u.prefs.notifs === false) return list.sort((a, b) => b.ts - a.ts).map((n) => ({ ...n, read: true }));
     DB.vouchers.forUser(u.id).forEach((v) => { if (DB.vouchers.status(v) === 'active' && v.expiresAt - Date.now() < 6 * 3600e3) list.push({ id: 'vx-' + v.code, ts: v.expiresAt - 6 * 3600e3, title: 'Voucher expiring soon', body: `${v.code} expires ${fmtDate(v.expiresAt)}. Add it to your Wi-Fi time.`, color: C.warn, icon: ICON.warn, view: 'wifi' }); });
-    DB.cashouts.forUser(u.id).forEach((c) => { if (c.status === 'paid') list.push({ id: 'co-' + c.code, ts: c.paidAt, title: 'Cash-out collected', body: `${fmtPeso(c.amount)} paid out${c.machineId ? ' at ' + c.machineId : ''}`, color: C.coins, icon: ICON.cash, view: 'wallet' }); });
+    DB.cashouts.forUser(u.id).forEach((c) => { if (c.status === 'paid' && !DB.transactions.forUser(u.id).some((t) => t.reward === 'cashout' && t.note === 'Redeemed at kiosk' && t.code === c.code)) list.push({ id: 'co-' + c.code, ts: c.paidAt, title: 'Cash-out collected', body: `${fmtPeso(c.amount)} paid out${c.machineId ? ' at ' + c.machineId : ''}`, color: C.coins, icon: ICON.cash, view: 'wallet' }); });
     if (!u.wifiSession && u.wifiMinutes > 0 && u.wifiMinutes < 5) list.push({ id: 'wifi-low', ts: Date.now() - 5 * 60e3, title: 'Wi-Fi time running low', body: `Only ${fmtMin(u.wifiMinutes)} left. Convert points to top up.`, color: C.warn, icon: ICON.wifi, view: 'wifi' });
     DB.machines.all().forEach((m) => { if (m.status !== 'online') list.push({ id: 'm-' + m.id + '-' + m.status, ts: Date.now() - 2 * 3600e3, title: `${m.name} is under ${m.status}`, body: 'Try another BOCO-FI machine nearby.', color: C.info, icon: ICON.pin, view: 'machines' }); });
     return list.sort((a, b) => b.ts - a.ts).map((n) => ({ ...n, read: (u.notifRead || []).includes(n.id) }));
