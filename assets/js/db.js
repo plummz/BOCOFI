@@ -260,7 +260,9 @@
       amount = round2(amount);
       const u = users.byId(userId);
       if (!u || amount <= 0 || amount > (u.coins || 0)) throw new Error('Not enough coin balance.');
-      const code = 'CO-' + Math.random().toString(16).slice(2, 6).toUpperCase();
+        let code;
+        do { code = 'CO-' + Math.floor(Math.random() * 0x10000).toString(16).padStart(4, '0').toUpperCase(); }
+        while (get().cashouts.some((x) => x.code === code));
       const ttlHours = Number(get().config.cashoutTtlHours) || 24;
       const c = { code, userId, amount, status: 'pending', createdAt: now(), expiresAt: now() + ttlHours * 3600 * 1000 };
       update((d) => { const usr = d.users.find((x) => x.id === userId); usr.coins = round2(usr.coins - amount); d.cashouts.push(c); });
