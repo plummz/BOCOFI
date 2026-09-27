@@ -367,10 +367,19 @@
       <p class="sub" role="alert">There is no active coin payout to complete.</p>
       <div class="actions"><button class="btn btn-blue" data-go="6.1">BACK TO REWARDS</button></div>`,
 
-    '6.3': () => `
-      <div class="icon-circle pop">${ICON.check}</div>
-      <h1>Coins dispensed</h1>
-      <p class="sub">Thank you for recycling</p>`,
+    '6.3': () => {
+      const tx = S.reward && S.reward.reward === 'coins' ? DB.transactions.all().find((t) => t.id === S.reward.id) : null;
+      return tx ? `
+        <div class="icon-circle pop" style="--accent:var(--color-ok)">${ICON.check}</div>
+        <h1>Coins dispensed</h1>
+        <div class="big-value">${fmtPeso(tx.total)}</div>
+        <p class="sub" role="status">Collect your coins from the tray below.</p>
+        <div class="actions"><button class="btn btn-blue" id="btnCoinsDone">CONTINUE</button></div>` : `
+        <div class="icon-circle pop" style="--accent:var(--color-danger)">${ICON.x}</div>
+        <h1>Coin confirmation unavailable</h1>
+        <p class="sub" role="alert">The completed coin transaction could not be found.</p>
+        <div class="actions"><button class="btn btn-blue" data-go="6.1">BACK TO REWARDS</button></div>`;
+    },
 
     '6.4': () => `
       <h2>Generating your voucher</h2>
@@ -684,7 +693,20 @@
         go('6.3');
       });
     },
-    '6.3': () => later(2400, () => go('7.1')),
+    '6.3': (el) => {
+      const tx = S.reward && S.reward.reward === 'coins' && DB.transactions.all().some((t) => t.id === S.reward.id);
+      if (!tx) return;
+      const button = $('#btnCoinsDone', el);
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+        button.textContent = 'Finishing…';
+        later(300, () => go('7.1'));
+      });
+      later(2400, () => go('7.1'));
+    },
     '6.4': (el) => {
       const bar = $('#genBar', el);
       requestAnimationFrame(() => { bar.style.transition = 'width 1.8s ease'; bar.style.width = '100%'; });
