@@ -390,11 +390,26 @@
       <p class="sub" role="alert">There is no active Wi-Fi reward to generate.</p>
       <div class="actions"><button class="btn btn-blue" data-go="6.1">BACK TO REWARDS</button></div>`,
 
-    '6.5': () => `
-      <p class="sub">Your Wi-Fi voucher · ${sessionMinutes()} minutes</p>
-      <div class="voucher" id="voucherCode">${esc(S.reward && S.reward.voucherCode || '')}</div>
-      <p class="countdown">Disappears in <span id="cd">${DB.config.get().voucherDisplaySeconds}</span> seconds</p>
-      <div class="actions"><button class="btn" style="background:var(--c-rewards)" data-go="7.1">DONE</button></div>`,
+    '6.5': () => {
+      const voucher = S.reward && S.reward.voucherCode ? DB.vouchers.byCode(S.reward.voucherCode) : null;
+      if (!voucher) return `
+        <div class="icon-circle pop" style="--accent:var(--color-danger)">${ICON.x}</div>
+        <h1>Voucher details unavailable</h1>
+        <p class="sub" role="alert">The generated voucher could not be found. Choose another reward.</p>
+        <div class="actions"><button class="btn btn-blue" data-go="6.1">BACK TO REWARDS</button></div>`;
+      const status = DB.vouchers.status(voucher);
+      if (status !== 'active') return `
+        <div class="icon-circle pop" style="--accent:var(--color-danger)">${ICON.x}</div>
+        <h1>Voucher ${status === 'used' ? 'already used' : 'expired'}</h1>
+        <p class="sub" role="alert">This code is ${esc(status)}. Check your app for its current Wi-Fi balance.</p>
+        <div class="actions"><button class="btn btn-blue" data-go="7.1">CONTINUE</button></div>`;
+      return `
+        <h2>Your Wi-Fi voucher · ${voucher.minutes} minutes</h2>
+        <div class="voucher" id="voucherCode">${esc(voucher.code)}</div>
+        <p class="sub" role="status">Valid until ${esc(DB.util.fmtDate(voucher.expiresAt))}.</p>
+        <p class="countdown">Kiosk display closes in <span id="cd">${DB.config.get().voucherDisplaySeconds}</span> seconds</p>
+        <div class="actions"><button class="btn" style="background:var(--color-primary)" id="btnVoucherDone">DONE</button></div>`;
+    },
 
     '6.6': () => `
       <p class="sub">Saving to your account</p>
@@ -736,8 +751,25 @@
       });
     },
     '6.5': (el) => {
+      let voucher = S.reward && S.reward.voucherCode ? DB.vouchers.byCode(S.reward.voucherCode) : null;
+      if (!voucher || DB.vouchers.status(voucher) !== 'active') return;
       let n = DB.config.get().voucherDisplaySeconds;
-      const tick = () => { n -= 1; $('#cd', el).textContent = n; if (n <= 0) go('7.1'); else later(1000, tick); };
+      const button = $('#btnVoucherDone', el);
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+        button.textContent = 'Finishing…';
+        later(300, () => go('7.1'));
+      });
+      const tick = () => {
+        voucher = DB.vouchers.byCode(S.reward.voucherCode);
+        if (!voucher || DB.vouchers.status(voucher) !== 'active') { go('6.5'); return; }
+        n -= 1;
+        $('#cd', el).textContent = n;
+        if (n <= 0) go('7.1'); else later(1000, tick);
+      };
       later(1000, tick);
     },
     '6.6': () => later(2600, () => go('6.7')),
