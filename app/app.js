@@ -292,7 +292,7 @@
 
       <div class="section-title"><h3>Cash out coins</h3></div>
       <div class="card">
-        <p class="help">Generate a code, then choose <b>COINS</b> at any BOCO-FI kiosk and enter it. The machine dispenses your coins. Codes last ${c.cashoutTtlHours} h and can be cancelled to get the balance back.</p>
+        <p class="help">Generate a code, enter it on a BOCO-FI kiosk reward screen, and collect your coins from the tray. Codes last ${c.cashoutTtlHours} h, work once, and can be cancelled before use to return the balance. Payout requires an online kiosk with enough coins.</p>
         ${amts.length ? `<div class="chips" id="cashAmt">${amts.map((a, i) => `<button class="chip ${i === 0 ? 'active' : ''}" data-amt="${a}">${a === all && all !== amts[0] ? 'All ' : ''}₱${a}</button>`).join('')}</div>
         <button class="btn btn-block mt" id="btnCashout" style="background:var(--coin)">${ICON.cash} Generate cash-out code</button>` : '<div class="empty">You need at least ₱1 in coin balance. Convert points above.</div>'}
         ${codes.length ? `<div class="section-title"><h4>Your codes</h4></div>${codes.map((co) => { const st = DB.cashouts.status(co); return `<div class="code-card ${st === 'pending' ? '' : 'dim'} mb"><div class="body"><div class="code">${esc(co.code)}</div><small>${fmtPeso(co.amount)} · ${st === 'pending' ? 'expires ' + fmtDate(co.expiresAt) : st}</small></div>${st === 'pending' ? `<button class="btn btn-outline btn-sm" data-cancel-cash="${esc(co.code)}">Cancel</button>` : `<span class="badge">${st}</span>`}</div>`; }).join('')}` : '<div class="empty">No cash-out codes yet.</div>'}
