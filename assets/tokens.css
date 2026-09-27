@@ -55,6 +55,8 @@
   --color-warn: #e0a51e;
   --color-danger: #d43f55;
   --color-info: var(--bocofi-blue-700);
+  --color-coin: #d99a1e;
+  --color-coin-soft: #fff4dc;
 
   /* ---------- spacing · most-used rem values in gap/margin/padding across
      base.css, kiosk.css, app.css, admin.css (count in brackets) ---------- */

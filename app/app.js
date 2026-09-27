@@ -187,7 +187,7 @@
     const q = encodeURIComponent(m.location + ', Bulacan');
     return `<div class="card m-card mb">
       <h4>${esc(m.name)}</h4><span class="badge ${st[0]}">${st[1]}</span>
-      <div class="m-meta"><span>${ICON.pin} ${esc(m.location)}${DIST[m.id] != null ? ' · ' + DIST[m.id] + ' km' : ''}</span></div>
+      <div class="m-meta"><span>${ICON.pin} ${esc(m.location)}</span></div>
       <div class="m-meta"><span class="${av.coins ? '' : 'off'}">🪙 Coins</span><span class="${av.wifi ? '' : 'off'}">📶 Wi-Fi</span><span class="${av.online ? '' : 'off'}">💾 Save points</span><span>Bin ${m.binLevel}%</span></div>
       <div class="bar ${m.binLevel >= cfg().binFullThreshold ? 'danger' : m.binLevel >= cfg().binAlertThreshold ? 'warn' : ''}"><i style="width:${m.binLevel}%"></i></div>
       <div class="m-actions"><a class="btn btn-outline btn-sm" href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">Directions</a><button class="btn btn-sm" data-view="recycle" ${av.online && !av.binFull ? '' : 'disabled'}>Link &amp; recycle</button></div>
@@ -217,10 +217,15 @@
     },
 
     home: (u) => {
-      const tx = DB.transactions.forUser(u.id).slice(0, 3);
+      const allTx = DB.transactions.forUser(u.id);
+      const tx = allTx.slice(0, 3);
+      const recyclingTx = allTx.filter((t) => t.machineId && Array.isArray(t.items) && t.items.length > 0);
       const bottles = u.bottles || 0; const tier = tierOf(bottles);
       const wk = weekly(u); const max = Math.max(1, ...wk.map((d) => d.n));
-      const near = DB.machines.all().slice().sort((a, b) => (DIST[a.id] || 9) - (DIST[b.id] || 9)).slice(0, 2);
+      const machines = DB.machines.all();
+      const featuredMachines = machines.slice(0, 2);
+      const weekTotal = wk.reduce((a, d) => a + d.n, 0);
+      const recyclingValue = recyclingTx.reduce((sum, t) => sum + Number(t.total || 0), 0);
       const pendingCash = DB.cashouts.forUser(u.id).filter((c) => DB.cashouts.status(c) === 'pending');
       return `
       <section class="hero leafy-bg">
@@ -242,9 +247,9 @@
 
       <div class="quick">
         <button data-view="recycle"><i style="background:var(--green-500)">${ICON.qr}</i>Link machine</button>
-        <button data-view="wallet"><i style="background:var(--coin)">${ICON.swap}</i>Convert pts</button>
+        <button data-view="wallet"><i style="background:var(--color-coin)">${ICON.swap}</i>Convert pts</button>
         <button data-view="wifi"><i style="background:var(--wifi)">${ICON.wifi}</i>${u.wifiSession ? 'Wi-Fi on' : 'Connect'}</button>
-        <button data-view="machines"><i style="background:var(--c-deposit)">${ICON.pin}</i>Find kiosk</button>
+        <button data-view="machines"><i style="background:var(--color-info)">${ICON.pin}</i>Find kiosk</button>
       </div>
 
       ${liveCard(u)}
@@ -256,17 +261,17 @@
       </div>
 
       <div class="card mt">
-        <div class="row between"><h4 style="margin:0">This week</h4><small class="muted">${wk.reduce((a, d) => a + d.n, 0)} items recycled</small></div>
-        <div class="chart">${wk.map((d) => `<div><b>${d.n || ''}</b><i class="${d.today ? 'hi' : ''}" style="height:${Math.max(4, Math.round(d.n / max * 70))}px"></i><small>${d.label}</small></div>`).join('')}</div>
+        <div class="row between"><h4 style="margin:0">This week</h4><small class="muted">${weekTotal} items recycled</small></div>
+        ${weekTotal ? `<div class="chart">${wk.map((d) => `<div><b>${d.n || ''}</b><i class="${d.today ? 'hi' : ''}" style="height:${Math.max(4, Math.round(d.n / max * 70))}px"></i><small>${d.label}</small></div>`).join('')}</div>` : '<div class="empty">No recycling activity this week yet. Link to a machine to get started.</div>'}
       </div>
 
       <div class="card mt">
         <h4>Your impact</h4>
-        <div class="impact"><div><b>${bottles}</b><small>items recycled</small></div><div><b>${(bottles * 0.02).toFixed(2)} kg</b><small>plastic diverted</small></div><div><b>${(bottles * 0.03).toFixed(2)} kg</b><small>CO₂ avoided (est.)</small></div></div>
+        <div class="impact"><div><b>${bottles}</b><small>items recycled</small></div><div><b>${recyclingTx.length}</b><small>kiosk transactions</small></div><div><b>${fmtPeso(recyclingValue)}</b><small>recycling value</small></div></div>
       </div>
 
-      <div class="section-title"><h3>Machines near you</h3><a href="#" data-view="machines">See all</a></div>
-      ${near.map(machineCard).join('')}
+      <div class="section-title"><h3>Machines</h3><a href="#" data-view="machines">See all</a></div>
+      ${featuredMachines.length ? featuredMachines.map(machineCard).join('') : '<div class="card"><div class="empty">No machines are listed yet.</div></div>'}
 
       <div class="section-title"><h3>Recent activity</h3><a href="#" data-view="history">See all</a></div>
       <div class="card">${tx.length ? `<ul class="list">${tx.map(txRow).join('')}</ul>` : '<div class="empty">No activity yet. Link to a machine to start recycling.</div>'}</div>`;
