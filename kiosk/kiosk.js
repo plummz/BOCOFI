@@ -453,10 +453,15 @@
       <div class="actions"><button class="btn btn-lg" style="background:var(--color-primary)" id="btnDone">DONE</button></div>`;
     },
 
-    '7.2': () => `
-      <div class="icon-circle pop">${ICON.x}</div>
+    '7.2': () => {
+      const m = machine();
+      const reason = S.rejectReason || (S.items.length ? 'The session could not be completed. Your accepted items remain in this session until reset.' : 'No valid items were inserted.');
+      return `
+      <div class="icon-circle pop" style="--accent:var(--color-danger)">${ICON.x}</div>
       <h1>Session ended</h1>
-      <p class="sub">No valid items were inserted</p>`,
+      <p class="sub" role="alert">${esc(reason)}${m ? ` · ${esc(m.name)}` : ''}</p>
+      <div class="actions"><button class="btn btn-blue" id="btnSessionRestart">START OVER</button></div>`;
+    },
   };
 
   /* ---------- per-screen behaviour ---------- */
@@ -846,7 +851,19 @@
       });
       later(8000, finish);
     },
-    '7.2': () => later(4000, () => { resetSession(); go('1.1'); }),
+    '7.2': (el) => {
+      const restart = () => { resetSession(); go('1.1'); };
+      const button = $('#btnSessionRestart', el);
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+        button.textContent = 'Resetting…';
+        later(250, restart);
+      });
+      later(4000, restart);
+    },
   };
 
   /* ---------- domain actions ---------- */
