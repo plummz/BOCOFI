@@ -411,10 +411,20 @@
         <div class="actions"><button class="btn" style="background:var(--color-primary)" id="btnVoucherDone">DONE</button></div>`;
     },
 
-    '6.6': () => `
-      <p class="sub">Saving to your account</p>
-      <div class="big-value">+${sessionPoints()} pts</div>
-      <div class="chip">New balance <b>${fmtPts((S.user ? S.user.points : 0) + sessionPoints())}</b></div>`,
+    '6.6': () => {
+      const pending = S.reward && S.reward.kind === 'save' ? S.reward : null;
+      const user = pending && DB.users.byId(pending.userId);
+      return pending && user ? `
+        <h2>Saving to your account</h2>
+        <p class="sub" role="status" aria-live="polite">Adding ${fmtPts(pending.points)} to ${esc(user.name)}.</p>
+        <div class="big-value">+${fmtPts(pending.points)}</div>
+        <div class="chip">New balance <b>${fmtPts(user.points + pending.points)}</b></div>
+        <div class="panel" aria-busy="true"><div class="bar"><i id="saveBar" style="width:0%;background:var(--color-primary)"></i></div><p class="muted">Please wait</p></div>` : `
+        <div class="icon-circle pop" style="--accent:var(--color-danger)">${ICON.x}</div>
+        <h1>Account save unavailable</h1>
+        <p class="sub" role="alert">The active save request or linked account could not be found.</p>
+        <div class="actions"><button class="btn btn-blue" data-go="6.1">BACK TO REWARDS</button></div>`;
+    },
 
     '6.7': () => `
       <div class="icon-circle pop">${ICON.check}</div>
@@ -772,7 +782,28 @@
       };
       later(1000, tick);
     },
-    '6.6': () => later(2600, () => go('6.7')),
+    '6.6': (el) => {
+      const pending = S.reward && S.reward.kind === 'save' ? S.reward : null;
+      if (!pending) return;
+      const bar = $('#saveBar', el);
+      if (bar) requestAnimationFrame(() => { bar.style.transition = 'width 1.8s ease'; bar.style.width = '100%'; });
+      later(2000, () => {
+        const user = DB.users.byId(pending.userId);
+        const m = machine();
+        if (!user || !m) {
+          S.reward = null;
+          S.rewardError = !user ? 'The linked account is no longer available. Link an account again or choose another reward.' : 'The machine record is unavailable. Try another reward.';
+          go('6.1');
+          return;
+        }
+        const tx = DB.transactions.add({ machineId, userId: user.id, items: pending.items, total: pending.total, reward: 'save', points: pending.points });
+        DB.users.addPoints(user.id, pending.points, pending.items.length);
+        DB.machines.patch(machineId, { totalBottles: m.totalBottles + pending.items.length });
+        S.user = DB.users.byId(user.id);
+        S.reward = tx;
+        go('6.7');
+      });
+    },
     '6.7': () => later(2400, () => go('7.1')),
 
     '7.1': (el) => { $('#btnDone', el).addEventListener('click', () => { resetSession(); go('1.1'); }); later(8000, () => { resetSession(); go('1.1'); }); },
@@ -791,7 +822,7 @@
   }
 
   function chooseReward(kind) {
-    const m = machine(); const c = DB.config.get();
+    const m = machine();
     const a = m && DB.machines.availability(m);
     const user = S.user && DB.users.byId(S.user.id);
     if (!m || !S.items.length || S.total <= 0) {
@@ -807,7 +838,6 @@
     if (S.rewardError) { go('6.1'); return; }
     S.rewardError = null;
     if (user) S.user = user;
-    const base = { machineId, userId: S.user ? S.user.id : null, items: S.items.slice(), total: S.total, reward: kind };
     if (kind === 'coins') {
       S.reward = { kind: 'coins', total: S.total, items: S.items.slice() };
       go('6.2');
@@ -816,15 +846,10 @@
       S.reward = { kind: 'wifi', total: S.total, minutes, items: S.items.slice() };
       go('6.4');
     } else if (kind === 'save') {
-      const pts = sessionPoints();
-      const tx = DB.transactions.add(Object.assign({}, base, { points: pts }));
-      S.reward = tx;
-      DB.users.addPoints(S.user.id, pts, S.items.length);
-      DB.machines.patch(machineId, { totalBottles: m.totalBottles + S.items.length });
-      S.user = DB.users.byId(S.user.id); // refresh balance for later screens
+      const points = sessionPoints();
+      S.reward = { kind: 'save', total: S.total, points, items: S.items.slice(), userId: user.id };
       go('6.6');
     }
-    void c;
   }
 
   /* ---------- pseudo QR renderer (deterministic pattern with finder squares) ---------- */
