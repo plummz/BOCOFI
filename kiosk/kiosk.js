@@ -441,11 +441,17 @@
         <div class="actions"><button class="btn btn-blue" id="btnSavedContinue">FINISH</button></div>`;
     },
 
-    '7.1': () => `
-      <div class="icon-circle pop">${ICON.leaf}</div>
-      <h1>Thank you for recycling</h1>
-      <p class="sub">${S.items.length} item${S.items.length === 1 ? '' : 's'} · ${fmtPeso(S.total)}${S.user ? ' · ' + esc(S.user.name.split(' ')[0]) : ''}</p>
-      <div class="actions"><button class="btn btn-lg" style="background:var(--c-close)" id="btnDone">DONE</button></div>`,
+    '7.1': () => {
+      const tx = S.reward && S.reward.id ? DB.transactions.all().find((t) => t.id === S.reward.id) : null;
+      const m = tx && DB.machines.byId(tx.machineId);
+      const user = tx && tx.userId ? DB.users.byId(tx.userId) : null;
+      const reward = tx ? tx.reward === 'coins' ? `${fmtPeso(tx.total)} in coins dispensed` : tx.reward === 'wifi' ? `${tx.minutes} minutes of Wi-Fi generated` : tx.reward === 'save' ? `${fmtPts(tx.points)} saved to the account` : 'Reward recorded' : null;
+      return `
+      <div class="icon-circle pop" style="--accent:var(--color-ok)">${ICON.leaf}</div>
+      <h1>${tx ? 'Thank you for recycling' : 'Session complete'}</h1>
+      ${tx ? `<p class="sub" role="status">${tx.items.length} item${tx.items.length === 1 ? '' : 's'} · ${fmtPeso(tx.total)} at ${esc(m ? m.name : 'the machine')}. ${esc(reward)}${user ? ` for ${esc(user.name.split(' ')[0])}` : ''}.</p>` : `<p class="sub" role="alert">${S.items.length} item${S.items.length === 1 ? '' : 's'} · ${fmtPeso(S.total)}. The reward transaction is unavailable; check your app balance before claiming again.</p>`}
+      <div class="actions"><button class="btn btn-lg" style="background:var(--color-primary)" id="btnDone">DONE</button></div>`;
+    },
 
     '7.2': () => `
       <div class="icon-circle pop">${ICON.x}</div>
@@ -827,7 +833,19 @@
       later(2400, () => go('7.1'));
     },
 
-    '7.1': (el) => { $('#btnDone', el).addEventListener('click', () => { resetSession(); go('1.1'); }); later(8000, () => { resetSession(); go('1.1'); }); },
+    '7.1': (el) => {
+      const finish = () => { resetSession(); go('1.1'); };
+      const button = $('#btnDone', el);
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+        button.textContent = 'Resetting…';
+        later(250, finish);
+      });
+      later(8000, finish);
+    },
     '7.2': () => later(4000, () => { resetSession(); go('1.1'); }),
   };
 
