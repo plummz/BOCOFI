@@ -381,9 +381,14 @@
         <div class="actions"><button class="btn btn-blue" data-go="6.1">BACK TO REWARDS</button></div>`;
     },
 
-    '6.4': () => `
+    '6.4': () => S.reward && S.reward.kind === 'wifi' ? `
       <h2>Generating your voucher</h2>
-      <div class="panel"><div class="bar"><i id="genBar" style="width:0%;background:var(--c-rewards)"></i></div><div class="muted">Please wait</div></div>`,
+      <p class="sub" role="status">Creating ${S.reward.minutes} minutes of Wi-Fi for ${esc(machine() ? machine().name : 'this machine')}.</p>
+      <div class="panel" aria-busy="true"><div class="bar"><i id="genBar" style="width:0%;background:var(--color-primary)"></i></div><div class="muted">Please wait</div></div>` : `
+      <div class="icon-circle pop" style="--accent:var(--color-danger)">${ICON.x}</div>
+      <h1>Voucher generation unavailable</h1>
+      <p class="sub" role="alert">There is no active Wi-Fi reward to generate.</p>
+      <div class="actions"><button class="btn btn-blue" data-go="6.1">BACK TO REWARDS</button></div>`,
 
     '6.5': () => `
       <p class="sub">Your Wi-Fi voucher · ${sessionMinutes()} minutes</p>
@@ -708,9 +713,27 @@
       later(2400, () => go('7.1'));
     },
     '6.4': (el) => {
+      if (!S.reward || S.reward.kind !== 'wifi') return;
       const bar = $('#genBar', el);
       requestAnimationFrame(() => { bar.style.transition = 'width 1.8s ease'; bar.style.width = '100%'; });
-      later(2000, () => go('6.5'));
+      later(2000, () => {
+        const m = machine();
+        const a = m && DB.machines.availability(m);
+        if (!m || !a || !a.wifi) {
+          S.reward = null;
+          S.rewardError = 'Wi-Fi became unavailable before the voucher was generated. No voucher transaction was recorded; choose another reward.';
+          go('6.1');
+          return;
+        }
+        const user = S.user && DB.users.byId(S.user.id);
+        const tx = DB.transactions.add({ machineId, userId: user ? user.id : null, items: S.reward.items, total: S.reward.total, reward: 'wifi', minutes: S.reward.minutes });
+        const voucher = DB.vouchers.create({ minutes: S.reward.minutes, txId: tx.id, userId: user ? user.id : null, machineId });
+        DB.update((d) => { const record = d.transactions.find((t) => t.id === tx.id); if (record) record.voucherCode = voucher.code; });
+        DB.machines.patch(machineId, { totalBottles: m.totalBottles + S.reward.items.length });
+        if (user) { DB.users.addPoints(user.id, 0, S.reward.items.length); S.user = DB.users.byId(user.id); }
+        S.reward = Object.assign({}, tx, { voucherCode: voucher.code, expiresAt: voucher.expiresAt });
+        go('6.5');
+      });
     },
     '6.5': (el) => {
       let n = DB.config.get().voucherDisplaySeconds;
@@ -758,12 +781,7 @@
       go('6.2');
     } else if (kind === 'wifi') {
       const minutes = sessionMinutes();
-      const tx = DB.transactions.add(Object.assign({}, base, { minutes }));
-      const v = DB.vouchers.create({ minutes, txId: tx.id, userId: S.user ? S.user.id : null, machineId });
-      DB.update((d) => { const t = d.transactions.find((x) => x.id === tx.id); if (t) t.voucherCode = v.code; });
-      S.reward = Object.assign({}, tx, { voucherCode: v.code });
-      DB.machines.patch(machineId, { totalBottles: m.totalBottles + S.items.length });
-      if (S.user) DB.users.addPoints(S.user.id, 0, S.items.length);
+      S.reward = { kind: 'wifi', total: S.total, minutes, items: S.items.slice() };
       go('6.4');
     } else if (kind === 'save') {
       const pts = sessionPoints();
