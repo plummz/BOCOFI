@@ -14,6 +14,8 @@
   const DB = window.BocofiDB;
   const { esc, fmtPeso, fmtPts, round2, clamp } = DB.util;
   const $ = (s, r = document) => r.querySelector(s);
+  const themeColor = $('meta[name="theme-color"]');
+  if (themeColor) themeColor.content = getComputedStyle(document.documentElement).getPropertyValue('--color-primary-strong').trim();
 
   /* ---------- machine selection ---------- */
   const MKEY = 'bocofi.kiosk.machine';
@@ -914,8 +916,8 @@
     let h = 2166136261;
     for (let i = 0; i < text.length; i++) { h ^= text.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
     const rnd = () => { h ^= h << 13; h >>>= 0; h ^= h >> 17; h ^= h << 5; h >>>= 0; return h / 4294967296; };
-    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, N, N); ctx.fillStyle = '#1d2733';
-    const finder = (x, y) => { ctx.fillRect(x, y, 7, 7); ctx.fillStyle = '#fff'; ctx.fillRect(x + 1, y + 1, 5, 5); ctx.fillStyle = '#1d2733'; ctx.fillRect(x + 2, y + 2, 3, 3); };
+    ctx.fillStyle = 'var(--color-white)'; ctx.fillRect(0, 0, N, N); ctx.fillStyle = 'var(--color-ink)';
+    const finder = (x, y) => { ctx.fillRect(x, y, 7, 7); ctx.fillStyle = 'var(--color-white)'; ctx.fillRect(x + 1, y + 1, 5, 5); ctx.fillStyle = 'var(--color-ink)'; ctx.fillRect(x + 2, y + 2, 3, 3); };
     for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
       const inFinder = (x < 8 && y < 8) || (x >= N - 8 && y < 8) || (x < 8 && y >= N - 8);
       if (!inFinder && rnd() > 0.55) ctx.fillRect(x, y, 1, 1);

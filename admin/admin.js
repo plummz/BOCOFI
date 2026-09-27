@@ -8,6 +8,8 @@
   const { esc, fmtPeso, fmtPts, fmtDate, fmtTime, round2, clamp } = DB.util;
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const themeColor = $('meta[name="theme-color"]');
+  if (themeColor) themeColor.content = getComputedStyle(document.documentElement).getPropertyValue('--color-primary-strong').trim();
   const page = $('#page');
   const filters = { txMachine: '', txReward: '', alerts: 'unread', vStatus: '' };
 
@@ -263,13 +265,13 @@
         <div class="card">
           <div class="card-title"><h3>Status</h3>${availChips(m)}</div>
           ${machineGauges(m)}
-          <div class="row wrap mt muted" style="font-size:.85rem">
+          <div class="row wrap mt muted" style="font-size:var(--text-size-08)">
             <span>${m.totalBottles.toLocaleString()} items lifetime</span><span>·</span><span>${fmtPeso(m.totalPaidOut)} paid out</span><span>·</span>
             <span>Emptied ${fmtDate(m.lastEmptied)}</span><span>·</span><span>Coins refilled ${fmtDate(m.lastRefilled)}</span>${m.lastCrush ? `<span>·</span><span>Crusher ran ${fmtDate(m.lastCrush)}</span>` : ''}
           </div>
         </div>
         ${m.session ? `<div class="card live-session"><div class="card-title"><h3>Live session</h3><span class="badge info">${esc(m.session.screen)} · ${esc(m.session.title)}</span></div>
-          <p class="muted" style="margin:0">${m.session.userName ? esc(m.session.userName) : m.session.mode === 'guest' ? 'Guest' : 'Not identified yet'} · ${m.session.items} item${m.session.items === 1 ? '' : 's'} · ${fmtPeso(m.session.total)} · updated ${fmtTime(m.session.updatedAt)}</p></div>` : ''}
+          <p class="muted" style="margin:var(--space-value-0)">${m.session.userName ? esc(m.session.userName) : m.session.mode === 'guest' ? 'Guest' : 'Not identified yet'} · ${m.session.items} item${m.session.items === 1 ? '' : 's'} · ${fmtPeso(m.session.total)} · updated ${fmtTime(m.session.updatedAt)}</p></div>` : ''}
         <div class="card"><div class="card-title"><h3>Recent transactions</h3></div>
           <div class="table-wrap"><table class="table"><thead><tr><th>ID</th><th>Time</th><th>Machine</th><th>User</th><th class="num">Items</th><th class="num">Value</th><th>Reward</th><th>Detail</th></tr></thead><tbody>${txRows(tx) || '<tr><td colspan="8" class="muted">No transactions yet.</td></tr>'}</tbody></table></div></div>
         <div class="card"><div class="card-title"><h3>Alerts from this machine</h3></div>${alerts.length ? alerts.map(alertRow).join('') : '<p class="muted">None.</p>'}</div>

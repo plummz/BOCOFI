@@ -4,9 +4,8 @@
    Every value below is taken from CSS that already exists in this repo.
    The source is noted next to each group. Nothing here is new styling.
 
-   Status: linked by the kiosk page for screen 1.1. base.css still defines
-   the shared live tokens. See BUILD-PLAN.md, step 2, for the remaining
-   adoption work.
+   Status: linked before shared and surface styles on the kiosk, app and
+   admin. Shared aliases in base.css point back to this file.
 
    Known gap: the Figma high-fidelity file uses a different green and blue
    (see BUILD-PLAN.md, "Decision D-A"). Those values are NOT used here,
@@ -57,6 +56,56 @@
   --color-info: var(--bocofi-blue-700);
   --color-coin: #d99a1e;
   --color-coin-soft: #fff4dc;
+  --color-teal: #16979c;
+  --color-orange: #e07a22;
+  --color-purple: #7c4fd0;
+  --color-green-ink: #1b7a44;
+  --color-blue-ink: #1d4f9f;
+  --color-success-soft: #e2f5ea;
+  --color-warning-soft: #fcf1d6;
+  --color-warning-ink: #8a6207;
+  --color-danger-soft: #fbe1e6;
+  --color-danger-ink: #a5223a;
+  --color-page-app: #dfe8df;
+  --color-page-admin: #eef1f4;
+  --color-page-blue-soft: #dfeaf3;
+  --color-transparent: transparent;
+  --color-leaf-soft: #eaf3ea;
+  --color-green-highlight: #6cb872;
+  --color-white-88: rgba(255,255,255,.88);
+  --color-white-96: rgba(255,255,255,.96);
+  --color-white-95: rgba(255,255,255,.95);
+  --color-white-90: rgba(255,255,255,.9);
+  --color-white-85: rgba(255,255,255,.85);
+  --color-white-82: rgba(255,255,255,.82);
+  --color-white-72: rgba(255,255,255,.72);
+  --color-white-70: rgba(255,255,255,.7);
+  --color-white-60: rgba(255,255,255,.6);
+  --color-white-22: rgba(255,255,255,.22);
+  --color-white-12: rgba(255,255,255,.12);
+  --color-black-05: rgba(0,0,0,.05);
+  --color-black-08: rgba(0,0,0,.08);
+  --color-black-10: rgba(0,0,0,.1);
+  --color-black-12: rgba(0,0,0,.12);
+  --color-black-20: rgba(0,0,0,.2);
+  --color-black-25: rgba(0,0,0,.25);
+  --color-black-35: rgba(0,0,0,.35);
+  --color-overlay-drawer: rgba(20,30,25,.45);
+  --color-green-12: rgba(47,107,58,.12);
+  --color-green-40: rgba(47,107,58,.4);
+  --color-green-highlight-18: rgba(63,143,79,.18);
+  --color-green-30: rgba(143,207,149,.30);
+  --color-green-35: rgba(143,207,149,.35);
+  --color-sky-45: rgba(185,212,234,.45);
+  --color-sky-55: rgba(185,212,234,.55);
+  --color-warn-08: rgba(224,165,30,.08);
+  --color-blue-12: rgba(47,111,216,.12);
+  --color-ink-06: rgba(29,39,51,.06);
+  --color-ink-12: rgba(29,39,51,.12);
+  --color-ink-25: rgba(29,39,51,.25);
+  --color-ink-35: rgba(29,39,51,.35);
+  --color-primary-shadow-08: rgba(31, 74, 40, .08);
+  --color-primary-shadow-10: rgba(31, 74, 40, .10);
 
   /* ---------- spacing · most-used rem values in gap/margin/padding across
      base.css, kiosk.css, app.css, admin.css (count in brackets) ---------- */
@@ -96,6 +145,102 @@
   --text-kiosk-h2: clamp(1.2rem, 2.4vw, 1.8rem);
   --text-kiosk-value: clamp(2.6rem, 7vw, 4.6rem);
 
+
+  /* Literal spacing values used by layout declarations. */
+  --space-value-neg-01em: -.01em;
+  --space-value-neg-02em: -.02em;
+  --space-value-neg-1-1rem: -1.1rem;
+  --space-value-neg-26px: -26px;
+  --space-value-0-1em: .1em;
+  --space-value-0-1rem: .1rem;
+  --space-value-0-02em: .02em;
+  --space-value-0-2em: .2em;
+  --space-value-0-2rem: .2rem;
+  --space-value-0-03em: .03em;
+  --space-value-0-3em: .3em;
+  --space-value-0-3rem: .3rem;
+  --space-value-0-04em: .04em;
+  --space-value-0-4em: .4em;
+  --space-value-0-4rem: .4rem;
+  --space-value-0-5em: .5em;
+  --space-value-0-05em: .05em;
+  --space-value-0-5rem: .5rem;
+  --space-value-0-6em: .6em;
+  --space-value-0-06em: .06em;
+  --space-value-0-6rem: .6rem;
+  --space-value-0-7em: .7em;
+  --space-value-0-7rem: .7rem;
+  --space-value-0-8em: .8em;
+  --space-value-0-08em: .08em;
+  --space-value-0-8rem: .8rem;
+  --space-value-0-9em: .9em;
+  --space-value-0-9rem: .9rem;
+  --space-value-0-12em: .12em;
+  --space-value-0-15em: .15em;
+  --space-value-0-25rem: .25rem;
+  --space-value-0-35em: .35em;
+  --space-value-0-35rem: .35rem;
+  --space-value-0-45em: .45em;
+  --space-value-0-45rem: .45rem;
+  --space-value-0-55em: .55em;
+  --space-value-0-65em: .65em;
+  --space-value-0-75em: .75em;
+  --space-value-0-75rem: .75rem;
+  --space-value-0-85em: .85em;
+  --space-value-0: 0;
+  --space-value-1-1rem: 1.1rem;
+  --space-value-1-2rem: 1.2rem;
+  --space-value-1-4em: 1.4em;
+  --space-value-1-4rem: 1.4rem;
+  --space-value-1-5rem: 1.5rem;
+  --space-value-1-8rem: 1.8rem;
+  --space-value-1em: 1em;
+  --space-value-1rem: 1rem;
+  --space-value-2em: 2em;
+  --space-value-2px: 2px;
+  --space-value-4px: 4px;
+  --space-value-5px: 5px;
+  --space-value-8px: 8px;
+  --space-value-14px: 14px;
+
+  /* Literal responsive and fixed font-size declarations. */
+  --text-size-01: .66rem;
+  --text-size-02: .68rem;
+  --text-size-03: .72rem;
+  --text-size-04: .75rem;
+  --text-size-05: .7rem;
+  --text-size-06: .82rem;
+  --text-size-07: .85em;
+  --text-size-08: .85rem;
+  --text-size-09: .8em;
+  --text-size-10: .8rem;
+  --text-size-11: .92rem;
+  --text-size-12: .95rem;
+  --text-size-13: .9em;
+  --text-size-14: .9rem;
+  --text-size-15: 1.05em;
+  --text-size-16: 1.05rem;
+  --text-size-17: 1.15rem;
+  --text-size-18: 1.1em;
+  --text-size-19: 1.1rem;
+  --text-size-20: 1.25rem;
+  --text-size-21: 1.2em;
+  --text-size-22: 1.2rem;
+  --text-size-23: 1.35rem;
+  --text-size-24: 1.3rem;
+  --text-size-25: 1.45rem;
+  --text-size-26: 1.6em;
+  --text-size-27: 1.75rem;
+  --text-size-28: 1.7rem;
+  --text-size-29: 16px;
+  --text-size-30: 1rem;
+  --text-size-31: 2.5rem;
+  --text-size-32: 2rem;
+  --text-size-33: clamp(1.2rem, 2.4vw, 1.8rem);
+  --text-size-34: clamp(1.5rem, 3.4vw, 2.6rem);
+  --text-size-35: clamp(16px, 1.6vw, 22px);
+  --text-size-36: clamp(2.6rem, 7vw, 4.6rem);
+  --text-size-37: clamp(2rem, 6vw, 3.4rem);
   --weight-medium: 600;  /* [23] */
   --weight-bold: 700;    /* [20] */
   --weight-heavy: 800;   /* [23] headings, buttons */

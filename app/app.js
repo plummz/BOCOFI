@@ -251,7 +251,7 @@
       </div>
 
       <div class="card mt">
-        <div class="row between"><h4 style="margin:0">This week</h4><small class="muted">${weekTotal} items recycled</small></div>
+        <div class="row between"><h4 style="margin:var(--space-value-0)">This week</h4><small class="muted">${weekTotal} items recycled</small></div>
         ${weekTotal ? `<div class="chart">${wk.map((d) => `<div><b>${d.n || ''}</b><i class="${d.today ? 'hi' : ''}" style="height:${Math.max(4, Math.round(d.n / max * 70))}px"></i><small>${d.label}</small></div>`).join('')}</div>` : '<div class="empty">No recycling activity this week yet. Link to a machine to get started.</div>'}
       </div>
 
@@ -436,7 +436,7 @@
       const tier = tierOf(u.bottles || 0);
       return `
       <div class="page-title"><h2>Profile &amp; settings</h2></div>
-      <div class="card row" style="gap:1rem"><div class="a-avatar" style="width:56px;height:56px;font-size:1.1rem;display:flex;align-items:center;justify-content:center;flex:none">${initials(u.name)}</div><div style="flex:1;min-width:0"><b>${esc(u.name)}</b><br><small class="muted">${esc(u.email)}</small><br><small>${tier.t.emoji} ${tier.t.name} · member since ${new Date(u.createdAt).toLocaleDateString([], { dateStyle: 'medium' })}</small></div></div>
+      <div class="card row" style="gap:var(--space-value-1rem)"><div class="a-avatar" style="width:56px;height:56px;font-size:var(--text-size-19);display:flex;align-items:center;justify-content:center;flex:none">${initials(u.name)}</div><div style="flex:1;min-width:0"><b>${esc(u.name)}</b><br><small class="muted">${esc(u.email)}</small><br><small>${tier.t.emoji} ${tier.t.name} · member since ${new Date(u.createdAt).toLocaleDateString([], { dateStyle: 'medium' })}</small></div></div>
       <form id="formProfile" class="card" novalidate>
         <h4>Edit details</h4>
         <div class="field"><label for="pName">Name</label><input class="input" id="pName" value="${esc(u.name)}" required></div>
