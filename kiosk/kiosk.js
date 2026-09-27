@@ -281,12 +281,18 @@
       <div class="actions"><button class="btn btn-blue" id="btnRejectContinue">CONTINUE</button><button class="btn btn-outline" data-go="4.1" ${canRetry ? '' : 'disabled'}>${canRetry ? 'TRY AGAIN' : 'RETRY UNAVAILABLE'}</button></div>`;
     },
 
-    '4.5': () => `
-      <h1>Try another item?</h1>
+    '4.5': () => {
+      const m = machine();
+      const a = m && DB.machines.availability(m);
+      const canInsert = !!a && a.online && !a.binFull;
+      return `
+      <h1>${S.items.length ? 'Add another item?' : 'Try another item?'}</h1>
+      <p class="sub" role="${canInsert ? 'status' : 'alert'}">${S.items.length ? `${S.items.length} accepted item${S.items.length === 1 ? '' : 's'} · session total ${fmtPeso(S.total)}.` : 'No valid items have been accepted yet.'}${canInsert ? '' : ' Intake is unavailable on this machine.'}</p>
       <div class="actions">
-        <button class="btn btn-lg" data-go="4.1">YES</button>
-        <button class="btn btn-outline btn-lg" id="btnNoMore">NO</button>
-      </div>`,
+        <button class="btn btn-lg" data-go="4.1" ${canInsert ? '' : 'disabled'}>YES</button>
+        <button class="btn btn-outline btn-lg" id="btnNoMore">${S.items.length ? 'FINISH AND CLAIM' : 'END SESSION'}</button>
+      </div>`;
+    },
 
     '5.1': () => `
       <h2>Bin capacity</h2>
