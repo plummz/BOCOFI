@@ -179,13 +179,15 @@
 
     '3.1': () => {
       const m = machine();
-      const ok = m.wifiSignal === 'strong', weak = m.wifiSignal === 'weak';
+      const online = !!m && m.status === 'online';
+      const ok = online && m.wifiSignal === 'strong', weak = online && m.wifiSignal === 'weak';
       return `
       <h2>System check</h2>
       <div class="panel">
-        <div class="status-row"><span class="lbl"><i class="dot ${ok ? 'ok' : weak ? 'warn' : 'danger'}"></i>Wi-Fi signal</span><span class="val ${ok ? 'ok' : weak ? 'warn' : 'bad'}">${wifiLabel(m.wifiSignal)}</span></div>
+        <div class="status-row"><span class="lbl"><i class="dot ${ok ? 'ok' : weak ? 'warn' : 'danger'}"></i>Wi-Fi signal</span><span class="val ${ok ? 'ok' : weak ? 'warn' : 'bad'}">${esc(m ? wifiLabel(m.wifiSignal) : 'Unavailable')}</span></div>
       </div>
-      <p class="sub">Checking connection…</p>`;
+      <p class="sub" role="${online ? 'status' : 'alert'}">${online ? `Checking connection for ${esc(m.name)}…` : 'Machine unavailable. System check cannot continue.'}</p>
+      <div class="actions"><button class="btn btn-blue" id="btnWifiContinue" ${online ? '' : 'disabled'}>CONTINUE</button><button class="btn btn-ghost" data-go="${S.mode === 'guest' ? '2.4' : '2.1'}">BACK</button></div>`;
     },
 
     '3.2': () => {
@@ -421,7 +423,19 @@
       later(3500, () => go(machine()?.status === 'online' ? '3.1' : '2.4'));
     },
 
-    '3.1': () => later(1800, () => go('3.2')),
+    '3.1': (el) => {
+      if (machine()?.status !== 'online') return;
+      const button = $('#btnWifiContinue', el);
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+        button.textContent = 'Checking…';
+        later(300, () => go(machine()?.status === 'online' ? '3.2' : '3.4'));
+      });
+      later(1800, () => go(machine()?.status === 'online' ? '3.2' : '3.4'));
+    },
     '3.2': () => later(1800, () => {
       const m = machine(); const a = DB.machines.availability(m);
       if (a.binFull || !a.online) { go('3.4'); $('#noRewardsWhy').textContent = a.online ? 'The bin is full — please come back later' : 'Machine is under maintenance'; return; }
