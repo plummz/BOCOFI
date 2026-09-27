@@ -90,7 +90,7 @@
   };
   function notifsFor(u) {
     const list = [];
-    DB.transactions.forUser(u.id).slice(0, 25).forEach((t) => { const n = TX_NOTE[t.reward]; if (n) list.push({ id: 'tx-' + t.id, ts: t.ts, title: n[0], body: n[1](t), color: C[n[2]], icon: n[3], view: 'history' }); });
+    DB.transactions.forUser(u.id).slice(0, 25).forEach((t) => { const n = TX_NOTE[t.reward]; if (n) list.push({ id: 'tx-' + t.id, ts: t.ts, title: t.reward === 'cashout' && t.note === 'Redeemed at kiosk' ? 'Cash-out collected' : n[0], body: n[1](t), color: C[n[2]], icon: n[3], view: 'history' }); });
     if (u.prefs && u.prefs.notifs === false) return list.sort((a, b) => b.ts - a.ts).map((n) => ({ ...n, read: true }));
     DB.vouchers.forUser(u.id).forEach((v) => { if (DB.vouchers.status(v) === 'active' && v.expiresAt - Date.now() < 6 * 3600e3) list.push({ id: 'vx-' + v.code, ts: v.expiresAt - 6 * 3600e3, title: 'Voucher expiring soon', body: `${v.code} expires ${fmtDate(v.expiresAt)}. Add it to your Wi-Fi time.`, color: C.warn, icon: ICON.warn, view: 'wifi' }); });
     DB.cashouts.forUser(u.id).forEach((c) => { if (c.status === 'paid' && !DB.transactions.forUser(u.id).some((t) => t.reward === 'cashout' && t.note === 'Redeemed at kiosk' && t.code === c.code)) list.push({ id: 'co-' + c.code, ts: c.paidAt, title: 'Cash-out collected', body: `${fmtPeso(c.amount)} paid out${c.machineId ? ' at ' + c.machineId : ''}`, color: C.coins, icon: ICON.cash, view: 'wallet' }); });
@@ -164,7 +164,10 @@
   function txRow(t) {
     const [label, color, icon, right] = TX_META[t.reward] || ['Transaction', 'var(--ink-3)', ICON.info, () => ''];
     const m = DB.machines.byId(t.machineId);
-    return `<li><div class="tile" style="background:${color}">${icon}</div><div class="body"><b>${label}</b><small>${t.items.length ? t.items.length + ' item' + (t.items.length === 1 ? '' : 's') + ' · ' : ''}${m ? esc(m.name) : 'In app'} · ${fmtDate(t.ts)}</small></div>${right(t)}</li>`;
+    const payout = t.reward === 'cashout' && t.note === 'Redeemed at kiosk';
+    const title = payout ? 'Cash-out collected' : label;
+    const amount = payout ? `<div class="amt" style="color:var(--green-700)">+${fmtPeso(t.total)}<small>${esc(t.code || '')}</small></div>` : right(t);
+    return `<li><div class="tile" style="background:${color}">${icon}</div><div class="body"><b>${title}</b><small>${t.items.length ? t.items.length + ' item' + (t.items.length === 1 ? '' : 's') + ' · ' : ''}${m ? esc(m.name) : 'In app'} · ${fmtDate(t.ts)}</small></div>${amount}</li>`;
   }
   function liveCard(u) {
     const live = DB.machines.all().find((m) => m.session && m.session.userId === u.id);
