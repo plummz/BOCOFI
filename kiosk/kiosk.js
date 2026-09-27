@@ -118,13 +118,19 @@
       <div class="actions"><button class="btn btn-lg" id="btnContinue" ${available ? '' : 'data-go="1.1"'}>${available ? 'START' : 'BACK TO IDLE'}</button>${available ? '<button class="btn btn-ghost" data-go="1.1">BACK</button>' : ''}</div>`;
     },
 
-    '2.1': () => `
+    '2.1': () => {
+      const m = machine();
+      const available = !!m && m.status === 'online';
+      return `
       <h1>How do you want to continue?</h1>
-      <p class="sub">Log in to save credits to your account, or continue as a guest.</p>
+      <p class="sub" role="status">${available ? `At ${esc(m.name)}, log in to save credits to your account or continue as a guest.` : 'Login and guest sessions are unavailable until this machine is online.'}</p>
       <div class="actions">
-        <button class="btn btn-blue btn-lg" data-go="2.2">LOG IN</button>
-        <button class="btn btn-outline btn-lg" data-go="2.4">GUEST</button>
-      </div>`,
+        <button class="btn btn-blue btn-lg" data-go="2.2" ${available ? '' : 'disabled'}>LOG IN</button>
+        <button class="btn btn-outline btn-lg" data-go="2.4" ${available ? '' : 'disabled'}>GUEST</button>
+        <button class="btn btn-ghost" data-go="1.2">BACK</button>
+      </div>
+      ${available ? '' : `<p class="start-status" role="alert">${esc(m ? `This machine is ${m.status}. Select an available machine in the service menu.` : 'No recycling machine is configured.')}</p>`}`;
+    },
 
     '2.2': () => `
       <h2>Scan this in the BOCO-FI app</h2>
