@@ -163,15 +163,18 @@
       <div class="actions"><button class="btn btn-blue btn-lg" data-go="2.1">TRY AGAIN</button></div>`,
 
     '2.4': () => {
-      const a = DB.machines.availability(machine());
+      const m = machine();
+      const online = !!m && m.status === 'online';
+      const a = m ? DB.machines.availability(m) : { coins: false, wifi: false };
       return `
       <h2>Guest mode</h2>
+      <p class="sub" role="status">${online ? `Using ${esc(m.name)}. Recycling credits cannot be saved in a guest session.` : 'Guest recycling is unavailable while this machine is offline.'}</p>
       <div class="panel">
         <div class="status-row"><span class="lbl"><i class="dot ${a.coins || a.wifi ? 'info' : 'danger'}"></i>Coins &amp; vouchers</span><span class="val ${a.coins || a.wifi ? 'ok' : 'bad'}">${a.coins || a.wifi ? 'Available' : 'Not available'}</span></div>
         <div class="status-row"><span class="lbl"><i class="dot danger"></i>Saving credits</span><span class="val bad">Not available</span></div>
       </div>
-      <p class="sub">Log in with the app next time to save credits to your account.</p>
-      <div class="actions"><button class="btn btn-blue" data-go="3.1">CONTINUE</button></div>`;
+      ${online ? '<p class="sub">Log in with the app next time to save credits to your account.</p>' : '<p class="start-status" role="alert">Select an available machine in the service menu to continue.</p>'}
+      <div class="actions"><button class="btn btn-blue" id="btnGuestContinue" ${online ? '' : 'disabled'}>CONTINUE</button><button class="btn btn-ghost" data-go="2.1">BACK</button></div>`;
     },
 
     '3.1': () => {
@@ -403,7 +406,20 @@
       });
       later(2400, () => go('3.1'));
     },
-    '2.4': () => { S.mode = 'guest'; later(3500, () => go('3.1')); },
+    '2.4': (el) => {
+      S.mode = 'guest';
+      if (machine()?.status !== 'online') return;
+      const button = $('#btnGuestContinue', el);
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+        button.textContent = 'Checking rewards…';
+        later(350, () => go(machine()?.status === 'online' ? '3.1' : '2.4'));
+      });
+      later(3500, () => go(machine()?.status === 'online' ? '3.1' : '2.4'));
+    },
 
     '3.1': () => later(1800, () => go('3.2')),
     '3.2': () => later(1800, () => {
