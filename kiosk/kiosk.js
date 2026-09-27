@@ -108,11 +108,15 @@
       ${unavailable ? `<p class="start-status" id="startStatus" role="status">${esc(reason)}</p>` : ''}`;
     },
 
-    '1.2': () => `
-      <div class="icon-circle pop">${ICON.check}</div>
-      <h1>Ready when you are</h1>
-      <p class="sub">Press start to begin</p>
-      <div class="actions"><button class="btn btn-lg" data-go="2.1">START</button></div>`,
+    '1.2': () => {
+      const m = machine();
+      const available = m && m.status === 'online';
+      return `
+      <div class="icon-circle pop" ${available ? '' : 'style="--accent:var(--color-danger)"'}>${available ? ICON.check : ICON.x}</div>
+      <h1>${available ? 'Ready when you are' : 'Machine unavailable'}</h1>
+      <p class="sub" role="${available ? 'status' : 'alert'}">${available ? `Connected to ${esc(m.name)}. Press start to begin.` : `This machine is ${esc(m ? m.status : 'unavailable')}. Choose another machine or ask for help.`}</p>
+      <div class="actions"><button class="btn btn-lg" id="btnContinue" ${available ? '' : 'data-go="1.1"'}>${available ? 'START' : 'BACK TO IDLE'}</button>${available ? '<button class="btn btn-ghost" data-go="1.1">BACK</button>' : ''}</div>`;
+    },
 
     '2.1': () => `
       <h1>How do you want to continue?</h1>
@@ -315,7 +319,19 @@
         later(450, () => go('1.2'));
       });
     },
-    '1.2': () => later(2500, () => go('2.1')),
+    '1.2': (el) => {
+      if (machine()?.status !== 'online') return;
+      const button = $('#btnContinue', el);
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+        button.textContent = 'Checking machine…';
+        later(350, () => go(machine()?.status === 'online' ? '2.1' : '1.2'));
+      });
+      later(2500, () => go(machine()?.status === 'online' ? '2.1' : '1.2'));
+    },
 
     '2.2': (el) => {
       S.linkCode = DB.links.create(machineId);
