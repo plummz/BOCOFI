@@ -78,6 +78,7 @@ body { background: #dfe8df; }
 .tabs { display: flex; background: var(--panel-2); border-radius: 12px; padding: 4px; margin-bottom: 1rem; }
 .tabs button { flex: 1; border: 0; background: none; border-radius: 9px; padding: .55em; font-weight: 700; color: var(--ink-3); min-height: 42px; }
 .tabs button.active { background: #fff; color: var(--green-700); box-shadow: var(--shadow-sm); }
+.tabs button:disabled { opacity: .45; cursor: not-allowed; }
 
 /* ---------- dashboard ---------- */
 .hero { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: 1rem 1.1rem; border-radius: var(--radius-lg); margin-bottom: .9rem; }

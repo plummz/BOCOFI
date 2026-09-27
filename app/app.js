@@ -10,6 +10,8 @@
   const { esc, fmtPeso, fmtPts, fmtDate, round2 } = DB.util;
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const themeColor = $('meta[name="theme-color"]');
+  if (themeColor) themeColor.content = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim();
   const view = $('#view');
   const ROUTES = ['home', 'wallet', 'recycle', 'wifi', 'redeem', 'machines', 'history', 'notifications', 'leaderboard', 'profile', 'help'];
   const TITLES = { home: 'Dashboard', wallet: 'Wallet', recycle: 'Recycle', wifi: 'Wi-Fi', redeem: 'Rewards', machines: 'Find a machine', history: 'History', notifications: 'Notifications', leaderboard: 'Leaderboard', profile: 'Profile & settings', help: 'Help' };
@@ -194,21 +196,25 @@
 
   /* ---------- views ---------- */
   const VIEWS = {
-    auth: () => `
+    auth: () => {
+      const accounts = DB.users.all();
+      const demo = accounts[0] || null;
+      return `
       <div class="auth-hero">
         <img class="mark" src="../assets/img/mark.svg" alt="">
-        <h1 style="margin-top:.8rem">Welcome to BOCO-FI</h1>
+        <h1 style="margin-top:var(--space-auth-heading)">Welcome to BOCO-FI</h1>
         <p class="muted">Recycle bottles &amp; cans. Earn points, coins and free Wi-Fi.</p>
       </div>
       <div class="tabs"><button id="tabLogin" class="${authTab === 'login' ? 'active' : ''}">Log in</button><button id="tabReg" class="${authTab === 'register' ? 'active' : ''}">Create account</button></div>
       <form id="formAuth" class="card" novalidate>
         ${authTab === 'register' ? `<div class="field"><label for="fName">Full name</label><input class="input" id="fName" autocomplete="name" required></div>` : ''}
-        <div class="field"><label for="fEmail">Email</label><input class="input" id="fEmail" type="email" inputmode="email" autocomplete="email" required value="${authTab === 'login' ? 'maria@example.com' : ''}"></div>
-        <div class="field"><label for="fPin">4-digit PIN</label><input class="input" id="fPin" type="password" inputmode="numeric" pattern="\\d{4}" maxlength="4" autocomplete="${authTab === 'login' ? 'current-password' : 'new-password'}" required value="${authTab === 'login' ? '1234' : ''}"></div>
-        <div class="error" id="authErr"></div>
-        <button class="btn btn-block" type="submit">${authTab === 'login' ? 'Log in' : 'Create account'}</button>
-        ${authTab === 'login' ? '<p class="help center mt">Demo account is pre-filled: maria@example.com / 1234</p>' : ''}
-      </form>`,
+        <div class="field"><label for="fEmail">Email</label><input class="input" id="fEmail" type="email" inputmode="email" autocomplete="email" required value="${authTab === 'login' && demo ? esc(demo.email) : ''}"></div>
+        <div class="field"><label for="fPin">4-digit PIN</label><input class="input" id="fPin" type="password" inputmode="numeric" pattern="\\d{4}" maxlength="4" autocomplete="${authTab === 'login' ? 'current-password' : 'new-password'}" required value="${authTab === 'login' && demo ? esc(demo.pin) : ''}"></div>
+        <div class="error" id="authErr" role="alert"></div>
+        <button class="btn btn-block" id="authSubmit" type="submit">${authTab === 'login' ? 'Log in' : 'Create account'}</button>
+        ${authTab === 'login' ? `<p class="help center mt" role="status">${demo ? 'A demo account is pre-filled from saved local data.' : 'No accounts are saved yet. Create one to get started.'}</p>` : ''}
+      </form>`;
+    },
 
     home: (u) => {
       const tx = DB.transactions.forUser(u.id).slice(0, 3);
@@ -471,18 +477,40 @@
       $('#formAuth').onsubmit = (e) => {
         e.preventDefault();
         const email = $('#fEmail').value.trim(), pin = $('#fPin').value.trim();
-        const err = $('#authErr'); err.textContent = '';
+        const err = $('#authErr'), button = $('#authSubmit'); err.textContent = '';
+        if (button.disabled) return;
         try {
           if (!/^\d{4}$/.test(pin)) throw new Error('PIN must be exactly 4 digits.');
           if (!/^\S+@\S+\.\S+$/.test(email)) throw new Error('Enter a valid email address.');
-          if (authTab === 'register') {
-            const name = $('#fName').value.trim();
-            if (name.length < 2) throw new Error('Enter your name.');
-            const u = DB.users.register(name, email, pin);
-            DB.users.login(u.email, pin);
-            toast('Welcome to BOCO-FI 🌱', 'ok');
-          } else { DB.users.login(email, pin); }
-          location.hash = '#/home'; render();
+          const mode = authTab;
+          const name = mode === 'register' ? $('#fName').value.trim() : '';
+          if (mode === 'register' && name.length < 2) throw new Error('Enter your name.');
+          button.disabled = true;
+          $('#tabLogin').disabled = true;
+          $('#tabReg').disabled = true;
+          button.setAttribute('aria-busy', 'true');
+          button.textContent = mode === 'register' ? 'Creating account…' : 'Signing in…';
+          setTimeout(() => {
+            try {
+              if (mode === 'register') {
+                const u = DB.users.register(name, email, pin);
+                DB.users.login(u.email, pin);
+                toast(`Welcome to BOCO-FI, ${u.name.split(' ')[0]}`, 'ok');
+              } else {
+                DB.users.login(email, pin);
+                const u = DB.users.current();
+                toast(u ? `Welcome back, ${u.name.split(' ')[0]}` : 'Signed in', 'ok');
+              }
+              location.hash = '#/home'; render();
+            } catch (ex) {
+              err.textContent = ex.message;
+              button.disabled = false;
+              $('#tabLogin').disabled = false;
+              $('#tabReg').disabled = false;
+              button.removeAttribute('aria-busy');
+              button.textContent = mode === 'register' ? 'Create account' : 'Log in';
+            }
+          }, 200);
         } catch (ex) { err.textContent = ex.message; }
       };
     },

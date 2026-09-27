@@ -67,6 +67,7 @@
   --space-7: 1rem;     /* [38] most used */
   --space-8: 1.2rem;   /* [10] */
   --space-9: 1.4rem;   /* [4] */
+  --space-auth-heading: .8rem;
   --tap-min: 48px;     /* base.css:46 --tap */
 
   /* ---------- radius · base.css:41-42 + most-used literals ---------- */
