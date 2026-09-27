@@ -24,7 +24,7 @@
   const machine = () => DB.machines.byId(machineId);
 
   /* ---------- session state ---------- */
-  const S = { screen: '1.1', mode: null, user: null, items: [], total: 0, linkCode: null, alerted: false, reward: null };
+  const S = { screen: '1.1', mode: null, user: null, items: [], total: 0, pendingItem: null, rejectReason: null, linkCode: null, alerted: false, reward: null };
   let timers = [];
   let idleTimer = null;
   const later = (ms, fn) => { const t = setTimeout(fn, ms); timers.push(t); return t; };
@@ -68,7 +68,7 @@
 
   function resetSession() {
     if (S.linkCode) DB.links.cancel(S.linkCode);
-    Object.assign(S, { mode: null, user: null, items: [], total: 0, linkCode: null, alerted: false, reward: null });
+    Object.assign(S, { mode: null, user: null, items: [], total: 0, pendingItem: null, rejectReason: null, linkCode: null, alerted: false, reward: null });
   }
 
   /* ---------- navigation ---------- */
@@ -251,9 +251,9 @@
     },
 
     '4.2': () => `
-      <div class="scan-frame"><div class="bottle"></div></div>
+      <div class="scan-frame" aria-hidden="true"><div class="bottle"></div></div>
       <h2>Scanning…</h2>
-      <p class="sub">Checking material and weight</p>`,
+      <p class="sub" role="status" aria-live="polite">Checking ${esc(S.pendingItem ? S.pendingItem.label : 'the item')} for material and weight.</p>`,
 
     '4.3': () => {
       const last = S.items[S.items.length - 1];
@@ -524,10 +524,14 @@
     },
     '4.2': () => later(1700, () => {
       const pending = S.pendingItem; S.pendingItem = null;
-      if (!pending) { go('4.4'); return; }
-      S.items.push(pending); S.total = round2(S.total + pending.value);
-      // fill-level sensor: each item adds ~1.5% to the bin
       const m = machine();
+      const availability = m && DB.machines.availability(m);
+      if (!pending) { S.rejectReason = 'We could not identify this item type.'; go('4.4'); return; }
+      if (!availability || !availability.online) { S.rejectReason = 'The machine became unavailable during the scan. Keep the item and try another machine.'; go('4.4'); return; }
+      if (availability.binFull) { S.rejectReason = 'The bin became full during the scan. Keep the item and try again later.'; go('4.4'); return; }
+      S.items.push(pending); S.total = round2(S.total + pending.value);
+      S.rejectReason = null;
+      // fill-level sensor: each item adds ~1.5% to the bin
       DB.machines.patch(machineId, { binLevel: clamp(round2(m.binLevel + 1.5), 0, 100) });
       go('4.3');
     }),
@@ -584,6 +588,7 @@
     const a = m && DB.machines.availability(m);
     if (!a || !a.online || a.binFull) { toast(!a || !a.online ? 'Machine unavailable — cannot scan items' : 'Bin is full — cannot accept more items', 'danger'); go('4.1'); return; }
     const r = DB.config.rewardFor(typeId);
+    S.rejectReason = r ? null : 'We could not identify this item type.';
     S.pendingItem = r ? { type: r.id, label: r.label, value: r.value } : null;
     go('4.2');
   }
