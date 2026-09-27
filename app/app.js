@@ -152,7 +152,7 @@
     coins: ['Coins dispensed', C.coins, ICON.coins, (t) => `<div class="amt">${fmtPeso(t.total)}<small>coins</small></div>`],
     wifi: ['Wi-Fi voucher', C.wifi, ICON.wifi, (t) => `<div class="amt">${t.minutes || 0} min<small>${esc(t.voucherCode || '')}</small></div>`],
     save: ['Points saved', C.pts, ICON.pts, (t) => `<div class="amt" style="color:var(--green-700)">+${t.points} pts<small>${fmtPeso(t.total)}</small></div>`],
-    claim: ['Wi-Fi claimed', C.wifi, ICON.wifi, (t) => `<div class="amt" style="color:var(--danger)">−${Math.abs(t.points)} pts<small>${t.minutes} min</small></div>`],
+    adjust: ['Points adjusted', C.pts, ICON.pts, (t) => `<div class="amt" style="color:${Number(t.points) < 0 ? 'var(--danger)' : 'var(--green-700)'}">${Number(t.points) > 0 ? '+' : '−'}${Math.abs(t.points || 0)} pts<small>${esc(t.note || 'Owner adjustment')}</small></div>`],
     'convert-coins': ['Points → coins', C.coins, ICON.swap, (t) => `<div class="amt" style="color:var(--coin)">+${fmtPeso(t.total)}<small>−${Math.abs(t.points)} pts</small></div>`],
     'convert-wifi': ['Points → Wi-Fi', C.wifi, ICON.swap, (t) => `<div class="amt" style="color:var(--wifi)">+${fmtMin(t.minutes)}<small>−${Math.abs(t.points)} pts</small></div>`],
     cashout: ['Cash-out code', C.coins, ICON.cash, (t) => `<div class="amt" style="color:var(--danger)">−${fmtPeso(t.total)}<small>${esc(t.code || '')}</small></div>`],
@@ -401,8 +401,8 @@
         all: () => true,
         recycling: (t) => ['save', 'coins', 'wifi'].includes(t.reward) && t.machineId,
         coins: (t) => /coins|cashout/.test(t.reward),
-        wifi: (t) => /wifi|claim|voucher/.test(t.reward),
-        points: (t) => ['save', 'convert-coins', 'convert-wifi', 'claim', 'bundle'].includes(t.reward),
+        wifi: (t) => /wifi|voucher/.test(t.reward),
+        points: (t) => ['save', 'adjust', 'convert-coins', 'convert-wifi', 'bundle'].includes(t.reward),
       };
       const tx = all.filter(F[histFilter] || F.all);
       const total = round2(all.reduce((n, t) => n + (t.machineId ? t.total : 0), 0));
