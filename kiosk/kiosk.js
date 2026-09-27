@@ -228,19 +228,25 @@
     },
 
     '4.1': () => {
+      const m = machine();
+      const a = m ? DB.machines.availability(m) : { online: false, binFull: false };
       const table = DB.config.get().rewardTable;
+      const ready = !!m && a.online && !a.binFull;
+      const disabledItems = ready ? '' : 'disabled';
+      const notice = !m ? 'No recycling machine is configured.' : !a.online ? `Machine ${esc(m.name)} is ${esc(m.status)}.` : a.binFull ? 'The recycling bin is full.' : '';
       return `
       <div class="icon-circle bounce">${ICON.down}</div>
       <h1>Insert your bottle or can</h1>
-      <p class="sub">Plastic bottles and aluminium cans</p>
-      ${S.items.length ? `<div class="chip">Session total <b>${fmtPeso(S.total)}</b> · ${S.items.length} item${S.items.length > 1 ? 's' : ''}</div>
-        <div class="actions"><button class="btn btn-outline" data-go="6.1">CLAIM REWARDS</button></div>` : ''}
+      <p class="sub" role="${ready ? 'status' : 'alert'}">${ready ? `Plastic bottles and aluminium cans · ${esc(m.name)}` : esc(notice)}</p>
+      ${S.items.length ? `<div class="chip" role="status">Session total <b>${fmtPeso(S.total)}</b> · ${S.items.length} item${S.items.length > 1 ? 's' : ''}</div>
+        <div class="actions"><button class="btn btn-outline" data-go="6.1" ${a.online ? '' : 'disabled'}>CLAIM REWARDS</button></div>` : ''}
       <div class="sim">
         <div class="sim-title">Demo · sensor simulator — insert an item</div>
-        <div class="sim-btns">
-          ${table.map((r) => `<button class="btn btn-outline" data-insert="${r.id}">${esc(r.label)} <small>${fmtPeso(r.value)}</small></button>`).join('')}
-          <button class="btn btn-danger" data-insert="invalid">Unknown item</button>
-        </div>
+        ${table.length ? `<div class="sim-btns">
+          ${table.map((r) => `<button class="btn btn-outline" data-insert="${esc(r.id)}" ${disabledItems}>${esc(r.label)} <small>${fmtPeso(r.value)}</small></button>`).join('')}
+          <button class="btn btn-danger" data-insert="invalid" ${disabledItems}>Unknown item</button>
+        </div>` : '<p class="sub" role="alert">No recyclable item types are configured.</p>'}
+        ${S.items.length ? '' : `<div class="actions"><button class="btn btn-ghost" data-go="7.2">CANCEL</button></div>`}
       </div>`;
     },
 
@@ -574,8 +580,9 @@
 
   /* ---------- domain actions ---------- */
   function insertItem(typeId) {
-    const a = DB.machines.availability(machine());
-    if (a.binFull) { toast('Bin is full — cannot accept more items', 'danger'); return; }
+    const m = machine();
+    const a = m && DB.machines.availability(m);
+    if (!a || !a.online || a.binFull) { toast(!a || !a.online ? 'Machine unavailable — cannot scan items' : 'Bin is full — cannot accept more items', 'danger'); go('4.1'); return; }
     const r = DB.config.rewardFor(typeId);
     S.pendingItem = r ? { type: r.id, label: r.label, value: r.value } : null;
     go('4.2');
