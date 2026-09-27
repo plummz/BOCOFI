@@ -73,6 +73,19 @@
         cashoutMinAmount: 1,
         cashoutTtlHours: 24,
         wifiTopupOptions: [10, 30, 60],
+        tiers: [
+          { name: 'Seedling', min: 0, emoji: '🌱' },
+          { name: 'Sprout', min: 25, emoji: '🌿' },
+          { name: 'Tree', min: 100, emoji: '🌳' },
+          { name: 'Forest', min: 250, emoji: '🌲' },
+        ],
+        rewardBundles: [
+          { id: 'wifi30', kind: 'wifi', label: '30 min Wi-Fi', sub: 'Wi-Fi time for a short session', minutes: 30, points: 300 },
+          { id: 'wifi60', kind: 'wifi', label: '1 hour Wi-Fi', sub: 'Save points compared with standard conversion', minutes: 60, points: 550 },
+          { id: 'wifi180', kind: 'wifi', label: '3 hours Wi-Fi', sub: 'Long session Wi-Fi time', minutes: 180, points: 1500 },
+          { id: 'coin5', kind: 'coins', label: '₱5 coin balance', sub: 'Cash out at a kiosk', pesos: 5, points: 500 },
+          { id: 'coin10', kind: 'coins', label: '₱10 coin balance', sub: 'Cash out at a kiosk', pesos: 10, points: 1000 },
+        ],
         binAlertThreshold: 80,       // % — crusher runs, owner notified
         binFullThreshold: 95,        // % — machine refuses new items
         coinLowThreshold: 10,        // % — coins unavailable below this
@@ -105,6 +118,8 @@
     if (typeof d.config.cashoutMinAmount !== 'number') d.config.cashoutMinAmount = 1;
     if (typeof d.config.cashoutTtlHours !== 'number') d.config.cashoutTtlHours = 24;
     if (!Array.isArray(d.config.wifiTopupOptions)) d.config.wifiTopupOptions = [10, 30, 60];
+    if (!Array.isArray(d.config.tiers)) d.config.tiers = seed().config.tiers;
+    if (!Array.isArray(d.config.rewardBundles)) d.config.rewardBundles = seed().config.rewardBundles;
     (d.users || []).forEach((u) => {
       if (typeof u.coins !== 'number') u.coins = 0;
       if (typeof u.wifiMinutes !== 'number') u.wifiMinutes = 0;

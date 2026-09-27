@@ -32,16 +32,8 @@
     info: '<svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 11v5"/></svg>',
   };
   const C = { coins: 'var(--coin)', wifi: 'var(--wifi)', pts: 'var(--green-500)', warn: 'var(--warn)', info: 'var(--info)', tier: 'var(--c-rewards)' };
-  const TIERS = [{ name: 'Seedling', min: 0, emoji: '🌱' }, { name: 'Sprout', min: 25, emoji: '🌿' }, { name: 'Tree', min: 100, emoji: '🌳' }, { name: 'Forest', min: 250, emoji: '🌲' }];
+  const tiers = () => cfg().tiers || [];
   const DIST = { 'BCF-001': 0.4, 'BCF-002': 1.2, 'BCF-003': 2.8 }; // demo distances (km)
-  const BUNDLES = [
-    { id: 'wifi30', kind: 'wifi', label: '30 min Wi-Fi', sub: 'Free Wi-Fi at any BOCO-FI hotspot', minutes: 30, pts: 300 },
-    { id: 'wifi60', kind: 'wifi', label: '1 hour Wi-Fi', sub: 'Save 50 pts vs converting', minutes: 60, pts: 550, save: '−8%' },
-    { id: 'wifi180', kind: 'wifi', label: '3 hours Wi-Fi', sub: 'Best value for study sessions', minutes: 180, pts: 1500, save: '−17%' },
-    { id: 'coin5', kind: 'coins', label: '₱5 coin balance', sub: 'Cash out at any kiosk', pesos: 5, pts: 500 },
-    { id: 'coin10', kind: 'coins', label: '₱10 coin balance', sub: 'Cash out at any kiosk', pesos: 10, pts: 1000 },
-  ];
-
   /* ---------- helpers ---------- */
   function toast(msg, kind = '') { const el = document.createElement('div'); el.className = 'toast ' + kind; el.textContent = msg; $('#toasts').appendChild(el); setTimeout(() => el.remove(), 2800); }
   const me = () => DB.users.current();
@@ -55,8 +47,9 @@
   const ago = (ts) => { const d = Date.now() - ts; if (d < 60e3) return 'now'; if (d < 3600e3) return Math.floor(d / 60e3) + 'm'; if (d < 86400e3) return Math.floor(d / 3600e3) + 'h'; return Math.floor(d / 86400e3) + 'd'; };
   const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'; };
   function tierOf(bottles) {
-    let t = TIERS[0]; TIERS.forEach((x) => { if (bottles >= x.min) t = x; });
-    const next = TIERS[TIERS.indexOf(t) + 1] || null;
+    const list = tiers();
+    let t = list[0] || { name: 'Member', min: 0, emoji: '' }; list.forEach((x) => { if (bottles >= x.min) t = x; });
+    const next = list[list.indexOf(t) + 1] || null;
     return { t, next, progress: next ? (bottles - t.min) / (next.min - t.min) : 1 };
   }
   const rankOf = (u) => DB.users.all().slice().sort((a, b) => (b.bottles || 0) - (a.bottles || 0)).findIndex((x) => x.id === u.id) + 1;
@@ -365,23 +358,32 @@
       </div>`;
     },
 
-    redeem: (u) => `
+    redeem: (u) => {
+      const c = cfg(); const bundles = c.rewardBundles || [];
+      return `
       <div class="page-title"><h2>Rewards</h2><span class="badge ok">${fmtPts(u.points)}</span></div>
-      <p class="muted">Spend stacked points on bundles. Bigger Wi-Fi bundles cost fewer points per minute.</p>
-      ${BUNDLES.map((b) => `<div class="card bundle mb">
-        <div class="b-ico tile ${b.kind}">${b.kind === 'wifi' ? ICON.wifi : ICON.coins}</div>
-        <div class="b-body"><b>${esc(b.label)} ${b.save ? `<span class="save-tag">${b.save}</span>` : ''}</b><small>${esc(b.sub)}</small></div>
-        <div class="b-price"><b>${b.pts} pts</b><button class="btn btn-sm ${u.points >= b.pts ? '' : 'btn-outline'}" data-bundle="${b.id}" ${u.points >= b.pts ? '' : 'disabled'}>${u.points >= b.pts ? 'Redeem' : 'Need ' + (b.pts - u.points)}</button></div>
-      </div>`).join('')}
+      <p class="muted">Spend stacked points on Wi-Fi time or coin balance.</p>
+      <div id="redeemErr" class="error" role="alert" aria-live="polite"></div>
+      ${bundles.length ? bundles.map((b) => {
+        const affordable = u.points >= b.points;
+        const standard = b.kind === 'wifi' ? b.minutes * (c.pointsPerPeso / c.wifiMinutesPerPeso) : 0;
+        const save = standard > b.points ? Math.round((1 - b.points / standard) * 100) : 0;
+        return `<div class="card bundle mb">
+          <div class="b-ico tile ${esc(b.kind)}">${b.kind === 'wifi' ? ICON.wifi : ICON.coins}</div>
+          <div class="b-body"><b>${esc(b.label)} ${save ? `<span class="save-tag">Save ${save}%</span>` : ''}</b><small>${esc(b.sub)}</small></div>
+          <div class="b-price"><b>${b.points} pts</b><button class="btn btn-sm ${affordable ? '' : 'btn-outline'}" data-bundle="${esc(b.id)}" ${affordable ? '' : 'disabled'}>${affordable ? 'Redeem' : 'Need ' + (b.points - u.points)}</button></div>
+        </div>`;
+      }).join('') : '<div class="card empty" role="status">No reward bundles are available right now.</div>'}
       <div class="card">
         <h4>Earn more points</h4>
         <ul class="steps">
-          <li><div><b>Recycle and choose SAVE</b><br><small class="muted">${cfg().pointsPerPeso} pts for every ₱1 of items.</small></div></li>
-          <li><div><b>Level up</b><br><small class="muted">Reach ${TIERS[2].name} (${TIERS[2].min} items) and ${TIERS[3].name} (${TIERS[3].min} items) for bonus perks.</small></div></li>
-          <li><div><b>Invite a friend</b><br><small class="muted">Share your code <b class="mono">${esc(u.id)}</b> — bonus points arrive after their first recycling session.</small></div></li>
+          <li><div><b>Recycle and choose SAVE</b><br><small class="muted">${c.pointsPerPeso} pts for every ₱1 of items.</small></div></li>
+          <li><div><b>Track your tier</b><br><small class="muted">Your tier follows the item thresholds listed in your profile.</small></div></li>
+          <li><div><b>Invite a friend</b><br><small class="muted">Share your invite code <b class="mono">${esc(u.id)}</b>.</small></div></li>
         </ul>
         <button class="btn btn-outline btn-block" id="btnShare">Share my invite code</button>
-      </div>`,
+      </div>`;
+    },
 
     machines: () => {
       const ms = DB.machines.all().slice().sort((a, b) => (DIST[a.id] || 9) - (DIST[b.id] || 9));
@@ -468,7 +470,7 @@
         <details class="faq"><summary>How does Wi-Fi time work?</summary><p>Your Wi-Fi time only counts down while you're connected. Join the <b>BOCO-FI Free Wi-Fi</b> network near a kiosk, tap <b>Connect</b> in the app, and tap <b>Disconnect</b> when you're done. Vouchers from kiosks can be added to your time bank.</p></details>
         <details class="faq"><summary>Which items are accepted?</summary><p>Empty, uncrushed PET plastic bottles (Sakto up to 1.5 L) and aluminium cans. Glass, tetra packs and other plastics are returned through the drawer.</p></details>
         <details class="faq"><summary>The machine said no rewards are available</summary><p>The kiosk checks its coin hopper and Wi-Fi signal before each session. If a reward isn't available you can still choose the others, or <b>SAVE</b> to points and spend later.</p></details>
-        <details class="faq"><summary>How do tiers work?</summary><p>${TIERS.map((t) => `${t.emoji} ${t.name} from ${t.min} items`).join(' · ')}. Higher tiers unlock bonus bundles in Rewards.</p></details>
+        <details class="faq"><summary>How do tiers work?</summary><p>${tiers().map((t) => `${t.emoji} ${t.name} from ${t.min} items`).join(' · ')}. Your tier tracks your recycled items.</p></details>
       </div>
       <div class="card">
         <h4>Contact</h4>
@@ -640,15 +642,32 @@
 
     redeem(u) {
       $$('[data-bundle]').forEach((b) => b.addEventListener('click', () => {
-        const bd = BUNDLES.find((x) => x.id === b.dataset.bundle); if (!bd || u.points < bd.pts) return;
-        DB.users.addPoints(u.id, -bd.pts);
-        if (bd.kind === 'wifi') addWifiTime(u, bd.minutes); else DB.users.addCoins(u.id, bd.pesos);
-        DB.transactions.add({ machineId: null, userId: u.id, items: [], total: bd.pesos || pesos(bd.pts), reward: 'bundle', points: -bd.pts, minutes: bd.minutes || 0, label: bd.label });
-        toast(`${bd.label} redeemed 🎉`, 'ok'); render();
+        if (b.disabled) return;
+        const bd = (cfg().rewardBundles || []).find((x) => x.id === b.dataset.bundle);
+        const latest = DB.users.byId(u.id); const err = $('#redeemErr'); err.textContent = '';
+        if (!bd || !latest) { err.textContent = 'This reward is no longer available. Refresh and try again.'; return; }
+        if (latest.points < bd.points) { err.textContent = 'You do not have enough points for this reward.'; render(); return; }
+        b.disabled = true; b.setAttribute('aria-busy', 'true'); b.textContent = 'Redeeming…';
+        setTimeout(() => {
+          const current = DB.users.byId(u.id);
+          const currentBundle = (cfg().rewardBundles || []).find((x) => x.id === bd.id);
+          if (!current || !currentBundle || current.points < currentBundle.points) { toast('Your balance or this offer changed. Review the latest rewards and try again.', 'danger'); render(); return; }
+          DB.users.addPoints(u.id, -currentBundle.points);
+          if (currentBundle.kind === 'wifi') addWifiTime(current, currentBundle.minutes); else DB.users.addCoins(u.id, currentBundle.pesos);
+          DB.transactions.add({ machineId: null, userId: u.id, items: [], total: currentBundle.pesos || pesos(currentBundle.points), reward: 'bundle', points: -currentBundle.points, minutes: currentBundle.minutes || 0, label: currentBundle.label });
+          toast(`${currentBundle.label} redeemed`, 'ok'); render();
+        }, 200);
       }));
       $('#btnShare').onclick = async () => {
         const text = `Join me on BOCO-FI — recycle bottles, earn coins and free Wi-Fi. My invite code: ${u.id}`;
-        try { if (navigator.share) await navigator.share({ title: 'BOCO-FI', text }); else { await navigator.clipboard.writeText(text); toast('Invite copied to clipboard', 'ok'); } } catch { /* cancelled */ }
+        const button = $('#btnShare'); if (button.disabled) return;
+        button.disabled = true; button.setAttribute('aria-busy', 'true'); button.textContent = 'Preparing invite…';
+        try {
+          if (navigator.share) await navigator.share({ title: 'BOCO-FI', text });
+          else if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(text); toast('Invite copied to clipboard', 'ok'); }
+          else throw new Error('Sharing is not available in this browser.');
+        } catch (ex) { if (ex.name !== 'AbortError') toast(ex.message || 'Could not share the invite.', 'danger'); }
+        finally { if (button.isConnected) { button.disabled = false; button.removeAttribute('aria-busy'); button.textContent = 'Share my invite code'; } }
       };
     },
 
