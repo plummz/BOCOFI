@@ -91,7 +91,7 @@ body { font-size: var(--text-size-35); }
 
 /* 2.2 QR */
 .qr-box { background: var(--color-white); padding: var(--space-value-14px); border-radius: 18px; box-shadow: var(--shadow); }
-.qr-box canvas { display: block; width: clamp(160px, 24vw, 240px); height: auto; image-rendering: pixelated; }
+.qr-box canvas { display: block; width: clamp(120px, min(24vw, 26vh), 240px); height: auto; image-rendering: pixelated; }
 .qr-code { font-family: ui-monospace, Menlo, monospace; font-size: var(--text-size-26); letter-spacing: var(--space-value-0-3em); font-weight: 800; color: var(--blue-700); }
 
 /* 4.2 scanning */

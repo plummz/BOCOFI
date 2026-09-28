@@ -152,7 +152,8 @@
       <div class="qr-box"><canvas id="qr" width="29" height="29" aria-label="Decorative QR preview; use the code below"></canvas></div>
       <p class="sub" id="linkStatus" role="status">Open Link to Machine and enter this one-time code.</p>
       <div class="qr-code" id="qrCode">Preparing…</div>
-      <div class="actions"><button class="btn btn-ghost" data-go="2.0">BACK</button></div>`;
+      <div class="actions"><button class="btn btn-ghost" data-go="2.0">BACK</button><button class="btn btn-lg" id="btnScanCode">SCAN CODE</button></div>
+      <p class="help">Demo: SCAN CODE stands in for the phone scan and links the account logged in to the app (or the demo user).</p>`;
     },
 
     '2.2': () => S.user ? `
@@ -504,6 +505,12 @@
       S.linkCode = DB.links.create(machineId);
       $('#qrCode', el).textContent = S.linkCode;
       drawQR($('#qr', el), `BOCOFI:${machineId}:${S.linkCode}`);
+      $('#btnScanCode', el).addEventListener('click', () => {
+        // Figma 2.1 "Scan Code" -> 2.2: simulate the app scan for this code
+        const d = DB.get(); const who = (d.appSession && DB.users.byId(d.appSession)) || DB.users.all()[0];
+        if (!who || !S.linkCode) { toast('No account available to link', 'danger'); return; }
+        try { DB.links.resolve(S.linkCode, who.id); } catch (ex) { toast(ex.message, 'danger'); }
+      });
       const poll = () => {
         if (S.screen !== '2.1' || !S.linkCode) return;
         if (machine()?.status !== 'online') {
@@ -963,11 +970,14 @@
   /* ---------- pseudo QR renderer (deterministic pattern with finder squares) ---------- */
   function drawQR(canvas, text) {
     const N = 29, ctx = canvas.getContext('2d');
+    const css = getComputedStyle(document.documentElement);
+    const WHITE = css.getPropertyValue('--color-white').trim() || '#ffffff';
+    const INK = css.getPropertyValue('--color-ink').trim() || '#1d2733';
     let h = 2166136261;
     for (let i = 0; i < text.length; i++) { h ^= text.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
     const rnd = () => { h ^= h << 13; h >>>= 0; h ^= h >> 17; h ^= h << 5; h >>>= 0; return h / 4294967296; };
-    ctx.fillStyle = 'var(--color-white)'; ctx.fillRect(0, 0, N, N); ctx.fillStyle = 'var(--color-ink)';
-    const finder = (x, y) => { ctx.fillRect(x, y, 7, 7); ctx.fillStyle = 'var(--color-white)'; ctx.fillRect(x + 1, y + 1, 5, 5); ctx.fillStyle = 'var(--color-ink)'; ctx.fillRect(x + 2, y + 2, 3, 3); };
+    ctx.fillStyle = WHITE; ctx.fillRect(0, 0, N, N); ctx.fillStyle = INK;
+    const finder = (x, y) => { ctx.fillRect(x, y, 7, 7); ctx.fillStyle = WHITE; ctx.fillRect(x + 1, y + 1, 5, 5); ctx.fillStyle = INK; ctx.fillRect(x + 2, y + 2, 3, 3); };
     for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
       const inFinder = (x < 8 && y < 8) || (x >= N - 8 && y < 8) || (x < 8 && y >= N - 8);
       if (!inFinder && rnd() > 0.55) ctx.fillRect(x, y, 1, 1);

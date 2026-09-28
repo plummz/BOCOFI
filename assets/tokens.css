@@ -54,7 +54,7 @@
   --color-line: #dfe5ec;
 
   /* ---------- status · base.css:36-39, badge colours base.css:130-133 ---------- */
-  --color-ok: #2e9e5b;
+  --color-ok: #3F5523;          /* Figma: success uses BOCOFI green too */
   --color-warn: #e0a51e;
   --color-danger: #d43f55;
   --color-info: var(--bocofi-blue-700);
