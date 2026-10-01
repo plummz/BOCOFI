@@ -1,9 +1,3 @@
-/* ==========================================================================
-   BOCO-FI · user app
-   Views: auth · home · wallet · recycle · wifi · redeem · machines · history ·
-          notifications · leaderboard · profile · help
-   Balances: stacked points · coin balance (₱) · Wi-Fi time remaining
-   ========================================================================== */
 (function () {
   'use strict';
   const DB = window.BocofiDB;
@@ -33,7 +27,6 @@
   };
   const C = { coins: 'var(--coin)', wifi: 'var(--wifi)', pts: 'var(--green-500)', warn: 'var(--warn)', info: 'var(--info)', tier: 'var(--c-rewards)' };
   const tiers = () => cfg().tiers || [];
-  /* ---------- helpers ---------- */
   function toast(msg, kind = '') { const el = document.createElement('div'); el.className = 'toast ' + kind; el.textContent = msg; $('#toasts').appendChild(el); setTimeout(() => el.remove(), 2800); }
   const me = () => DB.users.current();
   const cfg = () => DB.config.get();
@@ -54,7 +47,6 @@
   const rankOf = (u) => DB.users.all().slice().sort((a, b) => (b.bottles || 0) - (a.bottles || 0)).findIndex((x) => x.id === u.id) + 1;
   const wifiLeftLabel = (u) => (u.wifiSession ? fmtClock(wifiRemaining(u) * 60) : fmtMin(u.wifiMinutes));
 
-  /* ---------- Wi-Fi time bank ---------- */
   function wifiRemaining(u) { if (!u.wifiSession) return u.wifiMinutes || 0; return Math.max(0, u.wifiSession.minutesAtStart - (Date.now() - u.wifiSession.startedAt) / 60000); }
   function wifiConnect(u) {
     if ((u.wifiMinutes || 0) <= 0.05) { toast('No Wi-Fi time left. Convert points to top up.', 'danger'); return; }
@@ -68,13 +60,11 @@
     if (used >= 0.05) DB.transactions.add({ machineId: null, userId: u.id, items: [], total: 0, reward: 'wifi-use', points: 0, minutes: used });
     if (!quiet) toast(`Disconnected · ${fmtMin(used)} used`);
   }
-  /** add minutes to the bank, keeping a running session's countdown in sync */
   function addWifiTime(u, minutes) {
     DB.users.addWifi(u.id, minutes);
     if (u.wifiSession) DB.users.patch(u.id, { wifiSession: { ...u.wifiSession, minutesAtStart: u.wifiSession.minutesAtStart + minutes } });
   }
 
-  /* ---------- notifications (derived from shared data) ---------- */
   const TX_NOTE = {
     save: ['Points added', (t) => `+${t.points} pts saved from ${t.items.length} item${t.items.length === 1 ? '' : 's'}`, 'pts', ICON.pts],
     coins: ['Coins dispensed', (t) => `${fmtPeso(t.total)} in coins at the kiosk`, 'coins', ICON.coins],
@@ -100,7 +90,6 @@
   }
   const unreadCount = (u) => notifsFor(u).filter((n) => !n.read).length;
 
-  /* ---------- weekly chart ---------- */
   function weekly(u) {
     const tx = DB.transactions.forUser(u.id); const days = [];
     for (let i = 6; i >= 0; i--) {
@@ -111,7 +100,6 @@
     return days;
   }
 
-  /* ---------- drawer ---------- */
   const drawer = $('#drawer'), overlay = $('#drawerOverlay');
   function openDrawer() { drawer.classList.add('open'); drawer.setAttribute('aria-hidden', 'false'); overlay.hidden = false; $('#btnMenu').setAttribute('aria-expanded', 'true'); document.body.style.overflow = 'hidden'; }
   function closeDrawer() { drawer.classList.remove('open'); drawer.setAttribute('aria-hidden', 'true'); overlay.hidden = true; $('#btnMenu').setAttribute('aria-expanded', 'false'); document.body.style.overflow = ''; }
@@ -123,7 +111,6 @@
   function logout() { const u = me(); if (u) wifiDisconnect(u, true); DB.users.logout(); authTab = 'login'; closeDrawer(); location.hash = '#/home'; render(); }
   $('#btnDrawerLogout').addEventListener('click', logout);
 
-  /* ---------- router ---------- */
   function route() { const h = (location.hash || '#/home').replace(/^#\/?/, '').split('?')[0]; return ROUTES.includes(h) ? h : 'home'; }
   function goto(v) { closeDrawer(); if (route() === v) render(); else location.hash = '#/' + v; }
   window.addEventListener('hashchange', render);
@@ -147,7 +134,6 @@
     view.scrollTop = 0; window.scrollTo(0, 0);
   }
 
-  /* ---------- shared fragments ---------- */
   const TX_META = {
     coins: ['Coins dispensed', C.coins, ICON.coins, (t) => `<div class="amt">${fmtPeso(t.total)}<small>coins</small></div>`],
     wifi: ['Wi-Fi voucher', C.wifi, ICON.wifi, (t) => `<div class="amt">${t.minutes || 0} min<small>${esc(t.voucherCode || '')}</small></div>`],
@@ -187,7 +173,6 @@
     </div>`;
   }
 
-  /* ---------- views ---------- */
   const VIEWS = {
     auth: () => {
       const accounts = DB.users.all();
@@ -485,7 +470,6 @@
       </div>`,
   };
 
-  /* ---------- behaviours ---------- */
   const AFTER = {
     auth() {
       $('#tabLogin').onclick = () => { authTab = 'login'; render(); };
@@ -715,7 +699,6 @@
     },
   };
 
-  /* ---------- live Wi-Fi countdown (no full re-render) ---------- */
   setInterval(() => {
     const u = me(); if (!u || !u.wifiSession) return;
     const rem = wifiRemaining(u);
@@ -724,11 +707,9 @@
     const ring = $('#ring'); if (ring) ring.style.setProperty('--p', Math.round(rem / u.wifiSession.minutesAtStart * 100));
   }, 1000);
 
-  /* ---------- PWA install prompt ---------- */
   let deferredInstall = null;
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredInstall = e; });
 
-  // re-render when the kiosk or admin changes shared data in another tab
   DB.on((d, source) => { if (source !== 'local') render(); });
   render();
 

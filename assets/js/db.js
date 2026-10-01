@@ -1,14 +1,3 @@
-/* ==========================================================================
-   BOCO-FI · shared data layer
-   --------------------------------------------------------------------------
-   One localStorage document shared by the kiosk, the user app and the admin
-   dashboard. Cross-tab sync uses the `storage` event, so all three surfaces
-   can be open in separate tabs and react to each other live.
-
-   This stands in for a real backend. Swap the load()/save() functions for
-   API calls when a server exists — the rest of the code only talks to the
-   helpers exported below.
-   ========================================================================== */
 (function (global) {
   'use strict';
 
@@ -16,7 +5,6 @@
   const listeners = new Set();
   let db = null;
 
-  /* ---------- utilities ---------- */
   const uid = (p = '') => p + Math.random().toString(36).slice(2, 8).toUpperCase() + Date.now().toString(36).slice(-3).toUpperCase();
   const now = () => Date.now();
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
@@ -27,7 +15,6 @@
   const fmtTime = (ts) => new Date(ts).toLocaleTimeString([], { timeStyle: 'short' });
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-  /* ---------- seed data ---------- */
   function seed() {
     const t = now();
     const h = 3600 * 1000;
@@ -67,8 +54,8 @@
           { id: 'b15l', label: '1.5 L bottle', hint: 'PET', value: 0.20 },
           { id: 'can', label: 'Aluminium can', hint: '330 ml', value: 0.25 },
         ],
-        pointsPerPeso: 100,          // ₱1.40 → 140 pts (matches wireframe 6.6)
-        wifiMinutesPerPeso: 10,      // ₱1.40 → 14 min of Wi-Fi
+        pointsPerPeso: 100,
+        wifiMinutesPerPeso: 10,
         cashoutDenominations: [1, 5, 10, 20],
         cashoutMinAmount: 1,
         cashoutTtlHours: 24,
@@ -86,11 +73,11 @@
           { id: 'coin5', kind: 'coins', label: '₱5 coin balance', sub: 'Cash out at a kiosk', pesos: 5, points: 500 },
           { id: 'coin10', kind: 'coins', label: '₱10 coin balance', sub: 'Cash out at a kiosk', pesos: 10, points: 1000 },
         ],
-        binAlertThreshold: 80,       // % — crusher runs, owner notified
-        binFullThreshold: 95,        // % — machine refuses new items
-        coinLowThreshold: 10,        // % — coins unavailable below this
+        binAlertThreshold: 80,
+        binFullThreshold: 95,
+        coinLowThreshold: 10,
         voucherTtlHours: 24,
-        voucherDisplaySeconds: 30,   // wireframe 6.5 "Disappears in 30 seconds"
+        voucherDisplaySeconds: 30,
         idleTimeoutSeconds: 90,
         supportEmail: 'support@bocofi.ph',
         adminUser: 'admin',
@@ -102,15 +89,13 @@
       transactions,
       vouchers,
       alerts,
-      cashouts: [],   // app cash-out codes redeemed at a kiosk → { code, userId, amount, status, createdAt }
-      links: {},        // kiosk QR login codes → { machineId, status, userId, createdAt }
-      appSession: null, // user app: logged-in user id
+      cashouts: [],
+      links: {},
+      appSession: null,
       adminSession: null,
     };
   }
 
-  /* ---------- persistence ---------- */
-  /** Fill in fields added after a store was first seeded (safe on every load). */
   function migrate(d) {
     if (!d || typeof d !== 'object') return seed();
     if (!Array.isArray(d.users)) d.users = [];
@@ -169,7 +154,6 @@
     emit('remote');
   });
 
-  /* ---------- domain helpers ---------- */
   const users = {
     all: () => get().users,
     byId: (id) => get().users.find((u) => u.id === id) || null,
@@ -201,7 +185,6 @@
     all: () => get().machines,
     byId: (id) => get().machines.find((m) => m.id === id) || null,
     patch(id, fields) { update((d) => { const m = d.machines.find((x) => x.id === id); if (m) Object.assign(m, fields); }); },
-    /** availability derived from sensor state + owner toggles */
     availability(m) {
       const c = get().config;
       const online = m.status === 'online';
@@ -251,7 +234,6 @@
     clear() { update((d) => { d.alerts = []; }); },
   };
 
-  /** Cash-out codes: the app locks coin balance behind a code the user shows at a kiosk. */
   const cashouts = {
     all: () => get().cashouts.slice().sort((a, b) => b.createdAt - a.createdAt),
     forUser: (userId) => cashouts.all().filter((c) => c.userId === userId),
@@ -297,12 +279,10 @@
     status(c) { if (c.status !== 'pending') return c.status; if (c.expiresAt < now()) return 'expired'; return 'pending'; },
   };
 
-  /** QR login handshake: kiosk creates a code, the app resolves it. */
   const links = {
     create(machineId) {
       const code = Math.random().toString(36).slice(2, 6).toUpperCase().replace(/[O0I1]/g, 'X');
       update((d) => {
-        // prune stale codes (older than 5 min)
         Object.keys(d.links).forEach((k) => { if (now() - d.links[k].createdAt > 5 * 60 * 1000) delete d.links[k]; });
         d.links[code] = { machineId, status: 'pending', userId: null, createdAt: now() };
       });
@@ -337,7 +317,6 @@
     current: () => get().adminSession,
   };
 
-  /** Aggregate stats for the owner dashboard */
   function stats() {
     const d = get();
     const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0);

@@ -1,14 +1,3 @@
-/* ==========================================================================
-   BOCO-FI · kiosk state machine
-   Implements every screen of the Figma kiosk flow (numbering 1.0 → 7.1):
-     1.0 Display Page · 1.1 Start
-     2.0 Access Page · 2.1 QR Code · 2.2 Account Linking · 2.3 Guest Limits
-     3.0 Check WiFi Status · 3.1 Check Coin Status · 3.2 Check Reward Status · 3.3 No Reward Status
-     4.0 Insert Item · 4.1 Scan Item · 4.2 Item Accepted · 4.3 Decline Item · 4.4 Add Item?
-     5.0 Bin Status · 5.1 Crusher Status · 5.2 Session Status
-     6.0 Reward Choice · 6.1 Coin Dispense · 6.2 Coin Reward Release · 6.3 Generate WiFi Voucher · 6.4 WiFi Voucher Release · 6.5 Keep Reward As Balance · 6.6 Reward Balance Saved
-     7.0 Thank You Page · 7.1 Resetting Machine
-   ========================================================================== */
 (function () {
   'use strict';
   const DB = window.BocofiDB;
@@ -17,7 +6,6 @@
   const themeColor = $('meta[name="theme-color"]');
   if (themeColor) themeColor.content = getComputedStyle(document.documentElement).getPropertyValue('--color-primary-strong').trim();
 
-  /* ---------- machine selection ---------- */
   const MKEY = 'bocofi.kiosk.machine';
   const params = new URLSearchParams(location.search);
   let machineId = params.get('machine') || localStorage.getItem(MKEY) || DB.machines.all()[0].id;
@@ -25,7 +13,6 @@
   localStorage.setItem(MKEY, machineId);
   const machine = () => DB.machines.byId(machineId);
 
-  /* ---------- session state ---------- */
   const S = { screen: '1.0', mode: null, user: null, items: [], total: 0, pendingItem: null, rejectReason: null, crusherError: null, rewardError: null, linkCode: null, cashoutCode: '', alerted: false, reward: null };
   let timers = [];
   let idleTimer = null;
@@ -33,7 +20,7 @@
   const clearTimers = () => { timers.forEach(clearTimeout); timers = []; };
 
   const PHASE_COLOR = { 1: 'var(--c-startup)', 2: 'var(--c-identify)', 3: 'var(--c-check)', 4: 'var(--c-deposit)', 5: 'var(--c-storage)', 6: 'var(--c-rewards)', 7: 'var(--c-close)' };
-  const TITLES = { // Figma frame names (STUDENT-TYPE-FIGDESIGN 3:4 = BOCOFI low-fi)
+  const TITLES = {
     '1.0': 'Display Page', '1.1': 'Start',
     '2.0': 'Access Page', '2.1': 'QR Code', '2.2': 'Account Linking', '2.3': 'Guest Limits',
     '3.0': 'Check WiFi Status', '3.1': 'Check Coin Status', '3.2': 'Check Reward Status', '3.3': 'No Reward Status',
@@ -53,7 +40,6 @@
     leaf: '<svg class="ico" viewBox="0 0 24 24"><path d="M5 19C5 9 11 5 20 4c0 9-4 15-14 15z"/><path d="M5 19l8-8"/></svg>',
   };
 
-  /* ---------- helpers ---------- */
   function toast(msg, kind = '') {
     const el = document.createElement('div'); el.className = 'toast ' + kind; el.textContent = msg;
     $('#toasts').appendChild(el); setTimeout(() => el.remove(), 2800);
@@ -74,7 +60,6 @@
     Object.assign(S, { mode: null, user: null, items: [], total: 0, pendingItem: null, rejectReason: null, crusherError: null, rewardError: null, linkCode: null, cashoutCode: '', alerted: false, reward: null });
   }
 
-  /* ---------- navigation ---------- */
   function go(screen) {
     if (S.screen === '2.1' && screen !== '2.1' && S.linkCode) {
       DB.links.cancel(S.linkCode);
@@ -105,7 +90,6 @@
   }
   ['pointerdown', 'keydown', 'touchstart'].forEach((ev) => document.addEventListener(ev, armIdle, { passive: true }));
 
-  /* ---------- screen templates ---------- */
   const SCREENS = {
     '1.0': () => {
       const m = machine();
@@ -473,7 +457,6 @@
     },
   };
 
-  /* ---------- per-screen behaviour ---------- */
   const AFTER = {
     '1.0': (el) => {
       const button = $('#btnStart', el);
@@ -506,7 +489,6 @@
       $('#qrCode', el).textContent = S.linkCode;
       drawQR($('#qr', el), `BOCOFI:${machineId}:${S.linkCode}`);
       $('#btnScanCode', el).addEventListener('click', () => {
-        // Figma 2.1 "Scan Code" -> 2.2: simulate the app scan for this code
         const d = DB.get(); const who = (d.appSession && DB.users.byId(d.appSession)) || DB.users.all()[0];
         if (!who || !S.linkCode) { toast('No account available to link', 'danger'); return; }
         try { DB.links.resolve(S.linkCode, who.id); } catch (ex) { toast(ex.message, 'danger'); }
@@ -602,7 +584,6 @@
       const current = machine();
       const a = current ? DB.machines.availability(current) : { online: false, binFull: true, coins: false, wifi: false };
       if (!S.alerted && a.online && !a.binFull && ((!a.coins && !a.wifi) || !a.coins || !a.wifi)) {
-        // flowchart: "Notifies OWNER — user told only COINS / only WIFI VOUCHER can be selected"
         const onlySave = !a.coins && !a.wifi;
         DB.alerts.add(machineId, onlySave ? 'rewards' : !a.coins ? 'coins' : 'wifi', onlySave ? 'critical' : 'warning', onlySave ? S.user ? 'Coins and Wi-Fi are unavailable; logged-in users can still save credits.' : 'No rewards are currently available on this machine.' : !a.coins ? 'Coin hopper low — users are being offered Wi-Fi vouchers only.' : 'Wi-Fi unavailable — users are being offered coins only.');
         S.alerted = true;
@@ -656,7 +637,6 @@
       if (availability.binFull) { S.rejectReason = 'The bin became full during the scan. Keep the item and try again later.'; go('4.3'); return; }
       S.items.push(pending); S.total = round2(S.total + pending.value);
       S.rejectReason = null;
-      // fill-level sensor: each item adds ~1.5% to the bin
       DB.machines.patch(machineId, { binLevel: clamp(round2(m.binLevel + 1.5), 0, 100) });
       go('4.2');
     }),
@@ -726,7 +706,6 @@
           go('5.0');
           return;
         }
-        // crusher compacts the contents: fill level drops, owner is notified
         DB.machines.patch(machineId, { binLevel: clamp(Math.round(m.binLevel * 0.55), 0, 100), lastCrush: Date.now() });
         DB.alerts.add(machineId, 'bin', 'warning', `Bin reached ${Math.round(m.binLevel)}% — crusher cycle ran. Schedule a collection soon.`);
         S.crusherError = null;
@@ -925,7 +904,6 @@
     },
   };
 
-  /* ---------- domain actions ---------- */
   function insertItem(typeId) {
     const m = machine();
     const a = m && DB.machines.availability(m);
@@ -967,7 +945,6 @@
     }
   }
 
-  /* ---------- pseudo QR renderer (deterministic pattern with finder squares) ---------- */
   function drawQR(canvas, text) {
     const N = 29, ctx = canvas.getContext('2d');
     const css = getComputedStyle(document.documentElement);
@@ -985,7 +962,6 @@
     finder(0, 0); finder(N - 7, 0); finder(0, N - 7);
   }
 
-  /* ---------- header: bell, avatar, drawer ---------- */
   function renderHeader() {
     const m = machine(); const a = DB.machines.availability(m);
     const notices = [];
@@ -1044,13 +1020,10 @@
   });
   $('#btnResetSession').addEventListener('click', () => { resetSession(); go('1.0'); openDrawer(false); });
 
-  // generic [data-go] navigation
   $('#stage').addEventListener('click', (e) => { const b = e.target.closest('[data-go]'); if (b) go(b.dataset.go); });
 
-  // react to changes made from other tabs (admin toggles, app linking)
   DB.on((d, source) => { if (source === 'remote') { renderHeader(); if (!$('#drawer').hidden) syncDrawer(); } });
 
-  /* ---------- progress ticks + boot ---------- */
   $('#progressTicks').innerHTML = '<i></i>'.repeat(7);
   go('1.0');
 })();

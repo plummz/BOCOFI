@@ -1,7 +1,3 @@
-/* ==========================================================================
-   BOCO-FI · kiosk (machine touchscreen)
-   Landscape-first, large touch targets, no hover-only interactions.
-   ========================================================================== */
 html, body { height: 100%; overflow: hidden; }
 body { font-size: var(--text-size-35); }
 
@@ -11,7 +7,6 @@ body { font-size: var(--text-size-35); }
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
-/* ---------- header ---------- */
 .k-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: var(--space-value-0-6rem) var(--space-value-1-2rem); background: var(--color-white-72); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
@@ -29,7 +24,6 @@ body { font-size: var(--text-size-35); }
 .k-avatar { width: var(--tap); height: var(--tap); border-radius: 50%; border: 0; background: var(--sky); color: var(--blue-700); display: inline-flex; align-items: center; justify-content: center; font-weight: 800; }
 .k-avatar.linked { background: var(--green-500); color: var(--color-white); }
 
-/* ---------- stage ---------- */
 .k-stage { position: relative; display: flex; align-items: center; justify-content: center; padding: var(--space-value-1-2rem); overflow: hidden; }
 .screen {
   width: min(100%, 860px); max-height: 100%; overflow: auto;
@@ -44,7 +38,6 @@ body { font-size: var(--text-size-35); }
 .screen .btn { min-height: 64px; min-width: 200px; font-size: var(--text-size-18); }
 .screen .btn-lg { min-height: 74px; font-size: var(--text-size-21); }
 
-/* 1.1 idle — big round start button */
 .start-circle {
   width: clamp(200px, 30vw, 300px); height: clamp(200px, 30vw, 300px); border-radius: 50%;
   border: 10px solid color-mix(in srgb, var(--color-white) 55%, var(--color-transparent)); background: radial-gradient(circle at 35% 30%, var(--bocofi-green-400-highlight), var(--color-primary-strong) 70%);
@@ -66,7 +59,6 @@ body { font-size: var(--text-size-35); }
   .start-circle.is-loading::before { animation-duration: 1.4s; }
 }
 
-/* status icon circles (✓ ✕ ↓) */
 .icon-circle { width: 96px; height: 96px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--color-white); background: var(--accent, var(--green-500)); box-shadow: 0 10px 24px var(--color-black-12); }
 .icon-circle .ico { width: 48px; height: 48px; stroke-width: 2.6; }
 .icon-circle.pop { animation: pop .4s cubic-bezier(.2,1.4,.4,1); }
@@ -74,7 +66,6 @@ body { font-size: var(--text-size-35); }
 .icon-circle.bounce { animation: bounce 1.2s ease-in-out infinite; }
 @keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(10px); } }
 
-/* panels & status rows */
 .panel { width: min(100%, 560px); background: var(--color-white-82); border-radius: var(--radius-lg); padding: var(--space-value-1-2rem) var(--space-value-1-4rem); box-shadow: var(--shadow-sm); text-align: left; }
 .status-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-value-1rem); padding: var(--space-value-0-7em) var(--space-value-0); border-bottom: 1px solid var(--line); font-weight: 600; }
 .status-row:last-child { border-bottom: 0; }
@@ -84,23 +75,19 @@ body { font-size: var(--text-size-35); }
 .panel .bar { height: 18px; margin: var(--space-value-0-6rem) var(--space-value-0); }
 .panel .lbl-top { font-weight: 700; margin-bottom: var(--space-value-0-2rem); }
 
-/* big value (4.3, 6.2, 6.6) */
 .big-value { font-size: var(--text-size-36); font-weight: 900; color: var(--accent, var(--green-700)); letter-spacing: var(--space-value-neg-02em); line-height: 1; animation: pop .45s cubic-bezier(.2,1.4,.4,1); }
 .chip { display: inline-flex; gap: var(--space-value-0-6em); align-items: center; padding: var(--space-value-0-5em) var(--space-value-1em); border-radius: 12px; background: var(--color-white-85); border: 1px solid var(--line); font-weight: 600; }
 .chip b { font-weight: 800; }
 
-/* 2.2 QR */
 .qr-box { background: var(--color-white); padding: var(--space-value-14px); border-radius: 18px; box-shadow: var(--shadow); }
 .qr-box canvas { display: block; width: clamp(120px, min(24vw, 26vh), 240px); height: auto; image-rendering: pixelated; }
 .qr-code { font-family: ui-monospace, Menlo, monospace; font-size: var(--text-size-26); letter-spacing: var(--space-value-0-3em); font-weight: 800; color: var(--blue-700); }
 
-/* 4.2 scanning */
 .scan-frame { position: relative; width: min(60%, 360px); aspect-ratio: 16/9; border-radius: 16px; border: 3px solid var(--c-deposit); background: var(--color-white-60); overflow: hidden; }
 .scan-frame::after { content: ""; position: absolute; left: 0; right: 0; height: 4px; background: var(--c-deposit); box-shadow: 0 0 18px var(--c-deposit); animation: scan 1.2s linear infinite; }
 @keyframes scan { from { top: 0; } to { top: 100%; } }
 .scan-frame .bottle { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 60%; height: 34%; border-radius: 999px; background: linear-gradient(90deg, var(--bocofi-green-300), var(--bocofi-blue-500)); opacity: .8; }
 
-/* 6.1 reward cards */
 .reward-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-value-1rem); width: min(100%, 720px); }
 .reward-card { min-height: 150px; border-radius: 20px; border: 3px solid var(--c-rewards); background: var(--color-white-90); color: var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-value-0-5rem); font-weight: 800; letter-spacing: var(--space-value-0-04em); padding: var(--space-value-1rem); transition: transform .1s; }
 .reward-card .ico { width: 44px; height: 44px; color: var(--c-rewards); }
@@ -108,17 +95,14 @@ body { font-size: var(--text-size-35); }
 .reward-card:active { transform: scale(.97); }
 .reward-card:disabled { opacity: .45; border-color: var(--line); }
 
-/* 6.5 voucher */
 .voucher { font-family: ui-monospace, Menlo, monospace; font-size: var(--text-size-37); font-weight: 900; letter-spacing: var(--space-value-0-12em); padding: var(--space-value-0-3em) var(--space-value-0-8em); border: 4px solid var(--c-rewards); border-radius: 18px; background: var(--color-white); color: var(--ink); }
 .countdown { font-weight: 700; color: var(--ink-3); }
 
-/* sensor simulator strip on 4.1 */
 .sim { width: 100%; margin-top: var(--space-value-0-6rem); padding: var(--space-value-0-8rem) var(--space-value-1rem); border-radius: 16px; background: var(--color-ink-06); border: 1px dashed var(--color-ink-25); }
 .sim .sim-title { font-size: var(--text-size-09); font-weight: 800; letter-spacing: var(--space-value-0-08em); text-transform: uppercase; color: var(--ink-3); margin-bottom: var(--space-value-0-5rem); }
 .sim .sim-btns { display: flex; flex-wrap: wrap; gap: var(--space-value-0-5rem); justify-content: center; }
 .sim .btn { min-height: 46px; min-width: 0; font-size: var(--text-size-07); padding: var(--space-value-0-4em) var(--space-value-1em); }
 
-/* ---------- footer ---------- */
 .k-footer { display: flex; align-items: center; gap: var(--space-value-1rem); padding: var(--space-value-0-7rem) var(--space-value-1-2rem); background: var(--color-white-72); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-top: 1px solid var(--color-green-12); font-size: var(--text-size-10); font-weight: 700; color: var(--ink-2); }
 .k-step { min-width: 12ch; }
 .k-machine { color: var(--ink-3); font-family: ui-monospace, Menlo, monospace; }
@@ -128,13 +112,11 @@ body { font-size: var(--text-size-35); }
 .k-progress-ticks i { border-right: 2px solid var(--color-white-70); }
 .k-progress-ticks i:last-child { border: 0; }
 
-/* ---------- popovers ---------- */
 .k-pop { position: absolute; top: 64px; right: 12px; width: min(92vw, 360px); background: var(--color-white); border-radius: 16px; box-shadow: var(--shadow); padding: var(--space-value-1rem); z-index: 30; font-size: var(--text-size-12); }
 .k-pop ul { list-style: none; margin: var(--space-value-0); padding: var(--space-value-0); }
 .k-pop li { padding: var(--space-value-0-5em) var(--space-value-0); border-bottom: 1px solid var(--line); display: flex; gap: var(--space-value-0-6em); align-items: flex-start; }
 .k-pop li:last-child { border: 0; }
 
-/* ---------- service drawer ---------- */
 .k-scrim { position: absolute; inset: 0; background: var(--color-ink-35); z-index: 40; }
 .k-drawer {
   position: absolute; top: 0; bottom: 0; left: 0; width: min(92vw, 400px); background: var(--color-white); z-index: 50; overflow-y: auto; -webkit-overflow-scrolling: touch;
@@ -147,7 +129,6 @@ body { font-size: var(--text-size-35); }
 .k-drawer .k-lbl { display: flex; justify-content: space-between; font-weight: 700; font-size: var(--text-size-08); color: var(--ink-2); margin: var(--space-value-0-6rem) var(--space-value-0) var(--space-value-0-25rem); }
 .k-drawer input[type=range] { width: 100%; accent-color: var(--green-500); height: 40px; }
 
-/* portrait phones: still usable */
 @media (max-width: 640px) {
   .reward-grid { grid-template-columns: 1fr; }
   .screen .btn { min-width: 0; width: 100%; }

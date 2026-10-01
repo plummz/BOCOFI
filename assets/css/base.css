@@ -1,8 +1,4 @@
-/* ==========================================================================
-   BOCO-FI · shared design tokens & primitives
-   ========================================================================== */
 :root {
-  /* brand */
   --green-900: var(--bocofi-green-900);
   --green-700: var(--bocofi-green-700);
   --green-500: var(--bocofi-green-500);
@@ -14,7 +10,6 @@
   --blue-100: var(--bocofi-blue-100);
   --sky: var(--bocofi-sky);
 
-  /* wireframe section colours (site-map 1.0 – 7.0) */
   --c-startup: var(--bocofi-green-700);
   --c-identify: var(--bocofi-blue-700);
   --c-check: var(--bocofi-green-700);
@@ -23,7 +18,6 @@
   --c-rewards: var(--color-purple);
   --c-close: var(--bocofi-green-700);
 
-  /* neutrals */
   --ink: var(--color-ink);
   --ink-2: var(--color-ink-2);
   --ink-3: var(--color-ink-3);
@@ -32,7 +26,6 @@
   --panel-2: var(--color-surface-2);
   --bg: var(--color-page-bg-current);
 
-  /* status */
   --ok: var(--color-ok);
   --warn: var(--color-warn);
   --danger: var(--color-danger);
@@ -42,7 +35,7 @@
   --shadow: 0 6px 24px var(--color-primary-shadow-10);
   --shadow-sm: 0 2px 8px var(--color-primary-shadow-08);
   --font: var(--font-family);
-  --tap: var(--tap-min); /* minimum touch target */
+  --tap: var(--tap-min);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -69,7 +62,6 @@ button { cursor: pointer; }
 :focus-visible { outline: 3px solid var(--blue-500); outline-offset: 2px; }
 [hidden] { display: none !important; }
 
-/* ---------- buttons ---------- */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--space-value-0-5em);
   min-height: var(--tap); padding: var(--space-value-0-7em) var(--space-value-1-4em);
@@ -91,7 +83,6 @@ button { cursor: pointer; }
 .btn-lg { font-size: var(--text-size-17); padding: var(--space-value-0-9em) var(--space-value-2em); }
 .btn-block { width: 100%; }
 
-/* ---------- forms ---------- */
 .field { display: flex; flex-direction: column; gap: var(--space-value-0-35em); margin-bottom: var(--space-value-1em); }
 .field label { font-weight: 600; font-size: var(--text-size-14); color: var(--ink-2); }
 .input, .select, .textarea {
@@ -104,7 +95,6 @@ button { cursor: pointer; }
 .help { font-size: var(--text-size-06); color: var(--ink-3); }
 .error { color: var(--danger); font-size: var(--text-size-14); font-weight: 600; min-height: 1.2em; }
 
-/* ---------- cards & layout ---------- */
 .card { background: var(--panel); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: var(--space-value-1-1rem); }
 .card + .card { margin-top: var(--space-value-1rem); }
 .card-title { display: flex; align-items: center; justify-content: space-between; gap: var(--space-value-0-75rem); margin-bottom: var(--space-value-0-75rem); }
@@ -119,12 +109,10 @@ button { cursor: pointer; }
 .center { text-align: center; }
 .mt { margin-top: var(--space-value-1rem); } .mb { margin-bottom: var(--space-value-1rem); }
 
-/* ---------- progress ---------- */
 .bar { height: 12px; border-radius: 999px; background: var(--line); overflow: hidden; }
 .bar > i { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--green-500); transition: width .4s ease; }
 .bar.warn > i { background: var(--warn); } .bar.danger > i { background: var(--danger); } .bar.blue > i { background: var(--blue-500); }
 
-/* ---------- badges ---------- */
 .badge { display: inline-flex; align-items: center; gap: var(--space-value-0-35em); padding: var(--space-value-0-2em) var(--space-value-0-65em); border-radius: 999px; font-size: var(--text-size-04); font-weight: 700; letter-spacing: var(--space-value-0-03em); text-transform: uppercase; background: var(--panel-2); color: var(--ink-2); }
 .badge.ok { background: var(--color-success-soft); color: var(--color-green-ink); }
 .badge.warn { background: var(--color-warning-soft); color: var(--color-warning-ink); }
@@ -133,7 +121,6 @@ button { cursor: pointer; }
 .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ink-3); display: inline-block; }
 .dot.ok { background: var(--ok); } .dot.warn { background: var(--warn); } .dot.danger { background: var(--danger); } .dot.info { background: var(--info); }
 
-/* ---------- tables ---------- */
 .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 table.table { width: 100%; border-collapse: collapse; font-size: var(--text-size-11); }
 .table th, .table td { text-align: left; padding: var(--space-value-0-65em) var(--space-value-0-75em); border-bottom: 1px solid var(--line); white-space: nowrap; }
@@ -141,17 +128,14 @@ table.table { width: 100%; border-collapse: collapse; font-size: var(--text-size
 .table tr:last-child td { border-bottom: 0; }
 .table td.num, .table th.num { text-align: right; font-variant-numeric: tabular-nums; }
 
-/* ---------- toast ---------- */
 .toast-host { position: fixed; left: 50%; bottom: calc(1rem + env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; flex-direction: column; gap: var(--space-value-0-5rem); z-index: 1000; pointer-events: none; width: min(92vw, 420px); }
 .toast { background: var(--ink); color: var(--color-white); padding: var(--space-value-0-75em) var(--space-value-1em); border-radius: 12px; box-shadow: var(--shadow); font-weight: 600; animation: toast-in .25s ease; }
 .toast.ok { background: var(--green-700); } .toast.danger { background: var(--danger); }
 @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
-/* ---------- icons (inline SVG helpers) ---------- */
 .ico { width: 1.25em; height: 1.25em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 
-/* ---------- misc ---------- */
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-.leafy-bg { background: var(--color-white); } /* Figma: plain white screen background */
+.leafy-bg { background: var(--color-white); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }

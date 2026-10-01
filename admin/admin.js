@@ -1,7 +1,3 @@
-/* ==========================================================================
-   BOCO-FI · owner / admin dashboard
-   Routes: #dashboard · #machines[/ID] · #alerts · #transactions · #users · #vouchers · #settings
-   ========================================================================== */
 (function () {
   'use strict';
   const DB = window.BocofiDB;
@@ -25,7 +21,6 @@
   const userName = (id) => { const u = id && DB.users.byId(id); return u ? u.name : 'Guest'; };
   const machineName = (id) => { const m = id && DB.machines.byId(id); return m ? m.name : 'In app'; };
 
-  /* ---------- auth gate ---------- */
   function gate() {
     const ok = !!DB.admin.current();
     $('#login').hidden = ok; $('#shell').hidden = !ok;
@@ -37,7 +32,6 @@
   };
   $('#btnLogout').onclick = () => { DB.admin.logout(); gate(); };
 
-  /* ---------- router ---------- */
   function route() {
     const [name, arg] = (location.hash.replace('#', '') || 'dashboard').split('/');
     const view = VIEWS[name] ? name : 'dashboard';
@@ -55,7 +49,6 @@
   function closeSide() { $('#side').classList.remove('open'); $('#scrim').hidden = true; }
   $('#btnSide').onclick = openSide; $('#scrim').onclick = closeSide;
 
-  /* ---------- shared fragments ---------- */
   function machineGauges(m) {
     const c = DB.config.get();
     return `
@@ -97,14 +90,12 @@
     </tr>`).join('');
   }
 
-  /* ---------- views ---------- */
   const VIEWS = {
     dashboard() {
       const s = DB.stats();
       const ms = DB.machines.all();
       const alerts = DB.alerts.all().slice(0, 5);
       const tx = DB.transactions.all().slice(0, 6);
-      // last 7 days item counts
       const days = []; const dayMs = 86400000; const today = new Date(); today.setHours(0, 0, 0, 0);
       for (let i = 6; i >= 0; i--) {
         const start = today.getTime() - i * dayMs, end = start + dayMs;
@@ -307,7 +298,6 @@
     </div>`;
   }
 
-  /* ---------- behaviours ---------- */
   const AFTER = {
     dashboard() { bindMachineCards(); bindAlertButtons(); },
     machines(id) {
@@ -319,7 +309,7 @@
         let v = el.type === 'checkbox' ? el.checked : el.type === 'range' ? Number(el.value) : el.value;
         DB.machines.patch(mid, { [key]: v });
         const out = box.querySelector(`[data-o="${key}"]`); if (out) out.textContent = Math.round(v) + '%';
-        if (el.type !== 'range') route(); // re-render chips; sliders re-render on change
+        if (el.type !== 'range') route();
       });
       box.addEventListener('change', (e) => { if (e.target.type === 'range') route(); });
       box.querySelectorAll('[data-act]').forEach((b) => b.addEventListener('click', () => {
@@ -410,7 +400,6 @@
     $$('[data-read]').forEach((b) => b.onclick = (e) => { e.stopPropagation(); DB.alerts.markRead(b.dataset.read); route(); });
   }
 
-  // live updates from kiosk / app in other tabs (skip while typing in a form)
   DB.on((d, source) => {
     if (source !== 'remote' || !DB.admin.current()) return;
     const ae = document.activeElement; if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'SELECT')) return;

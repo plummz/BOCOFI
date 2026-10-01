@@ -1,14 +1,9 @@
-/* ==========================================================================
-   BOCO-FI · owner / admin dashboard
-   ========================================================================== */
 body { background: var(--color-page-admin); }
 
-/* ---------- login ---------- */
 .login { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: var(--space-value-1-5rem); }
 .login-card { width: min(100%, 400px); background: var(--color-white); border-radius: var(--radius-lg); padding: var(--space-value-1-8rem); box-shadow: var(--shadow); }
 .login-logo { height: 40px; width: auto; margin-bottom: var(--space-value-0-6rem); }
 
-/* ---------- shell ---------- */
 .shell { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; min-height: 100dvh; }
 .side { background: var(--color-white); border-right: 1px solid var(--line); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; height: 100dvh; }
 .side-brand { padding: var(--space-value-1-1rem) var(--space-value-1-2rem) var(--space-value-0-6rem); }
@@ -30,14 +25,12 @@ body { background: var(--color-page-admin); }
 .page > * { animation: fade .2s ease; }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 
-/* ---------- KPI tiles ---------- */
 .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--space-value-1rem); margin-bottom: var(--space-value-1-2rem); }
 .kpi { background: var(--color-white); border-radius: var(--radius); padding: var(--space-value-1rem) var(--space-value-1-1rem); box-shadow: var(--shadow-sm); border-left: 5px solid var(--accent, var(--green-500)); }
 .kpi small { color: var(--ink-3); font-weight: 600; text-transform: uppercase; letter-spacing: var(--space-value-0-05em); font-size: var(--text-size-05); }
 .kpi b { display: block; font-size: var(--text-size-28); font-weight: 900; letter-spacing: var(--space-value-neg-02em); line-height: 1.2; }
 .kpi .sub { color: var(--ink-3); font-size: var(--text-size-10); }
 
-/* ---------- dashboard layout ---------- */
 .two { display: grid; grid-template-columns: 1.4fr 1fr; gap: var(--space-value-1rem); align-items: start; }
 .chart { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--space-value-0-5rem); align-items: end; height: 160px; padding-top: var(--space-value-1rem); }
 .chart .col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: var(--space-value-0-3rem); }
@@ -45,7 +38,6 @@ body { background: var(--color-page-admin); }
 .chart .col b { font-size: var(--text-size-10); }
 .chart .col small { color: var(--ink-3); font-size: var(--text-size-05); }
 
-/* ---------- machine cards ---------- */
 .mgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-value-1rem); }
 .mcard { background: var(--color-white); border-radius: var(--radius); padding: var(--space-value-1-1rem); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-value-0-6rem); cursor: pointer; border: 2px solid var(--color-transparent); transition: border-color .15s, transform .15s; }
 .mcard:hover { border-color: var(--green-300); transform: translateY(-2px); }
@@ -56,7 +48,6 @@ body { background: var(--color-page-admin); }
 .gauge .v { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
 .chips { display: flex; flex-wrap: wrap; gap: var(--space-value-0-4rem); }
 
-/* machine detail */
 .detail-head { display: flex; align-items: center; gap: var(--space-value-1rem); margin-bottom: var(--space-value-1rem); flex-wrap: wrap; }
 .detail-head h2 { margin: var(--space-value-0); }
 .controls .field { margin-bottom: var(--space-value-0-8rem); }
@@ -72,7 +63,6 @@ body { background: var(--color-page-admin); }
 .live-session { border-left: 5px solid var(--c-deposit); }
 .actions-row { display: flex; flex-wrap: wrap; gap: var(--space-value-0-5rem); }
 
-/* ---------- alerts ---------- */
 .alert { display: flex; gap: var(--space-value-0-9rem); align-items: flex-start; padding: var(--space-value-0-9rem) var(--space-value-0); border-bottom: 1px solid var(--line); }
 .alert:last-child { border: 0; }
 .alert.unread { background: linear-gradient(90deg, var(--color-warn-08), var(--color-transparent)); margin: var(--space-value-0) var(--space-value-neg-1-1rem); padding: var(--space-value-0-9rem) var(--space-value-1-1rem); }
@@ -81,12 +71,10 @@ body { background: var(--color-page-admin); }
 .alert .body b { display: block; }
 .alert .body small { color: var(--ink-3); }
 
-/* ---------- filters ---------- */
 .filters { display: flex; flex-wrap: wrap; gap: var(--space-value-0-6rem); align-items: center; margin-bottom: var(--space-value-1rem); }
 .filters .select, .filters .input { width: auto; min-width: 160px; min-height: 40px; }
 .filters .spacer { flex: 1; }
 
-/* ---------- settings ---------- */
 .reward-rows { display: grid; gap: var(--space-value-0-5rem); }
 .reward-row { display: grid; grid-template-columns: 1.4fr 1fr 110px 44px; gap: var(--space-value-0-5rem); align-items: center; }
 .reward-row .input { min-height: 40px; }
@@ -94,7 +82,6 @@ body { background: var(--color-page-admin); }
 .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--space-value-1rem); align-items: start; }
 .danger-zone { border: 2px solid var(--color-danger-soft); }
 
-/* ---------- responsive ---------- */
 @media (max-width: 900px) {
   .shell { grid-template-columns: 1fr; }
   .side { position: fixed; left: 0; top: 0; bottom: 0; width: min(84vw, 300px); z-index: 30; transform: translateX(-100%); transition: transform .22s ease; box-shadow: 12px 0 40px var(--color-black-20); }

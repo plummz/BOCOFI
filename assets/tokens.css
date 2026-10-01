@@ -1,60 +1,38 @@
-/* ==========================================================================
-   BOCO-FI · design tokens
-   --------------------------------------------------------------------------
-   Brand colours follow the Figma high-fidelity file (STUDENT-TYPE-FIGDESIGN,
-   kiosk 3:4 and mobile 3:7, read 2026-09-28), per user decision D-A/D-B:
-     BOCOFI green #3F5523 · BOCOFI blue #3FADED · white #FFFFFF.
-   Figma builds its light fills as opacity of those two colours on white:
-     green 6% #F4F5F2 (header) · 10% #ECEEE9 (content box / card)
-     14% #E4E7E0 (status box) · blue 9% #EEF8FD (mobile nav).
-   Other tints below (green 35% #BCC4B2, blue 35% #BCE2F9) follow the same
-   rule. Status colours (ok / warn / danger) are kept for meaning only.
-
-   Linked before shared and surface styles on the kiosk, app and admin.
-   Shared aliases in base.css point back to this file.
-   ========================================================================== */
 :root {
-  /* ---------- BOCOFI green (primary) · base.css:6-11, logo.svg ---------- */
-  --bocofi-green-900: #3F5523;   /* headings on kiosk (.screen h1/h2) */
-  --bocofi-green-700: #3F5523;   /* theme-color, logo, active nav, chips, text links on green */
-  --bocofi-green-500: #3F5523;   /* .btn default fill, bars, avatars, toggles */
-  --bocofi-green-300: #BCC4B2;   /* chart bars, progress gradient end, leafy background */
-  --bocofi-green-100: #E4E7E0;   /* admin active nav, points tile background */
-  --bocofi-green-050: #F4F5F2;   /* pressed / active row tint */
-  --bocofi-green-400-highlight: #3F5523; /* kiosk start circle + logo gradient only (kiosk.css:50) */
+  --bocofi-green-900: #3F5523;
+  --bocofi-green-700: #3F5523;
+  --bocofi-green-500: #3F5523;
+  --bocofi-green-300: #BCC4B2;
+  --bocofi-green-100: #E4E7E0;
+  --bocofi-green-050: #F4F5F2;
+  --bocofi-green-400-highlight: #3F5523;
 
-  --bocofi-green-010: #ECEEE9;   /* Figma content box / card: green 10% */
+  --bocofi-green-010: #ECEEE9;
 
   --color-primary: var(--bocofi-green-500);
   --color-primary-strong: var(--bocofi-green-700);
   --color-primary-ink: var(--bocofi-green-900);
 
-  /* ---------- BOCOFI blue (secondary / action) · base.css:12-15, logo.svg ---------- */
-  --bocofi-blue-700: #3FADED;    /* .btn-blue, links, Wi-Fi colour (app --wifi), kiosk QR code */
-  --bocofi-blue-500: #3FADED;    /* focus ring, blue bar, logo letters */
-  --bocofi-blue-100: #EEF8FD;    /* info badge background */
-  --bocofi-blue-050: #EEF8FD;    /* app --wifi-bg */
-  --bocofi-sky: #BCE2F9;         /* kiosk avatar, leafy background */
+  --bocofi-blue-700: #3FADED;
+  --bocofi-blue-500: #3FADED;
+  --bocofi-blue-100: #EEF8FD;
+  --bocofi-blue-050: #EEF8FD;
+  --bocofi-sky: #BCE2F9;
 
   --color-secondary: var(--bocofi-blue-700);
   --color-secondary-soft: var(--bocofi-blue-100);
 
-  /* ---------- white & surfaces · base.css:31-33, app.css:10, admin.css:4 ---------- */
-  --color-white: #ffffff;        /* cards (--panel), popovers, buttons (.btn-outline), inputs */
+  --color-white: #ffffff;
   --color-surface: var(--color-white);
-  --color-surface-2: #f4f6f8;    /* --panel-2: tabs, converter boxes */
-  /* Page backgrounds in use today are tinted, not white:
-     base --bg #eef3ee · app body #dfe8df · admin body #eef1f4 · .leafy-bg gradient */
+  --color-surface-2: #f4f6f8;
   --color-page-bg-current: #ffffff;
 
-  /* ---------- text & lines · base.css:27-30 ---------- */
   --color-ink: #1d2733;
   --color-ink-2: #4b5563;
-  --color-ink-3: #6b7280;       /* secondary text; passes AA on white and light surfaces */
+  --color-ink-3: #6b7280;
   --color-line: #dfe5ec;
 
-  /* ---------- status · base.css:36-39, badge colours base.css:130-133 ---------- */
-  --color-ok: #3F5523;          /* Figma: success uses BOCOFI green too */
+  --color-ok: #3F5523;
   --color-warn: #e0a51e;
   --color-danger: #d43f55;
   --color-info: var(--bocofi-blue-700);
@@ -111,46 +89,39 @@
   --color-primary-shadow-08: rgba(63, 85, 35, .08);
   --color-primary-shadow-10: rgba(63, 85, 35, .10);
 
-  /* ---------- spacing · most-used rem values in gap/margin/padding across
-     base.css, kiosk.css, app.css, admin.css (count in brackets) ---------- */
-  --space-1: .25rem;   /* [6] */
-  --space-2: .4rem;    /* [8] */
-  --space-3: .5rem;    /* [32] */
-  --space-4: .6rem;    /* [19] */
-  --space-5: .75rem;   /* [13] */
-  --space-6: .9rem;    /* [12] */
-  --space-7: 1rem;     /* [38] most used */
-  --space-8: 1.2rem;   /* [10] */
-  --space-9: 1.4rem;   /* [4] */
+  --space-1: .25rem;
+  --space-2: .4rem;
+  --space-3: .5rem;
+  --space-4: .6rem;
+  --space-5: .75rem;
+  --space-6: .9rem;
+  --space-7: 1rem;
+  --space-8: 1.2rem;
+  --space-9: 1.4rem;
   --space-auth-heading: .8rem;
-  --tap-min: 48px;     /* base.css:46 --tap */
+  --tap-min: 48px;
 
-  /* ---------- radius · base.css:41-42 + most-used literals ---------- */
-  --radius-sm: 12px;   /* [15] inputs, tiles, toasts */
-  --radius-md: 14px;   /* base --radius */
-  --radius-lg: 22px;   /* base --radius-lg */
+  --radius-sm: 12px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
   --radius-pill: 999px;
 
-  /* ---------- type · base.css:45,54,62 + most-used font-size literals ---------- */
   --font-family: "Inter", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
-  --text-2xs: .7rem;    /* [9] captions, nav labels */
-  --text-xs: .75rem;    /* [4] badges, table headers */
-  --text-sm: .85rem;    /* [9] small buttons, meta */
-  --text-md: .9rem;     /* [3] */
-  --text-base: 16px;    /* body */
-  --text-lg: 1.1rem;    /* [4] h3 */
-  --text-xl: 1.35rem;   /* h2 */
-  --text-2xl: 1.75rem;  /* h1 */
-  --text-display: 2.5rem; /* app wallet balance */
-  /* Kiosk scales type with the viewport (kiosk.css:6,40,41,79): */
+  --text-2xs: .7rem;
+  --text-xs: .75rem;
+  --text-sm: .85rem;
+  --text-md: .9rem;
+  --text-base: 16px;
+  --text-lg: 1.1rem;
+  --text-xl: 1.35rem;
+  --text-2xl: 1.75rem;
+  --text-display: 2.5rem;
   --text-kiosk-body: clamp(16px, 1.6vw, 22px);
   --text-kiosk-h1: clamp(1.5rem, 3.4vw, 2.6rem);
   --text-kiosk-h2: clamp(1.2rem, 2.4vw, 1.8rem);
   --text-kiosk-value: clamp(2.6rem, 7vw, 4.6rem);
 
-
-  /* Literal spacing values used by layout declarations. */
   --space-value-neg-01em: -.01em;
   --space-value-neg-02em: -.02em;
   --space-value-neg-1-1rem: -1.1rem;
@@ -221,7 +192,6 @@
   --space-launcher-code-radius: 6px;
   --space-launcher-border: 6px;
 
-  /* Launcher page dimensions retained from index.html. */
   --size-launcher-content: 1040px;
   --size-launcher-logo: 320px;
   --size-launcher-logo-responsive: 70vw;
@@ -234,7 +204,6 @@
   --font-launcher-footer: .85rem;
   --shadow-launcher-hover: 0 12px 32px rgba(63,85,35,.16);
 
-  /* Literal responsive and fixed font-size declarations. */
   --text-size-01: .66rem;
   --text-size-02: .68rem;
   --text-size-03: .72rem;
@@ -272,10 +241,10 @@
   --text-size-35: clamp(16px, 1.6vw, 22px);
   --text-size-36: clamp(2.6rem, 7vw, 4.6rem);
   --text-size-37: clamp(2rem, 6vw, 3.4rem);
-  --weight-medium: 600;  /* [23] */
-  --weight-bold: 700;    /* [20] */
-  --weight-heavy: 800;   /* [23] headings, buttons */
-  --weight-black: 900;   /* [7] big numbers */
+  --weight-medium: 600;
+  --weight-bold: 700;
+  --weight-heavy: 800;
+  --weight-black: 900;
   --line-height-body: 1.45;
   --line-height-heading: 1.2;
 }

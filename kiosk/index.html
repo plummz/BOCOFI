@@ -13,7 +13,6 @@
 <body>
   <div class="kiosk leafy-bg" id="kiosk">
 
-    <!-- ===== header (storyboard: ☰ · logo · 🔔 · avatar) ===== -->
     <header class="k-header">
       <button class="k-iconbtn" id="btnMenu" aria-label="Service menu" aria-expanded="false">
         <svg class="ico" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
@@ -30,10 +29,8 @@
       </div>
     </header>
 
-    <!-- ===== stage: the current screen is rendered here ===== -->
     <main class="k-stage" id="stage" aria-live="polite"></main>
 
-    <!-- ===== footer progress (storyboard: 7-step bar) ===== -->
     <footer class="k-footer">
       <span class="k-step" id="stepLabel">1.1 · Idle</span>
       <div class="k-progress" aria-hidden="true">
@@ -43,7 +40,6 @@
       <span class="k-machine" id="machineLabel">BCF-001</span>
     </footer>
 
-    <!-- ===== notices popover ===== -->
     <div class="k-pop" id="popNotices" role="region" aria-labelledby="noticeTitle" hidden>
       <h4 id="noticeTitle">Machine notices</h4>
       <ul id="noticeList"></ul>
@@ -53,7 +49,6 @@
       <p id="userInfo" class="muted">No user linked.</p>
     </div>
 
-    <!-- ===== service drawer (owner / demo tools) ===== -->
     <aside class="k-drawer" id="drawer" aria-label="Service menu" hidden>
       <div class="k-drawer-head">
         <h3>Service menu</h3>
