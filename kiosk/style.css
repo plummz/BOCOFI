@@ -7,7 +7,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 24px;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   max-width: 1240px;
   margin: 0 auto;
   padding: 28px 40px;
@@ -16,6 +17,7 @@ body {
 
 /* header */
 header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -50,6 +52,7 @@ header .logo {
 .screen {
   display: none;
   flex: 1;
+  min-height: 0;
   flex-direction: column;
   gap: 24px;
 }
@@ -64,7 +67,8 @@ header .logo {
   display: flex;
   justify-content: space-between;
   gap: 40px;
-  min-height: 480px;
+  min-height: 0;
+  overflow-y: auto;
   padding: 60px 90px 60px 54px;
   background-color: rgba(63, 85, 35, 0.1);
   border: 1px solid rgba(63, 85, 35, 0.5);
@@ -151,6 +155,7 @@ header .logo {
 
 /* bottom action bar */
 .actions {
+  flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
   align-items: center;
@@ -323,72 +328,100 @@ header .logo {
 /* tablets and phones */
 @media (max-width: 900px) {
   .kiosk {
-    padding: 12px;
-    gap: 12px;
+    padding: 8px;
+    gap: 8px;
+    border-width: 0;
   }
 
   header {
-    height: 64px;
-    padding: 0 16px;
+    height: 52px;
+    padding: 0 14px;
   }
 
   header .logo {
-    height: 38px;
+    height: 34px;
   }
 
   .screen {
-    gap: 12px;
+    gap: 8px;
   }
 
   .content {
     flex-direction: column-reverse;
     justify-content: flex-end;
-    gap: 20px;
-    padding: 20px;
+    gap: 12px;
+    padding: 14px 16px;
   }
 
   .picture {
     width: 100%;
-    max-width: 320px;
-    align-self: center;
+    max-width: none;
     margin-top: 0;
   }
 
+  .picture::before {
+    display: none;
+  }
+
   .picture img {
-    height: 150px;
+    height: 120px;
     object-fit: cover;
+    border-width: 3px;
   }
 
   .text h1 {
-    font-size: 28px;
+    margin: 0 0 6px;
+    font-size: 24px;
   }
 
   .desc {
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+
+  .extra {
+    margin-bottom: 10px;
+  }
+
+  .option {
+    padding: 10px 14px;
+    margin-bottom: 8px;
     font-size: 15px;
   }
 
   .status {
-    margin-top: 10px;
+    margin-top: 0;
     width: 100%;
-    padding: 16px;
+    padding: 12px 14px;
+    font-size: 14px;
   }
 
   .actions {
-    position: sticky;
-    bottom: 0;
     height: auto;
-    padding: 12px;
-    gap: 10px;
-    background-color: #eef7fd;
+    padding: 8px;
+    gap: 8px;
   }
 
   .actions button {
     flex: 1;
     width: auto;
-    height: 48px;
+    height: 46px;
+  }
+
+  #qrCanvas {
+    width: 80px;
+    height: 80px;
   }
 
   .link-code {
-    font-size: 30px;
+    font-size: 28px;
+  }
+
+  .big {
+    font-size: 26px;
+  }
+
+  .info {
+    font-size: 15px;
   }
 }

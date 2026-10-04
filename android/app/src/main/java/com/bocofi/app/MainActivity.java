@@ -3,6 +3,8 @@ package com.bocofi.app;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -28,6 +30,10 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        if (Build.VERSION.SDK_INT >= 29) {
+            getWindow().setNavigationBarContrastEnforced(false);
+        }
 
         fixSystemBars();
 
@@ -134,9 +140,16 @@ public class MainActivity extends Activity {
 
     private void highlight(Button button, boolean active) {
         if (active) {
-            button.setBackgroundColor(Color.parseColor("#3FADED"));
+            GradientDrawable pill = new GradientDrawable();
+            pill.setColor(Color.WHITE);
+            pill.setCornerRadius(60);
+            button.setBackground(pill);
+            button.setTextColor(Color.parseColor("#3F5523"));
+            button.setTypeface(null, Typeface.BOLD);
         } else {
             button.setBackgroundColor(Color.TRANSPARENT);
+            button.setTextColor(Color.parseColor("#DDE5D6"));
+            button.setTypeface(null, Typeface.NORMAL);
         }
     }
 

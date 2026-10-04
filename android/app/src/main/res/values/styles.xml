@@ -5,6 +5,7 @@
         <item name="android:colorPrimaryDark">#3F5523</item>
         <item name="android:colorAccent">#3FADED</item>
         <item name="android:statusBarColor">#3F5523</item>
+        <item name="android:navigationBarColor">#3F5523</item>
         <item name="android:windowBackground">@android:color/white</item>
     </style>
 </resources>

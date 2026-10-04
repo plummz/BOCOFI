@@ -12,7 +12,7 @@
 |---|---|
 | App name | BOCO-FI |
 | Package name | com.bocofi.app |
-| Version | 1.2 (version code 3) |
+| Version | 1.3 (version code 4) |
 | File size | about 1.3 MB |
 | Minimum Android | Android 7.0 (API 24) |
 | Target Android | Android 16 (API 36) |

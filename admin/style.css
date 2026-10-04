@@ -18,7 +18,8 @@ body {
 }
 
 .login-box label,
-.login-box input {
+.login-box input,
+.login-box .rule {
   text-align: left;
 }
 

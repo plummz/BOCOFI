@@ -129,7 +129,7 @@ function showPage(name) {
   if (nav) nav.classList.add('active');
 
   loadPage();
-  window.scrollTo(0, 0);
+  document.querySelector('.content').scrollTop = 0;
 }
 
 function loadPage() {
