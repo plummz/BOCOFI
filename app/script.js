@@ -103,6 +103,11 @@ function logout() {
   }
   data.loggedInUser = null;
   saveData(data);
+
+  // clear the login form
+  document.getElementById('nameInput').value = '';
+  document.getElementById('emailInput').value = '';
+  document.getElementById('pinInput').value = '';
   start();
 }
 
