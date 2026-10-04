@@ -4,7 +4,7 @@
 
 - File: `BOCO-FI.apk`
 - Google Drive folder: https://drive.google.com/drive/folders/1urI8SjJE5q3R4qBUX_9saxqWRvegs-dS
-- Direct file link: (DRIVE_FILE_LINK)
+- Direct file link: https://drive.google.com/file/d/1x3fRKjZwf-Hcf_-pj3o1DOJctD4zXLwj/view
 
 ## Details
 
