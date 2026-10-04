@@ -47,10 +47,30 @@ public class MainActivity extends Activity {
         setupWebView(appView, "app/index.html");
         setupWebView(adminView, "admin/index.html");
 
-        tabHome.setOnClickListener(v -> showTab(homeView));
-        tabKiosk.setOnClickListener(v -> showTab(kioskView));
-        tabApp.setOnClickListener(v -> showTab(appView));
-        tabAdmin.setOnClickListener(v -> showTab(adminView));
+        tabHome.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showTab(homeView);
+            }
+        });
+        tabKiosk.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showTab(kioskView);
+            }
+        });
+        tabApp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showTab(appView);
+            }
+        });
+        tabAdmin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showTab(adminView);
+            }
+        });
 
         showTab(homeView);
     }
@@ -128,22 +148,25 @@ public class MainActivity extends Activity {
     // keep the page below the status bar and above the navigation bar and keyboard
     private void fixSystemBars() {
         LinearLayout root = findViewById(R.id.root);
-        root.setOnApplyWindowInsetsListener((v, insets) -> {
-            int left, top, right, bottom;
-            if (Build.VERSION.SDK_INT >= 30) {
-                android.graphics.Insets bars = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.ime());
-                left = bars.left;
-                top = bars.top;
-                right = bars.right;
-                bottom = bars.bottom;
-            } else {
-                left = insets.getSystemWindowInsetLeft();
-                top = insets.getSystemWindowInsetTop();
-                right = insets.getSystemWindowInsetRight();
-                bottom = insets.getSystemWindowInsetBottom();
+        root.setOnApplyWindowInsetsListener(new View.OnApplyWindowInsetsListener() {
+            @Override
+            public WindowInsets onApplyWindowInsets(View v, WindowInsets insets) {
+                int left, top, right, bottom;
+                if (Build.VERSION.SDK_INT >= 30) {
+                    android.graphics.Insets bars = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.ime());
+                    left = bars.left;
+                    top = bars.top;
+                    right = bars.right;
+                    bottom = bars.bottom;
+                } else {
+                    left = insets.getSystemWindowInsetLeft();
+                    top = insets.getSystemWindowInsetTop();
+                    right = insets.getSystemWindowInsetRight();
+                    bottom = insets.getSystemWindowInsetBottom();
+                }
+                v.setPadding(left, top, right, bottom);
+                return insets;
             }
-            v.setPadding(left, top, right, bottom);
-            return insets;
         });
     }
 
