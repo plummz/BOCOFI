@@ -32,7 +32,7 @@ function getDefaultData() {
     ],
 
     users: [
-      { id: 'U001', name: 'Maria Santos', email: 'maria@example.com', pin: '1234', points: 850, coins: 12.5, wifiMinutes: 45, itemsRecycled: 34, joined: now - 40 * day, wifiStart: null, wifiStartMinutes: 0 },
+      { id: 'U001', name: 'Maria Santos', email: 'juandelacruz@gmail.com', pin: '1234', points: 850, coins: 12.5, wifiMinutes: 45, itemsRecycled: 34, joined: now - 40 * day, wifiStart: null, wifiStartMinutes: 0 },
       { id: 'U002', name: 'Jose Reyes', email: 'jose@example.com', pin: '1234', points: 120, coins: 0, wifiMinutes: 5, itemsRecycled: 6, joined: now - 12 * day, wifiStart: null, wifiStartMinutes: 0 },
       { id: 'U003', name: 'Ana Dela Cruz', email: 'ana@example.com', pin: '1234', points: 2140, coins: 4, wifiMinutes: 120, itemsRecycled: 112, joined: now - 90 * day, wifiStart: null, wifiStartMinutes: 0 }
     ],

@@ -23,7 +23,7 @@ The data is saved in the browser's localStorage, so the kiosk, app and admin can
 
 ## Test accounts
 
-- User app: `maria@example.com`, PIN `1234`
+- User app: `juandelacruz@gmail.com`, PIN `1234`
 - Admin: `admin` / `admin123`
 
 ## How to test the whole process
