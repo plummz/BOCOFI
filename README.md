@@ -30,10 +30,10 @@ The data is saved in the browser's localStorage, so the kiosk, app and admin can
 
 1. Open the kiosk and the app in two tabs.
 2. Log in to the app.
-3. On the kiosk, tap **Recycle Today**, then **Start**, then **Log in**. A 4-letter code will show.
+3. On the kiosk, tap **Start**, then **Continue**, choose **Log in with QR code** and tap **Continue**. A 4-letter code will show.
 4. In the app, go to **Recycle** and type the code, then tap **Link my account**.
-5. On the kiosk, click the item buttons to insert bottles or cans. (We don't have the sensor yet, so the buttons act like the sensor.)
-6. Tap **Claim** and choose COINS, WI-FI or SAVE.
+5. On the kiosk, pick a test item and tap **Open Intake**. (We don't have the sensor yet, so the test item list acts like the sensor.) Tap **Add Another**, then **Add Item** to insert more, or **Finish Session** when done.
+6. Tap **Choose Rewards**, pick Coins, Wi-Fi or Save, then **Continue**.
 7. Check the app and the admin page to see the update.
 
 The ☰ menu on the kiosk lets you change the bin level, coin level and Wi-Fi signal to test the other screens.

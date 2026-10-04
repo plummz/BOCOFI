@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BOCO-FI Kiosk</title>
   <link rel="icon" href="../assets/img/mark.svg">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -13,272 +13,515 @@
   <div class="kiosk">
 
     <header>
-      <button class="menu-btn" onclick="openMenu()">&#9776;</button>
-      <img src="../assets/img/logo.svg" alt="BOCO-FI" class="logo">
-      <span id="userLabel" class="user-label">Not logged in</span>
+      <img src="../assets/img/logo.svg" alt="BOCOFI" class="logo">
+      <div class="header-right">
+        <span id="userLabel"></span>
+        <button class="menu-btn" onclick="openMenu()">&#9776;</button>
+      </div>
     </header>
 
-    <main>
-      <!-- 1.0 Display Page -->
-      <div class="screen" id="screen-1.0">
-        <button class="start-btn" id="startBtn" onclick="showScreen('1.1')">Recycle<br>Today<small>Tap to Start</small></button>
-        <p class="gray">Turn your empty bottles and cans into coins or free Wi-Fi.</p>
-        <p class="error" id="startError"></p>
-      </div>
-
-      <!-- 1.1 Start -->
-      <div class="screen" id="screen-1.1">
-        <div class="icon green">&#10004;</div>
-        <h1>Ready when you are</h1>
-        <p id="readyText"></p>
-        <button class="btn big" onclick="showScreen('2.0')">START</button>
-        <button class="btn btn-white" onclick="showScreen('1.0')">BACK</button>
-      </div>
-
-      <!-- 2.0 Access Page -->
-      <div class="screen" id="screen-2.0">
-        <h1>How do you want to continue?</h1>
-        <p>Log in to save your points to your account, or continue as guest.</p>
-        <button class="btn btn-blue big" onclick="showScreen('2.1')">LOG IN</button>
-        <button class="btn btn-white big" onclick="showScreen('2.3')">GUEST</button>
-        <br>
-        <button class="btn btn-white" onclick="showScreen('1.1')">BACK</button>
-      </div>
-
-      <!-- 2.1 QR Code -->
-      <div class="screen" id="screen-2.1">
-        <h2>Link your account in the BOCO-FI app</h2>
-        <canvas id="qrCanvas" width="29" height="29"></canvas>
-        <p>Open the app, go to <b>Recycle</b> and enter this code:</p>
-        <div class="link-code" id="linkCode">----</div>
-        <p class="error" id="linkError"></p>
-        <button class="btn btn-white" onclick="cancelLink()">BACK</button>
-        <button class="btn" onclick="scanCode()">SCAN CODE</button>
-      </div>
-
-      <!-- 2.2 Account Linking -->
-      <div class="screen" id="screen-2.2">
-        <div class="icon green">&#10004;</div>
-        <h1>Welcome back, <span id="welcomeName"></span>!</h1>
-        <p>Your balance is <b id="welcomePoints"></b> points.</p>
-        <button class="btn btn-blue big" onclick="showScreen('3.0')">CONTINUE</button>
-      </div>
-
-      <!-- 2.3 Guest Limits -->
-      <div class="screen" id="screen-2.3">
-        <h2>Guest mode</h2>
-        <div class="panel">
-          <p>Coins and Wi-Fi vouchers: <b id="guestRewards"></b></p>
-          <p>Save points to account: <b class="red-text">Not available</b></p>
+    <!-- 1.0 Display Page -->
+    <div class="screen" id="screen-1.0">
+      <div class="content">
+        <div class="text">
+          <h1>Recycle Today</h1>
+          <p class="desc">Turn your empty bottles and cans into coins or free Wi-Fi. Tap Start to begin.</p>
+          <div class="extra" id="extra-1.0"></div>
+          <div class="status"><span class="dot">&#9679;</span> <span id="status-1.0">Online</span></div>
         </div>
-        <p class="gray">Log in with the app next time so you can save your points.</p>
-        <button class="btn btn-blue" onclick="startGuest()">CONTINUE</button>
-        <button class="btn btn-white" onclick="showScreen('2.0')">BACK</button>
+        <div class="picture"><img src="img/screen-1-0.jpg" alt=""></div>
       </div>
+      <div class="actions">
+        <button class="btn-back" disabled>Back</button>
+        <button class="btn-main" id="startBtn" onclick="showScreen('1.1')">Start</button>
+      </div>
+    </div>
 
-      <!-- 3.0 Check WiFi Status -->
-      <div class="screen" id="screen-3.0">
-        <h2>Checking machine...</h2>
-        <div class="panel">
-          <p>Wi-Fi signal: <b id="wifiStatus"></b></p>
+    <!-- 1.1 Start -->
+    <div class="screen" id="screen-1.1">
+      <div class="content">
+        <div class="text">
+          <h1>Ready to Begin?</h1>
+          <p class="desc">Choose Start when you are ready to recycle bottles or cans.</p>
+          <div class="extra"></div>
+          <div class="status"><span class="dot">&#9679;</span> Ready</div>
         </div>
-        <button class="btn btn-blue" onclick="showScreen('3.1')">CONTINUE</button>
+        <div class="picture"><img src="img/screen-1-1.jpg" alt=""></div>
       </div>
+      <div class="actions">
+        <button class="btn-back" onclick="showScreen('1.0')">Back</button>
+        <button class="btn-main" onclick="showScreen('2.0')">Continue</button>
+      </div>
+    </div>
 
-      <!-- 3.1 Check Coin Status -->
-      <div class="screen" id="screen-3.1">
-        <h2>Checking machine...</h2>
-        <div class="panel">
-          <p>Coin hopper level</p>
-          <div class="bar"><div id="coinBar"></div></div>
-          <p id="coinText"></p>
+    <!-- 2.0 Access Page -->
+    <div class="screen" id="screen-2.0">
+      <div class="content">
+        <div class="text">
+          <h1>Choose How to Continue</h1>
+          <p class="desc">Sign in with a QR code or continue as a guest.</p>
+          <div class="extra">
+            <button class="option" id="optionLogin" onclick="chooseAccess('login')">Log in with QR code</button>
+            <button class="option" id="optionGuest" onclick="chooseAccess('guest')">Continue as guest</button>
+          </div>
+          <div class="status"><span class="dot">&#9679;</span> <span id="status-2.0">Select an option</span></div>
         </div>
-        <button class="btn btn-blue" onclick="checkRewards()">CONTINUE</button>
+        <div class="picture"><img src="img/screen-2-0.jpg" alt=""></div>
       </div>
-
-      <!-- 3.2 Check Reward Status -->
-      <div class="screen" id="screen-3.2">
-        <h2>Rewards available today</h2>
-        <div class="panel" id="rewardList"></div>
-        <button class="btn btn-blue" onclick="showScreen('4.0')">CONTINUE</button>
+      <div class="actions">
+        <button class="btn-back" onclick="showScreen('1.1')">Back</button>
+        <button class="btn-main" id="accessBtn" onclick="continueAccess()">Continue</button>
       </div>
+    </div>
 
-      <!-- 3.3 No Reward Status -->
-      <div class="screen" id="screen-3.3">
-        <div class="icon red">&#10006;</div>
-        <h1>No rewards available</h1>
-        <p id="noRewardText"></p>
-        <button class="btn btn-blue" onclick="endSession()">START OVER</button>
-      </div>
-
-      <!-- 4.0 Insert Item -->
-      <div class="screen" id="screen-4.0">
-        <div class="icon arrow">&#8595;</div>
-        <h1>Insert your bottle or can</h1>
-        <p class="gray">Plastic bottles and aluminum cans only. Make sure they are empty.</p>
-        <p id="insertTotal" class="total"></p>
-        <button id="claimBtn" class="btn btn-white" onclick="showScreen('6.0')">CLAIM REWARDS</button>
-
-        <div class="test-box">
-          <p><b>Test buttons</b> (no sensor yet, click an item to insert it)</p>
-          <div id="itemButtons"></div>
-          <button class="btn btn-red btn-small" onclick="insertItem('unknown')">Unknown item</button>
+    <!-- 2.1 QR Code -->
+    <div class="screen" id="screen-2.1">
+      <div class="content">
+        <div class="text">
+          <h1>Scan QR Code</h1>
+          <p class="desc">Open the BOCOFI mobile app and scan the code on this screen.</p>
+          <div class="extra">
+            <div class="link-box">
+              <canvas id="qrCanvas" width="29" height="29"></canvas>
+              <div>
+                <p class="small-label">Or type this code in the app:</p>
+                <div class="link-code" id="linkCode">----</div>
+              </div>
+            </div>
+            <p class="error" id="linkError"></p>
+          </div>
+          <div class="status"><span class="dot">&#9679;</span> Waiting for scan</div>
         </div>
-        <button id="cancelBtn" class="btn btn-white" onclick="showScreen('7.1')">CANCEL</button>
+        <div class="picture"><img src="img/screen-2-1.jpg" alt=""></div>
       </div>
-
-      <!-- 4.1 Scan Item -->
-      <div class="screen" id="screen-4.1">
-        <div class="scanner"><div class="bottle"></div></div>
-        <h2>Scanning...</h2>
-        <p class="gray">Please wait while we check your item.</p>
+      <div class="actions">
+        <button class="btn-back" onclick="cancelLink()">Back</button>
+        <button class="btn-main" onclick="scanCode()">Scan Code</button>
       </div>
+    </div>
 
-      <!-- 4.2 Item Accepted -->
-      <div class="screen" id="screen-4.2">
-        <div class="icon green">&#10004;</div>
-        <h1>Item accepted</h1>
-        <p id="acceptedName"></p>
-        <div class="big-text" id="acceptedValue"></div>
-        <p id="acceptedTotal" class="total"></p>
-        <button class="btn btn-blue" onclick="afterAccepted()">CONTINUE</button>
-      </div>
-
-      <!-- 4.3 Decline Item -->
-      <div class="screen" id="screen-4.3">
-        <div class="icon red">&#10006;</div>
-        <h1>Item not accepted</h1>
-        <p>Sorry, we can't accept this item. Please take it back.</p>
-        <button class="btn btn-blue" onclick="showScreen('4.4')">CONTINUE</button>
-      </div>
-
-      <!-- 4.4 Add Item? -->
-      <div class="screen" id="screen-4.4">
-        <h1>Try another item?</h1>
-        <p id="tryAgainText"></p>
-        <button class="btn big" onclick="showScreen('4.0')">YES</button>
-        <button class="btn btn-white big" onclick="noMoreItems()">NO</button>
-      </div>
-
-      <!-- 5.0 Bin Status -->
-      <div class="screen" id="screen-5.0">
-        <h2>Bin is almost full</h2>
-        <div class="panel">
-          <div class="bar"><div id="binBar" class="yellow"></div></div>
-          <p id="binText"></p>
+    <!-- 2.2 Account Linking -->
+    <div class="screen" id="screen-2.2">
+      <div class="content">
+        <div class="text">
+          <h1>Account Linked</h1>
+          <p class="desc">Your BOCOFI account is now connected to this machine.</p>
+          <div class="extra" id="extra-2.2"></div>
+          <div class="status"><span class="dot">&#9679;</span> Account Connected</div>
         </div>
-        <button class="btn btn-blue" onclick="showScreen('5.1')">START CRUSHING</button>
+        <div class="picture"><img src="img/screen-2-2.jpg" alt=""></div>
       </div>
+      <div class="actions">
+        <button class="btn-back" onclick="unlinkUser()">Back</button>
+        <button class="btn-main" onclick="showScreen('3.0')">Continue</button>
+      </div>
+    </div>
 
-      <!-- 5.1 Crusher Status -->
-      <div class="screen" id="screen-5.1">
-        <h2>Crushing...</h2>
-        <div class="panel">
-          <div class="bar"><div id="crushBar" class="yellow loading"></div></div>
-          <p class="gray">Please wait.</p>
+    <!-- 2.3 Guest Limits -->
+    <div class="screen" id="screen-2.3">
+      <div class="content">
+        <div class="text">
+          <h1>Guest Session Limits</h1>
+          <p class="desc">Guest users can receive coins or Wi-Fi rewards only.</p>
+          <div class="extra"></div>
+          <div class="status"><span class="dot">&#9679;</span> Guest Mode</div>
         </div>
+        <div class="picture"><img src="img/screen-2-3.jpg" alt=""></div>
       </div>
-
-      <!-- 5.2 Session Status -->
-      <div class="screen" id="screen-5.2">
-        <h1>What would you like to do?</h1>
-        <p id="sessionTotal" class="total"></p>
-        <button class="btn big" onclick="showScreen('4.0')">ADD MORE</button>
-        <button class="btn btn-white big" onclick="showScreen('6.0')">CLAIM</button>
+      <div class="actions">
+        <button class="btn-back" onclick="showScreen('2.0')">Back</button>
+        <button class="btn-main" onclick="showScreen('3.0')">I Understand</button>
       </div>
+    </div>
 
-      <!-- 6.0 Reward Choice -->
-      <div class="screen" id="screen-6.0">
-        <h1>Choose your reward</h1>
-        <p id="rewardTotal" class="total"></p>
-        <div class="rewards">
-          <button class="reward" id="coinsBtn" onclick="chooseReward('coins')">COINS<small id="coinsInfo"></small></button>
-          <button class="reward" id="wifiBtn" onclick="chooseReward('wifi')">WI-FI<small id="wifiInfo"></small></button>
-          <button class="reward" id="saveBtn" onclick="chooseReward('save')">SAVE<small id="saveInfo"></small></button>
+    <!-- 3.0 Check WiFi Status -->
+    <div class="screen" id="screen-3.0">
+      <div class="content">
+        <div class="text">
+          <h1>Connection Checked</h1>
+          <p class="desc" id="desc-3.0">The Wi-Fi connection is working. Tap Continue when you are ready.</p>
+          <div class="extra"></div>
+          <div class="status"><span class="dot">&#9679;</span> <span id="status-3.0">Wi-Fi Connected</span></div>
         </div>
+        <div class="picture"><img src="img/screen-3-0.jpg" alt=""></div>
+      </div>
+      <div class="actions">
+        <button class="btn-back" onclick="goBackFromCheck()">Back</button>
+        <button class="btn-main" onclick="showScreen('3.1')">Continue</button>
+      </div>
+    </div>
 
-        <div class="panel">
-          <label for="cashoutInput">Have a cash-out code from the app?</label>
-          <input type="text" id="cashoutInput" placeholder="CO-XXXX" maxlength="7">
-          <p class="error" id="cashoutError"></p>
-          <button class="btn" onclick="redeemCashout()">REDEEM CODE</button>
+    <!-- 3.1 Check Coin Status -->
+    <div class="screen" id="screen-3.1">
+      <div class="content">
+        <div class="text">
+          <h1>Coin Availability Status</h1>
+          <p class="desc" id="desc-3.1">There are enough coins in the machine. Tap Continue when you are ready.</p>
+          <div class="extra"></div>
+          <div class="status"><span class="dot">&#9679;</span> <span id="status-3.1">Coins Available</span></div>
         </div>
-        <button class="btn btn-white" onclick="showScreen('5.2')">BACK</button>
+        <div class="picture"><img src="img/screen-3-1.jpg" alt=""></div>
       </div>
+      <div class="actions">
+        <button class="btn-back" onclick="showScreen('3.0')">Back</button>
+        <button class="btn-main" onclick="showScreen('3.2')">Continue</button>
+      </div>
+    </div>
 
-      <!-- 6.1 Coin Dispense -->
-      <div class="screen" id="screen-6.1">
-        <h2>Dispensing coins...</h2>
-        <div class="big-text" id="dispenseAmount"></div>
-        <div class="panel">
-          <div class="bar"><div class="loading"></div></div>
+    <!-- 3.2 Check Reward Status -->
+    <div class="screen" id="screen-3.2">
+      <div class="content">
+        <div class="text">
+          <h1>Available Rewards</h1>
+          <p class="desc">These rewards are available for your recycling session.</p>
+          <div class="extra" id="extra-3.2"></div>
+          <div class="status"><span class="dot">&#9679;</span> Rewards Ready</div>
         </div>
+        <div class="picture"><img src="img/screen-3-2.jpg" alt=""></div>
       </div>
-
-      <!-- 6.2 Coin Reward Release -->
-      <div class="screen" id="screen-6.2">
-        <div class="icon green">&#10004;</div>
-        <h1>Coins released</h1>
-        <div class="big-text" id="coinsAmount"></div>
-        <p>Please get your coins from the tray below.</p>
-        <button class="btn btn-blue" onclick="showScreen('7.0')">CONTINUE</button>
+      <div class="actions">
+        <button class="btn-back" onclick="showScreen('3.1')">Back</button>
+        <button class="btn-main" onclick="checkRewards()">Continue</button>
       </div>
+    </div>
 
-      <!-- 6.3 Generate WiFi Voucher -->
-      <div class="screen" id="screen-6.3">
-        <h2>Generating your voucher...</h2>
-        <div class="panel">
-          <div class="bar"><div class="loading"></div></div>
+    <!-- 3.3 No Reward Status -->
+    <div class="screen" id="screen-3.3">
+      <div class="content">
+        <div class="text">
+          <h1>Reward Unavailable</h1>
+          <p class="desc" id="desc-3.3">One reward option is currently unavailable. You can choose another.</p>
+          <div class="extra"></div>
+          <div class="status"><span class="dot">&#9679;</span> <span id="status-3.3">Limited Rewards</span></div>
         </div>
+        <div class="picture"><img src="img/screen-3-3.jpg" alt=""></div>
       </div>
-
-      <!-- 6.4 WiFi Voucher Release -->
-      <div class="screen" id="screen-6.4">
-        <h2>Your Wi-Fi voucher (<span id="voucherMinutes"></span> minutes)</h2>
-        <div class="voucher" id="voucherCode"></div>
-        <p>Connect to <b>BOCO-FI Free Wi-Fi</b> and enter this code.</p>
-        <p class="gray">This screen will close in <span id="voucherTimer">30</span> seconds</p>
-        <button class="btn" onclick="showScreen('7.0')">DONE</button>
+      <div class="actions">
+        <button class="btn-back" onclick="showScreen('3.2')">Back</button>
+        <button class="btn-main" id="noRewardBtn" onclick="afterNoReward()">Choose Another</button>
       </div>
+    </div>
 
-      <!-- 6.5 Keep Reward As Balance -->
-      <div class="screen" id="screen-6.5">
-        <h2>Saving to your account...</h2>
-        <div class="big-text" id="savingPoints"></div>
-        <div class="panel">
-          <div class="bar"><div class="loading"></div></div>
+    <!-- 4.0 Insert Item -->
+    <div class="screen" id="screen-4.0">
+      <div class="content">
+        <div class="text">
+          <h1>Insert Your Item</h1>
+          <p class="desc">Place one empty plastic bottle or aluminum can into the opening.</p>
+          <div class="extra">
+            <div class="test-box">
+              <label for="itemSelect">Test item (no sensor yet)</label>
+              <select id="itemSelect"></select>
+            </div>
+            <p class="total" id="insertTotal"></p>
+          </div>
+          <div class="status"><span class="dot">&#9679;</span> Waiting for Item</div>
         </div>
+        <div class="picture"><img src="img/screen-4-0.jpg" alt=""></div>
       </div>
-
-      <!-- 6.6 Reward Balance Saved -->
-      <div class="screen" id="screen-6.6">
-        <div class="icon green">&#10004;</div>
-        <h1>Points saved</h1>
-        <div class="big-text" id="savedPoints"></div>
-        <p>New balance: <b id="newBalance"></b></p>
-        <button class="btn btn-blue" onclick="showScreen('7.0')">CONTINUE</button>
+      <div class="actions">
+        <button class="btn-back" onclick="backFromInsert()">Back</button>
+        <button class="btn-main" onclick="openIntake()">Open Intake</button>
       </div>
+    </div>
 
-      <!-- 7.0 Thank You Page -->
-      <div class="screen" id="screen-7.0">
-        <div class="icon green">&#9851;</div>
-        <h1>Thank you for recycling!</h1>
-        <p id="thanksText"></p>
-        <button class="btn big" onclick="endSession()">DONE</button>
+    <!-- 4.1 Scan Item -->
+    <div class="screen" id="screen-4.1">
+      <div class="content">
+        <div class="text">
+          <h1>Scanning Item</h1>
+          <p class="desc">Keep the item still while the machine checks it. This takes a few seconds.</p>
+          <div class="extra"></div>
+          <div class="status"><span class="dot">&#9679;</span> Scanning</div>
+        </div>
+        <div class="picture"><img src="img/screen-4-1.jpg" alt=""></div>
       </div>
-
-      <!-- 7.1 Resetting Machine -->
-      <div class="screen" id="screen-7.1">
-        <h1>Session ended</h1>
-        <p class="gray">Resetting the machine...</p>
+      <div class="actions">
+        <button class="btn-back" disabled>Back</button>
+        <button class="btn-main" disabled>Please wait</button>
       </div>
-    </main>
+    </div>
 
-    <footer>
-      <span id="stepLabel">1.0 Display Page</span>
-      <div class="bar"><div id="progress"></div></div>
-      <span id="machineLabel"></span>
-    </footer>
+    <!-- 4.2 Item Accepted -->
+    <div class="screen" id="screen-4.2">
+      <div class="content">
+        <div class="text">
+          <h1>Item Accepted</h1>
+          <p class="desc">The item is valid and has been added to your session.</p>
+          <div class="extra" id="extra-4.2"></div>
+          <div class="status"><span class="dot">&#9679;</span> Accepted</div>
+        </div>
+        <div class="picture"><img src="img/screen-4-2.jpg" alt=""></div>
+      </div>
+      <div class="actions">
+        <button class="btn-back" disabled>Back</button>
+        <button class="btn-main" onclick="showScreen('4.4')">Add Another</button>
+      </div>
+    </div>
+
+    <!-- 4.3 Decline Item -->
+    <div class="screen" id="screen-4.3">
+      <div class="content">
+        <div class="text">
+          <h1>Item not accepted</h1>
+          <p class="desc">This item cannot be accepted. Remove it and try another item.</p>
+          <div class="extra"></div>
+          <div class="status"><span class="dot">&#9679;</span> Not Accepted</div>
+        </div>
+        <div class="picture"><img src="img/screen-4-3.jpg" alt=""></div>
+      </div>
+      <div class="actions">
+        <button class="btn-back" onclick="showScreen('4.4')">Back</button>
+        <button class="btn-main" onclick="showScreen('4.0')">Try Again</button>
+      </div>
+    </div>
+
+    <!-- 4.4 Add Item? -->
+    <div class="screen" id="screen-4.4">
+      <div class="content">
+        <div class="text">
+          <h1>Add Another Item?</h1>
+          <p class="desc">You can add another item or finish the recycling session.</p>
+          <div class="extra" id="extra-4.4"></div>
+          <div class="status"><span class="dot">&#9679;</span> Session active</div>
+        </div>
+        <div class="picture"><img src="img/screen-4-4.jpg" alt=""></div>
+      </div>
+      <div class="actions">
+        <button class="btn-back" onclick="showScreen('4.0')">Add Item</button>
+        <button class="btn-main" onclick="finishSession()">Finish Session</button>
+      </div>
+    </div>
+
+    <!-- 5.0 Bin Status -->
+    <div class="screen" id="screen-5.0">
+      <div class="content">
+        <div class="text">
+          <h1>Bin Capacity</h1>
+          <p class="desc">The bin is almost full, so the machine will crush the items first. Tap Continue to start.</p>
+          <div class="extra"></div>
+          <div class="status"><span class="dot">&#9679;</span> <span id="status-5.0">Bin at 80%</span></div>
+        </div>
+        <div class="picture"><img src="img/screen-5-0.jpg" alt=""></div>
+      </div>
+      <div class="actions">
+        <button class="btn-back" onclick="showScreen('4.4')">Back</button>
+        <button class="btn-main" onclick="showScreen('5.1')">Continue</button>
+      </div>
+    </div>
+
+    <!-- 5.1 Crusher Status -->
+    <div class="screen" id="screen-5.1">
+      <div class="content">
+        <div class="text">
+          <h1>Crushing in progress</h1>
+          <p class="desc">Please wait while the items are being crushed. This takes a few seconds.</p>
+          <div class="extra"></div>
+          <div class="status"><span class="dot">&#9679;</span> Crushing</div>
+        </div>
+        <div class="picture"><img src="img/screen-5-1.jpg" alt=""></div>
+      </div>
+      <div class="actions">
+        <button class="btn-back" disabled>Back</button>
+        <button class="btn-main" disabled>Please Wait</button>
+      </div>
+    </div>
+
+    <!-- 5.2 Session Status -->
+    <div class="screen" id="screen-5.2">
+      <div class="content">
+        <div class="text">
+          <h1>Session summary</h1>
+          <p class="desc">Review the number of accepted items and your total reward.</p>
+          <div class="extra" id="extra-5.2"></div>
+          <div class="status"><span class="dot">&#9679;</span> Items Processed</div>
+        </div>
+        <div class="picture"><img src="img/screen-5-2.jpg" alt=""></div>
+      </div>
+      <div class="actions">
+        <button class="btn-back" onclick="showScreen('4.0')">Back</button>
+        <button class="btn-main" onclick="showScreen('6.0')">Choose Rewards</button>
+      </div>
+    </div>
+
+    <!-- 6.0 Reward Choice -->
+    <div class="screen" id="screen-6.0">
+      <div class="content">
+        <div class="text">
+          <h1>Choose Your Reward</h1>
+          <p class="desc">Choose coins, Wi-Fi time, or save it as points in your BOCOFI app.</p>
+          <div class="extra">
+            <button class="option" id="coinsBtn" onclick="chooseReward('coins')">Coins<small id="coinsInfo"></small></button>
+            <button class="option" id="wifiBtn" onclick="chooseReward('wifi')">Wi-Fi<small id="wifiInfo"></small></button>
+            <button class="option" id="saveBtn" onclick="chooseReward('save')">Save<small id="saveInfo"></small></button>
+            <div class="cashout">
+              <input type="text" id="cashoutInput" placeholder="Cash-out code (CO-XXXX)" maxlength="7">
+              <button class="btn-small-green" onclick="redeemCashout()">Redeem</button>
+            </div>
+            <p class="error" id="cashoutError"></p>
+          </div>
+          <div class="status"><span class="dot">&#9679;</span> <span id="status-6.0">Select reward</span></div>
+        </div>
+        <div class="picture"><img src="img/screen-6-0.jpg" alt=""></div>
+      </div>
+      <div class="actions">
+        <button class="btn-back" onclick="showScreen('5.2')">Back</button>
+        <button class="btn-main" id="rewardBtn" onclick="continueReward()">Continue</button>
+      </div>
+    </div>
+
+    <!-- 6.1 Coin Dispense -->
+    <div class="screen" id="screen-6.1">
+      <div class="content">
+        <div class="text">
+          <h1>Dispensing Coins</h1>
+          <p class="desc">Please wait while the machine prepares your coin reward.</p>
+          <div class="extra" id="extra-6.1"></div>
+          <div class="status"><span class="dot">&#9679;</span> Dispensing</div>
+        </div>
+        <div class="picture"><img src="img/screen-6-1.jpg" alt=""></div>
+      </div>
+      <div class="actions">
+        <button class="btn-back" disabled>Back</button>
+        <button class="btn-main" disabled>Please Wait</button>
+      </div>
+    </div>
+
+    <!-- 6.2 Coin Reward Release -->
+    <div class="screen" id="screen-6.2">
+      <div class="content">
+        <div class="text">
+          <h1>Coins Released</h1>
+          <p class="desc">Collect your coins from the reward tray below.</p>
+          <div class="extra" id="extra-6.2"></div>
+          <div class="status"><span class="dot">&#9679;</span> Coins ready</div>
+        </div>
+        <div class="picture"><img src="img/screen-6-2.jpg" alt=""></div>
+      </div>
+      <div class="actions">
+        <button class="btn-back" disabled>Back</button>
+        <button class="btn-main" onclick="showScreen('7.0')">Done</button>
+      </div>
+    </div>
+
+    <!-- 6.3 Generate WiFi Voucher -->
+    <div class="screen" id="screen-6.3">
+      <div class="content">
+        <div class="text">
+          <h1>Creating WiFi Voucher</h1>
+          <p class="desc">The machine is creating your Wi-Fi access code.</p>
+          <div class="extra"></div>
+          <div class="status"><span class="dot">&#9679;</span> Creating voucher</div>
+        </div>
+        <div class="picture"><img src="img/screen-6-3.jpg" alt=""></div>
+      </div>
+      <div class="actions">
+        <button class="btn-back" disabled>Back</button>
+        <button class="btn-main" disabled>Please Wait</button>
+      </div>
+    </div>
+
+    <!-- 6.4 WiFi Voucher Release -->
+    <div class="screen" id="screen-6.4">
+      <div class="content">
+        <div class="text">
+          <h1>Your WiFi Voucher</h1>
+          <p class="desc">Use the code and password below to connect to Wi-Fi.</p>
+          <div class="extra" id="extra-6.4"></div>
+          <div class="status"><span class="dot">&#9679;</span> Voucher ready</div>
+        </div>
+        <div class="picture"><img src="img/screen-6-4.jpg" alt=""></div>
+      </div>
+      <div class="actions">
+        <button class="btn-back" disabled>Back</button>
+        <button class="btn-main" onclick="showScreen('7.0')">Done</button>
+      </div>
+    </div>
+
+    <!-- 6.5 Keep Reward As Balance -->
+    <div class="screen" id="screen-6.5">
+      <div class="content">
+        <div class="text">
+          <h1>Save as Points</h1>
+          <p class="desc" id="desc-6.5">Your reward will be saved as points in your BOCOFI app. 100 points = ₱1.00.</p>
+          <div class="extra" id="extra-6.5"></div>
+          <div class="status"><span class="dot">&#9679;</span> Save to app</div>
+        </div>
+        <div class="picture"><img src="img/screen-6-5.jpg" alt=""></div>
+      </div>
+      <div class="actions">
+        <button class="btn-back" onclick="showScreen('6.0')">Back</button>
+        <button class="btn-main" onclick="savePoints()">Save Points</button>
+      </div>
+    </div>
+
+    <!-- 6.6 Reward Balance Saved -->
+    <div class="screen" id="screen-6.6">
+      <div class="content">
+        <div class="text">
+          <h1>Points Saved</h1>
+          <p class="desc">Your points were added to your BOCOFI app. You can use them later for coins or Wi-Fi.</p>
+          <div class="extra" id="extra-6.6"></div>
+          <div class="status"><span class="dot">&#9679;</span> Saved</div>
+        </div>
+        <div class="picture"><img src="img/screen-6-6.jpg" alt=""></div>
+      </div>
+      <div class="actions">
+        <button class="btn-back" disabled>Back</button>
+        <button class="btn-main" onclick="showScreen('7.0')">Done</button>
+      </div>
+    </div>
+
+    <!-- 7.0 Thank You Page -->
+    <div class="screen" id="screen-7.0">
+      <div class="content">
+        <div class="text">
+          <h1>Thank You</h1>
+          <p class="desc">Thank you for recycling with BOCOFI.</p>
+          <div class="extra" id="extra-7.0"></div>
+          <div class="status"><span class="dot">&#9679;</span> Session complete</div>
+        </div>
+        <div class="picture"><img src="img/screen-7-0.jpg" alt=""></div>
+      </div>
+      <div class="actions">
+        <button class="btn-back" disabled>Back</button>
+        <button class="btn-main" onclick="showScreen('7.1')">Finish</button>
+      </div>
+    </div>
+
+    <!-- 7.1 Resetting Machine -->
+    <div class="screen" id="screen-7.1">
+      <div class="content">
+        <div class="text">
+          <h1>Getting Ready</h1>
+          <p class="desc">Please wait a moment. The machine is getting ready for the next person.</p>
+          <div class="extra"></div>
+          <div class="status"><span class="dot">&#9679;</span> Almost ready</div>
+        </div>
+        <div class="picture"><img src="img/screen-7-1.jpg" alt=""></div>
+      </div>
+      <div class="actions">
+        <button class="btn-back" disabled>Back</button>
+        <button class="btn-main" disabled>Please Wait</button>
+      </div>
+    </div>
+
+    <!-- 1.2 Are You Still There? -->
+    <div class="screen" id="screen-1.2">
+      <div class="content">
+        <div class="text">
+          <h1>Are You Still There?</h1>
+          <p class="desc">Tap Yes to keep going. If no one answers, the session will end in 15 seconds.</p>
+          <div class="extra"></div>
+          <div class="status"><span class="dot">&#9679;</span> Ending in <span id="stillSeconds">15</span> seconds</div>
+        </div>
+        <div class="picture"><img src="img/screen-1-2.jpg" alt=""></div>
+      </div>
+      <div class="actions">
+        <button class="btn-back" onclick="showScreen('7.1')">End Session</button>
+        <button class="btn-main" onclick="stillHere()">Yes, I'm Here</button>
+      </div>
+    </div>
   </div>
 
   <!-- side menu -->

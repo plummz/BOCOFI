@@ -1,19 +1,10 @@
-var screenNames = {
-  '1.0': 'Display Page', '1.1': 'Start',
-  '2.0': 'Access Page', '2.1': 'QR Code', '2.2': 'Account Linking', '2.3': 'Guest Limits',
-  '3.0': 'Check WiFi Status', '3.1': 'Check Coin Status', '3.2': 'Check Reward Status', '3.3': 'No Reward Status',
-  '4.0': 'Insert Item', '4.1': 'Scan Item', '4.2': 'Item Accepted', '4.3': 'Decline Item', '4.4': 'Add Item?',
-  '5.0': 'Bin Status', '5.1': 'Crusher Status', '5.2': 'Session Status',
-  '6.0': 'Reward Choice', '6.1': 'Coin Dispense', '6.2': 'Coin Reward Release', '6.3': 'Generate WiFi Voucher',
-  '6.4': 'WiFi Voucher Release', '6.5': 'Keep Reward As Balance', '6.6': 'Reward Balance Saved',
-  '7.0': 'Thank You Page', '7.1': 'Resetting Machine'
-};
-
 var machineId = localStorage.getItem('bocofi_kiosk_machine') || 'BCF-001';
 
 var currentScreen = '1.0';
+var lastScreen = '1.0';
 var userId = null;
 var isGuest = false;
+var accessChoice = null;
 var items = [];
 var total = 0;
 var pendingItem = null;
@@ -27,6 +18,7 @@ var alertSent = false;
 var screenTimer = null;
 var repeatTimer = null;
 var idleTimer = null;
+var stillTimer = null;
 
 function getMachine(data) {
   return findMachine(data, machineId);
@@ -41,40 +33,12 @@ function showMessage(text) {
   }, 2500);
 }
 
-function showScreen(id) {
-  clearTimeout(screenTimer);
-  clearInterval(repeatTimer);
-
-  var screens = document.querySelectorAll('.screen');
-  for (var i = 0; i < screens.length; i++) {
-    screens[i].classList.remove('active');
-  }
-  document.getElementById('screen-' + id).classList.add('active');
-  currentScreen = id;
-
-  var phase = parseInt(id.charAt(0));
-  document.getElementById('stepLabel').textContent = id + ' ' + screenNames[id];
-  document.getElementById('progress').style.width = (phase / 7 * 100) + '%';
-
-  setupScreen(id);
-  updateHeader();
+function setText(id, text) {
+  document.getElementById(id).textContent = text;
 }
 
-function updateHeader() {
-  var data = loadData();
-  var label = document.getElementById('userLabel');
-  var user = findUser(data, userId);
-
-  if (user) {
-    label.textContent = user.name;
-  } else if (isGuest) {
-    label.textContent = 'Guest';
-  } else {
-    label.textContent = 'Not logged in';
-  }
-
-  var m = getMachine(data);
-  document.getElementById('machineLabel').textContent = m.id + ' ' + m.name;
+function setHtml(id, html) {
+  document.getElementById(id).innerHTML = html;
 }
 
 function itemCountText() {
@@ -90,24 +54,64 @@ function sessionMinutes(data) {
   return Math.max(1, Math.round(total * data.settings.wifiMinutesPerPeso));
 }
 
+function hideAllScreens() {
+  var screens = document.querySelectorAll('.screen');
+  for (var i = 0; i < screens.length; i++) {
+    screens[i].classList.remove('active');
+  }
+}
+
+function showScreen(id) {
+  clearTimeout(screenTimer);
+  clearInterval(repeatTimer);
+  clearInterval(stillTimer);
+
+  hideAllScreens();
+  document.getElementById('screen-' + id).classList.add('active');
+  currentScreen = id;
+
+  setupScreen(id);
+  updateHeader();
+  resetIdleTimer();
+}
+
+function updateHeader() {
+  var data = loadData();
+  var user = findUser(data, userId);
+  var label = document.getElementById('userLabel');
+
+  if (user) {
+    label.textContent = user.name;
+  } else if (isGuest) {
+    label.textContent = 'Guest';
+  } else {
+    label.textContent = '';
+  }
+}
+
 function setupScreen(id) {
   var data = loadData();
   var m = getMachine(data);
   var user = findUser(data, userId);
 
   if (id === '1.0') {
-    var startBtn = document.getElementById('startBtn');
-    if (m.status !== 'online') {
-      startBtn.disabled = true;
-      document.getElementById('startError').textContent = 'This machine is under ' + m.status + '. Please use another machine.';
+    if (m.status === 'online') {
+      setText('status-1.0', 'Online');
+      setText('extra-1.0', '');
+      document.getElementById('startBtn').disabled = false;
     } else {
-      startBtn.disabled = false;
-      document.getElementById('startError').textContent = '';
+      setText('status-1.0', 'Under ' + m.status);
+      setText('extra-1.0', 'This machine is not available right now. Please use another machine.');
+      document.getElementById('startBtn').disabled = true;
     }
   }
 
-  if (id === '1.1') {
-    document.getElementById('readyText').textContent = 'Connected to ' + m.name + '. Press start to begin.';
+  if (id === '2.0') {
+    accessChoice = null;
+    document.getElementById('optionLogin').classList.remove('selected');
+    document.getElementById('optionGuest').classList.remove('selected');
+    document.getElementById('accessBtn').disabled = true;
+    setText('status-2.0', 'Select an option');
   }
 
   if (id === '2.1') {
@@ -116,39 +120,42 @@ function setupScreen(id) {
   }
 
   if (id === '2.2') {
-    document.getElementById('welcomeName').textContent = user.name.split(' ')[0];
-    document.getElementById('welcomePoints').textContent = user.points;
-  }
-
-  if (id === '2.3') {
-    var hasReward = canGiveCoins(data, m) || canGiveWifi(m);
-    document.getElementById('guestRewards').textContent = hasReward ? 'Available' : 'Not available';
+    setHtml('extra-2.2', '<p class="info">Logged in as <b>' + user.name + '</b></p>' +
+      '<p class="info">Current balance: <b>' + user.points + ' points</b></p>');
   }
 
   if (id === '3.0') {
-    var signal = { strong: 'Strong', weak: 'Weak', none: 'No signal' };
-    document.getElementById('wifiStatus').textContent = signal[m.wifiSignal];
+    if (m.wifiSignal === 'strong') {
+      setText('status-3.0', 'Wi-Fi Connected');
+      setText('desc-3.0', 'The Wi-Fi connection is working. Tap Continue when you are ready.');
+    } else if (m.wifiSignal === 'weak') {
+      setText('status-3.0', 'Wi-Fi Weak');
+      setText('desc-3.0', 'The Wi-Fi signal is weak but still working. Tap Continue when you are ready.');
+    } else {
+      setText('status-3.0', 'No Wi-Fi');
+      setText('desc-3.0', 'The Wi-Fi connection is not working. Wi-Fi vouchers will not be available.');
+    }
   }
 
   if (id === '3.1') {
-    document.getElementById('coinBar').style.width = m.coinLevel + '%';
     if (canGiveCoins(data, m)) {
-      document.getElementById('coinText').textContent = m.coinLevel + '% - enough coins';
+      setText('status-3.1', 'Coins Available');
+      setText('desc-3.1', 'There are enough coins in the machine. Tap Continue when you are ready.');
     } else {
-      document.getElementById('coinText').textContent = m.coinLevel + '% - coins are running out';
+      setText('status-3.1', 'Coins Low');
+      setText('desc-3.1', 'The machine is low on coins. Coin rewards will not be available.');
     }
   }
 
   if (id === '3.2') {
     var coinsOk = canGiveCoins(data, m);
     var wifiOk = canGiveWifi(m);
-    var html = '';
-    html += '<p>Coins: ' + (coinsOk ? '<b class="green-text">Available</b>' : '<b class="red-text">Not available</b>') + '</p>';
-    html += '<p>Wi-Fi voucher: ' + (wifiOk ? '<b class="green-text">Available</b>' : '<b class="red-text">Not available</b>') + '</p>';
+    var html = '<p class="info">Coins: <b>' + (coinsOk ? 'Available' : 'Not available') + '</b></p>';
+    html += '<p class="info">Wi-Fi voucher: <b>' + (wifiOk ? 'Available' : 'Not available') + '</b></p>';
     if (user) {
-      html += '<p>Save to account: <b class="green-text">Available</b></p>';
+      html += '<p class="info">Save as points: <b>Available</b></p>';
     }
-    document.getElementById('rewardList').innerHTML = html;
+    setHtml('extra-3.2', html);
 
     if (!alertSent && (!coinsOk || !wifiOk)) {
       if (!coinsOk) addAlert(data, m.id, 'Coin hopper is low. Users can only get Wi-Fi or save points.', 'warning');
@@ -159,29 +166,32 @@ function setupScreen(id) {
   }
 
   if (id === '3.3') {
-    var reason = 'Coins and Wi-Fi vouchers are not available right now.';
-    if (isBinFull(data, m)) reason = 'The bin is full.';
-    document.getElementById('noRewardText').textContent = reason + ' Please try another machine.';
-    addAlert(data, m.id, 'No rewards available. A user was turned away.', 'critical');
-    saveData(data);
+    var noReward = !canGiveCoins(data, m) && !canGiveWifi(m) && !user;
+    if (noReward || isBinFull(data, m)) {
+      setText('status-3.3', 'No Rewards');
+      setText('desc-3.3', 'No rewards are available right now. Please use another machine.');
+      setText('noRewardBtn', 'Finish');
+      addAlert(data, m.id, 'No rewards available. A user was turned away.', 'critical');
+      saveData(data);
+    } else {
+      setText('status-3.3', 'Limited Rewards');
+      setText('desc-3.3', 'One reward option is currently unavailable. You can choose another.');
+      setText('noRewardBtn', 'Choose Another');
+    }
   }
 
   if (id === '4.0') {
-    var buttons = '';
+    var options = '';
     for (var i = 0; i < data.items.length; i++) {
-      var item = data.items[i];
-      buttons += '<button class="btn btn-white btn-small" onclick="insertItem(\'' + item.id + '\')">' + item.name + ' (' + peso(item.value) + ')</button> ';
+      options += '<option value="' + data.items[i].id + '">' + data.items[i].name + ' (' + peso(data.items[i].value) + ')</option>';
     }
-    document.getElementById('itemButtons').innerHTML = buttons;
+    options += '<option value="unknown">Unknown item (will be rejected)</option>';
+    setHtml('itemSelect', options);
 
     if (items.length > 0) {
-      document.getElementById('insertTotal').textContent = 'Total: ' + peso(total) + ' (' + itemCountText() + ')';
-      document.getElementById('claimBtn').classList.remove('hidden');
-      document.getElementById('cancelBtn').classList.add('hidden');
+      setText('insertTotal', 'Total so far: ' + peso(total) + ' (' + itemCountText() + ')');
     } else {
-      document.getElementById('insertTotal').textContent = '';
-      document.getElementById('claimBtn').classList.add('hidden');
-      document.getElementById('cancelBtn').classList.remove('hidden');
+      setText('insertTotal', '');
     }
   }
 
@@ -191,22 +201,21 @@ function setupScreen(id) {
 
   if (id === '4.2') {
     var last = items[items.length - 1];
-    document.getElementById('acceptedName').textContent = last.name;
-    document.getElementById('acceptedValue').textContent = '+' + peso(last.value);
-    document.getElementById('acceptedTotal').textContent = 'Total: ' + peso(total) + ' (' + itemCountText() + ')';
+    setHtml('extra-4.2', '<p class="big">+' + peso(last.value) + '</p>' +
+      '<p class="info">' + last.name + '</p>' +
+      '<p class="total">Total: ' + peso(total) + ' (' + itemCountText() + ')</p>');
   }
 
   if (id === '4.4') {
     if (items.length > 0) {
-      document.getElementById('tryAgainText').textContent = 'You have ' + itemCountText() + ' worth ' + peso(total) + '.';
+      setHtml('extra-4.4', '<p class="total">Total: ' + peso(total) + ' (' + itemCountText() + ')</p>');
     } else {
-      document.getElementById('tryAgainText').textContent = 'No items accepted yet.';
+      setHtml('extra-4.4', '<p class="info">No items accepted yet.</p>');
     }
   }
 
   if (id === '5.0') {
-    document.getElementById('binBar').style.width = m.binLevel + '%';
-    document.getElementById('binText').textContent = 'Bin is at ' + Math.round(m.binLevel) + '%. The crusher will make more space.';
+    setText('status-5.0', 'Bin at ' + Math.round(m.binLevel) + '%');
   }
 
   if (id === '5.1') {
@@ -214,7 +223,8 @@ function setupScreen(id) {
   }
 
   if (id === '5.2') {
-    document.getElementById('sessionTotal').textContent = 'Total: ' + peso(total) + ' (' + itemCountText() + ')';
+    setHtml('extra-5.2', '<p class="info">Accepted items: <b>' + items.length + '</b></p>' +
+      '<p class="big">' + peso(total) + '</p>');
   }
 
   if (id === '6.0') {
@@ -223,13 +233,13 @@ function setupScreen(id) {
 
   if (id === '6.1') {
     var amount = rewardType === 'cashout' ? cashoutAmount : total;
-    document.getElementById('dispenseAmount').textContent = peso(amount);
+    setHtml('extra-6.1', '<p class="big">' + peso(amount) + '</p>');
     screenTimer = setTimeout(finishCoins, 2500);
   }
 
   if (id === '6.2') {
     var paid = rewardType === 'cashout' ? cashoutAmount : total;
-    document.getElementById('coinsAmount').textContent = peso(paid);
+    setHtml('extra-6.2', '<p class="big">' + peso(paid) + '</p>');
   }
 
   if (id === '6.3') {
@@ -237,13 +247,11 @@ function setupScreen(id) {
   }
 
   if (id === '6.4') {
-    document.getElementById('voucherCode').textContent = lastVoucher.code;
-    document.getElementById('voucherMinutes').textContent = lastVoucher.minutes;
     var seconds = 30;
-    document.getElementById('voucherTimer').textContent = seconds;
+    showVoucher(seconds);
     repeatTimer = setInterval(function () {
       seconds--;
-      document.getElementById('voucherTimer').textContent = seconds;
+      showVoucher(seconds);
       if (seconds <= 0) {
         showScreen('7.0');
       }
@@ -251,23 +259,25 @@ function setupScreen(id) {
   }
 
   if (id === '6.5') {
-    document.getElementById('savingPoints').textContent = '+' + sessionPoints(data) + ' pts';
-    screenTimer = setTimeout(finishSave, 2000);
+    setText('desc-6.5', 'Your reward will be saved as points in your BOCOFI app. ' + data.settings.pointsPerPeso + ' points = ₱1.00.');
+    setHtml('extra-6.5', '<p class="big">+' + sessionPoints(data) + ' points</p>');
   }
 
   if (id === '6.6') {
-    document.getElementById('savedPoints').textContent = '+' + sessionPoints(data) + ' pts';
-    document.getElementById('newBalance').textContent = user.points + ' pts';
+    setHtml('extra-6.6', '<p class="big">+' + sessionPoints(data) + ' points</p>' +
+      '<p class="info">New balance: <b>' + user.points + ' points</b></p>');
   }
 
   if (id === '7.0') {
     var text = '';
-    if (rewardType === 'cashout') text = 'Your cash-out of ' + peso(cashoutAmount) + ' is complete.';
+    if (rewardType === 'cashout') text = 'Cash-out of ' + peso(cashoutAmount) + ' complete.';
     if (rewardType === 'coins') text = 'You recycled ' + itemCountText() + ' and got ' + peso(total) + ' in coins.';
     if (rewardType === 'wifi') text = 'You recycled ' + itemCountText() + ' and got ' + lastVoucher.minutes + ' minutes of Wi-Fi.';
     if (rewardType === 'save') text = 'You recycled ' + itemCountText() + ' and saved ' + sessionPoints(data) + ' points.';
-    document.getElementById('thanksText').textContent = text;
-    screenTimer = setTimeout(endSession, 8000);
+    setHtml('extra-7.0', '<p class="info">' + text + '</p>');
+    screenTimer = setTimeout(function () {
+      showScreen('7.1');
+    }, 10000);
   }
 
   if (id === '7.1') {
@@ -276,6 +286,24 @@ function setupScreen(id) {
 }
 
 // ---------- 2.x log in ----------
+
+function chooseAccess(choice) {
+  accessChoice = choice;
+  document.getElementById('optionLogin').classList.toggle('selected', choice === 'login');
+  document.getElementById('optionGuest').classList.toggle('selected', choice === 'guest');
+  document.getElementById('accessBtn').disabled = false;
+  setText('status-2.0', choice === 'login' ? 'Log in selected' : 'Guest selected');
+}
+
+function continueAccess() {
+  if (accessChoice === 'login') {
+    showScreen('2.1');
+  } else if (accessChoice === 'guest') {
+    isGuest = true;
+    userId = null;
+    showScreen('2.3');
+  }
+}
 
 function makeLinkCode() {
   var data = loadData();
@@ -292,8 +320,8 @@ function makeLinkCode() {
   data.links.push({ code: linkCode, machineId: machineId, userId: null, created: Date.now() });
   saveData(data);
 
-  document.getElementById('linkCode').textContent = linkCode;
-  document.getElementById('linkError').textContent = '';
+  setText('linkCode', linkCode);
+  setText('linkError', '');
   drawQR();
 }
 
@@ -311,7 +339,7 @@ function scanCode() {
   var data = loadData();
   var link = findLink(data, linkCode);
   if (!link) {
-    document.getElementById('linkError').textContent = 'Code expired. Go back and try again.';
+    setText('linkError', 'Code expired. Go back and try again.');
     return;
   }
   link.userId = data.loggedInUser || data.users[0].id;
@@ -334,10 +362,10 @@ function removeLinkCode() {
   linkCode = null;
 }
 
-function startGuest() {
-  isGuest = true;
+function unlinkUser() {
+  removeLinkCode();
   userId = null;
-  showScreen('3.0');
+  showScreen('2.0');
 }
 
 function drawQR() {
@@ -374,23 +402,53 @@ function drawCorner(ctx, x, y) {
 
 // ---------- 3.x machine check ----------
 
+function goBackFromCheck() {
+  if (isGuest) {
+    showScreen('2.3');
+  } else {
+    showScreen('2.2');
+  }
+}
+
 function checkRewards() {
+  var data = loadData();
+  var m = getMachine(data);
+  var coinsOk = canGiveCoins(data, m);
+  var wifiOk = canGiveWifi(m);
+
+  if (m.status !== 'online' || isBinFull(data, m) || !coinsOk || !wifiOk) {
+    showScreen('3.3');
+  } else {
+    showScreen('4.0');
+  }
+}
+
+function afterNoReward() {
   var data = loadData();
   var m = getMachine(data);
   var noReward = !canGiveCoins(data, m) && !canGiveWifi(m) && !userId;
 
-  if (m.status !== 'online' || isBinFull(data, m) || noReward) {
-    showScreen('3.3');
+  if (noReward || isBinFull(data, m) || m.status !== 'online') {
+    showScreen('7.1');
   } else {
-    showScreen('3.2');
+    showScreen('4.0');
   }
 }
 
 // ---------- 4.x inserting items ----------
 
-function insertItem(itemId) {
+function backFromInsert() {
+  if (items.length > 0) {
+    showScreen('4.4');
+  } else {
+    showScreen('3.2');
+  }
+}
+
+function openIntake() {
   var data = loadData();
   var m = getMachine(data);
+  var itemId = document.getElementById('itemSelect').value;
 
   if (isBinFull(data, m)) {
     showMessage('The bin is full. Cannot accept more items.');
@@ -423,21 +481,18 @@ function finishScan() {
   showScreen('4.2');
 }
 
-function afterAccepted() {
+function finishSession() {
+  if (items.length === 0) {
+    showScreen('7.1');
+    return;
+  }
+
   var data = loadData();
   var m = getMachine(data);
   if (m.binLevel >= data.settings.binCrushLevel) {
     showScreen('5.0');
   } else {
     showScreen('5.2');
-  }
-}
-
-function noMoreItems() {
-  if (items.length > 0) {
-    showScreen('6.0');
-  } else {
-    showScreen('7.1');
   }
 }
 
@@ -449,7 +504,6 @@ function finishCrushing() {
   addAlert(data, m.id, 'Bin reached ' + Math.round(m.binLevel) + '%. Crusher ran, please schedule a collection.', 'warning');
   m.binLevel = Math.round(m.binLevel * 0.55);
   saveData(data);
-  showMessage('Crushing done');
   showScreen('5.2');
 }
 
@@ -457,46 +511,56 @@ function finishCrushing() {
 
 function setupRewardScreen(data, m, user) {
   var hasItems = items.length > 0;
-  var coinsBtn = document.getElementById('coinsBtn');
-  var wifiBtn = document.getElementById('wifiBtn');
-  var saveBtn = document.getElementById('saveBtn');
 
-  document.getElementById('rewardTotal').textContent = 'Total: ' + peso(total) + ' (' + itemCountText() + ')';
+  rewardType = null;
+  document.getElementById('coinsBtn').disabled = !(hasItems && canGiveCoins(data, m));
+  document.getElementById('wifiBtn').disabled = !(hasItems && canGiveWifi(m));
+  document.getElementById('saveBtn').disabled = !(hasItems && user);
+  document.getElementById('coinsBtn').classList.remove('selected');
+  document.getElementById('wifiBtn').classList.remove('selected');
+  document.getElementById('saveBtn').classList.remove('selected');
+  document.getElementById('rewardBtn').disabled = true;
 
-  coinsBtn.disabled = !(hasItems && canGiveCoins(data, m));
-  wifiBtn.disabled = !(hasItems && canGiveWifi(m));
-  saveBtn.disabled = !(hasItems && user);
-
-  document.getElementById('coinsInfo').textContent = canGiveCoins(data, m) ? peso(total) : 'Not available';
-  document.getElementById('wifiInfo').textContent = canGiveWifi(m) ? sessionMinutes(data) + ' minutes' : 'Not available';
-  document.getElementById('saveInfo').textContent = user ? '+' + sessionPoints(data) + ' pts' : 'Log in to save';
+  setText('coinsInfo', canGiveCoins(data, m) ? peso(total) : 'Not available');
+  setText('wifiInfo', canGiveWifi(m) ? sessionMinutes(data) + ' minutes' : 'Not available');
+  setText('saveInfo', user ? '+' + sessionPoints(data) + ' points' : 'Log in to save');
+  setText('status-6.0', 'Select reward');
 
   document.getElementById('cashoutInput').value = '';
-  document.getElementById('cashoutError').textContent = '';
+  setText('cashoutError', '');
 }
 
 function chooseReward(type) {
   rewardType = type;
-  if (type === 'coins') showScreen('6.1');
-  if (type === 'wifi') showScreen('6.3');
-  if (type === 'save') showScreen('6.5');
+  document.getElementById('coinsBtn').classList.toggle('selected', type === 'coins');
+  document.getElementById('wifiBtn').classList.toggle('selected', type === 'wifi');
+  document.getElementById('saveBtn').classList.toggle('selected', type === 'save');
+  document.getElementById('rewardBtn').disabled = false;
+
+  var names = { coins: 'Coins selected', wifi: 'Wi-Fi selected', save: 'Save selected' };
+  setText('status-6.0', names[type]);
+}
+
+function continueReward() {
+  if (rewardType === 'coins') showScreen('6.1');
+  if (rewardType === 'wifi') showScreen('6.3');
+  if (rewardType === 'save') showScreen('6.5');
 }
 
 function redeemCashout() {
   var data = loadData();
   var m = getMachine(data);
   var code = document.getElementById('cashoutInput').value.trim().toUpperCase();
-  var error = document.getElementById('cashoutError');
   var c = findCashout(data, code);
 
   if (code === '') {
-    error.textContent = 'Please enter your code.';
+    setText('cashoutError', 'Please enter your code.');
   } else if (!c) {
-    error.textContent = 'Code not found.';
+    setText('cashoutError', 'Code not found.');
   } else if (cashoutStatus(c) !== 'pending') {
-    error.textContent = 'This code is already ' + cashoutStatus(c) + '.';
+    setText('cashoutError', 'This code is already ' + cashoutStatus(c) + '.');
   } else if (!canGiveCoins(data, m)) {
-    error.textContent = 'This machine has no coins right now.';
+    setText('cashoutError', 'This machine has no coins right now.');
   } else {
     rewardType = 'cashout';
     cashoutCode = code;
@@ -537,6 +601,7 @@ function finishVoucher() {
 
   lastVoucher = {
     code: makeCode('WF-', 4),
+    password: makeCode('', 6),
     minutes: minutes,
     userId: userId,
     machineId: m.id,
@@ -555,7 +620,14 @@ function finishVoucher() {
   showScreen('6.4');
 }
 
-function finishSave() {
+function showVoucher(seconds) {
+  setHtml('extra-6.4', '<p class="info">Wi-Fi name: <b>BOCOFI Free WiFi</b></p>' +
+    '<p class="info">Code: <b class="code">' + lastVoucher.code + '</b></p>' +
+    '<p class="info">Password: <b class="code">' + lastVoucher.password + '</b></p>' +
+    '<p class="info">Good for ' + lastVoucher.minutes + (lastVoucher.minutes === 1 ? ' minute' : ' minutes') + '. This screen closes in ' + seconds + ' seconds.</p>');
+}
+
+function savePoints() {
   var data = loadData();
   var m = getMachine(data);
   var user = findUser(data, userId);
@@ -576,6 +648,7 @@ function endSession() {
   removeLinkCode();
   userId = null;
   isGuest = false;
+  accessChoice = null;
   items = [];
   total = 0;
   pendingItem = null;
@@ -587,18 +660,46 @@ function endSession() {
   showScreen('1.0');
 }
 
+// ---------- 1.2 are you still there ----------
+
 function resetIdleTimer() {
   clearTimeout(idleTimer);
-  idleTimer = setTimeout(function () {
-    if (currentScreen !== '1.0') {
-      endSession();
-      showMessage('Session timed out');
-    }
-  }, 90000);
-}
-document.addEventListener('click', resetIdleTimer);
+  if (currentScreen === '1.0' || currentScreen === '1.2' || currentScreen === '7.1') return;
 
-// ---------- side menu (for testing) ----------
+  idleTimer = setTimeout(askStillThere, 60000);
+}
+
+function askStillThere() {
+  lastScreen = currentScreen;
+  hideAllScreens();
+  document.getElementById('screen-1.2').classList.add('active');
+  currentScreen = '1.2';
+
+  var seconds = 15;
+  setText('stillSeconds', seconds);
+  stillTimer = setInterval(function () {
+    seconds--;
+    setText('stillSeconds', seconds);
+    if (seconds <= 0) {
+      clearInterval(stillTimer);
+      showScreen('7.1');
+    }
+  }, 1000);
+}
+
+function stillHere() {
+  clearInterval(stillTimer);
+  hideAllScreens();
+  document.getElementById('screen-' + lastScreen).classList.add('active');
+  currentScreen = lastScreen;
+  resetIdleTimer();
+}
+
+document.addEventListener('click', function () {
+  if (currentScreen !== '1.2') resetIdleTimer();
+});
+
+// ---------- side menu ----------
 
 function openMenu() {
   var data = loadData();
@@ -615,9 +716,9 @@ function openMenu() {
   }
 
   document.getElementById('binRange').value = m.binLevel;
-  document.getElementById('binValue').textContent = Math.round(m.binLevel);
+  setText('binValue', Math.round(m.binLevel));
   document.getElementById('coinRange').value = m.coinLevel;
-  document.getElementById('coinValue').textContent = Math.round(m.coinLevel);
+  setText('coinValue', Math.round(m.coinLevel));
   document.getElementById('wifiSelect').value = m.wifiSignal;
 
   document.getElementById('menu').classList.remove('hidden');
@@ -642,8 +743,8 @@ function updateSensors() {
   m.wifiSignal = document.getElementById('wifiSelect').value;
   saveData(data);
 
-  document.getElementById('binValue').textContent = m.binLevel;
-  document.getElementById('coinValue').textContent = m.coinLevel;
+  setText('binValue', m.binLevel);
+  setText('coinValue', m.coinLevel);
 }
 
 window.addEventListener('storage', function () {
@@ -656,4 +757,3 @@ if (!findMachine(loadData(), machineId)) {
   machineId = 'BCF-001';
 }
 showScreen('1.0');
-resetIdleTimer();

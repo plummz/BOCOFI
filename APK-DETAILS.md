@@ -12,8 +12,8 @@
 |---|---|
 | App name | BOCO-FI |
 | Package name | com.bocofi.app |
-| Version | 1.1 (version code 2) |
-| File size | about 100 KB |
+| Version | 1.2 (version code 3) |
+| File size | about 1.3 MB |
 | Minimum Android | Android 7.0 (API 24) |
 | Target Android | Android 16 (API 36) |
 | Build type | Debug |
@@ -48,9 +48,9 @@ All 4 tabs stay open in the background, so when you switch from the Kiosk to the
 ## How to use it for the demo
 
 1. **App** tab: log in with the test account.
-2. **Kiosk** tab: tap Recycle Today, START, then LOG IN. Remember the 4-letter code.
+2. **Kiosk** tab: tap Start, Continue, choose "Log in with QR code", then Continue. Remember the 4-letter code.
 3. **App** tab: tap Recycle, type the code, tap Link my account.
-4. **Kiosk** tab: it says Welcome back, Juan. Tap CONTINUE on the check screens, insert items, CLAIM, then choose a reward.
+4. **Kiosk** tab: it shows Account Linked. Tap Continue on the check screens, pick a test item and tap Open Intake, then Add Another, Finish Session, Choose Rewards, pick a reward and Continue.
 5. **App** tab: the new points show on the home screen.
 
 To start over: in the App tab, tap **Log out**, or go to Profile and tap **Reset test data**.
