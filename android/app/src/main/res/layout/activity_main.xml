@@ -6,34 +6,6 @@
     android:orientation="vertical"
     android:background="#3F5523">
 
-    <!-- tabs to switch between the parts of the system -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:orientation="horizontal"
-        android:background="#3F5523">
-
-        <Button
-            android:id="@+id/tabHome"
-            style="@style/TabButton"
-            android:text="Home" />
-
-        <Button
-            android:id="@+id/tabKiosk"
-            style="@style/TabButton"
-            android:text="Kiosk" />
-
-        <Button
-            android:id="@+id/tabApp"
-            style="@style/TabButton"
-            android:text="App" />
-
-        <Button
-            android:id="@+id/tabAdmin"
-            style="@style/TabButton"
-            android:text="Admin" />
-    </LinearLayout>
-
     <!-- one WebView for each part, so the kiosk keeps its screen when you switch to the app -->
     <FrameLayout
         android:layout_width="match_parent"
@@ -64,4 +36,32 @@
             android:layout_height="match_parent"
             android:visibility="gone" />
     </FrameLayout>
+
+    <!-- tabs at the bottom to switch between the parts of the system -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:orientation="horizontal"
+        android:background="#3F5523">
+
+        <Button
+            android:id="@+id/tabHome"
+            style="@style/TabButton"
+            android:text="Home" />
+
+        <Button
+            android:id="@+id/tabKiosk"
+            style="@style/TabButton"
+            android:text="Kiosk" />
+
+        <Button
+            android:id="@+id/tabApp"
+            style="@style/TabButton"
+            android:text="App" />
+
+        <Button
+            android:id="@+id/tabAdmin"
+            style="@style/TabButton"
+            android:text="Admin" />
+    </LinearLayout>
 </LinearLayout>

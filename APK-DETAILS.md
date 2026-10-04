@@ -12,7 +12,7 @@
 |---|---|
 | App name | BOCO-FI |
 | Package name | com.bocofi.app |
-| Version | 1.0 (version code 1) |
+| Version | 1.1 (version code 2) |
 | File size | about 100 KB |
 | Minimum Android | Android 7.0 (API 24) |
 | Target Android | Android 16 (API 36) |
@@ -22,7 +22,7 @@
 
 ## What's inside
 
-The app has 4 tabs at the top:
+The app has 4 tabs at the bottom of the screen:
 
 | Tab | What it shows |
 |---|---|

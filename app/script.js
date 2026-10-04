@@ -109,7 +109,7 @@ function logout() {
   document.getElementById('emailInput').value = '';
   document.getElementById('pinInput').value = '';
   document.getElementById('pinInput').type = 'password';
-  document.querySelector('#loginPage .eye-btn').textContent = '👁';
+  document.querySelector('#loginPage .show-btn').textContent = 'Show';
   start();
 }
 

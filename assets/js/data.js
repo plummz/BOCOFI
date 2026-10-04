@@ -211,17 +211,15 @@ function cashoutStatus(c) {
   return c.status;
 }
 
-// show or hide a password when the eye button is clicked
+// show or hide a password when the Show button is clicked
 function togglePassword(inputId, button) {
   var input = document.getElementById(inputId);
   if (input.type === 'password') {
     input.type = 'text';
-    button.textContent = '🙈';
-    button.title = 'Hide';
+    button.textContent = 'Hide';
   } else {
     input.type = 'password';
-    button.textContent = '👁';
-    button.title = 'Show';
+    button.textContent = 'Show';
   }
 }
 

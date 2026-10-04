@@ -92,25 +92,28 @@ input[type="range"] {
   padding: 0;
 }
 
-/* password box with eye button */
+/* password box with show/hide button */
 .password-box {
   position: relative;
 }
 
 .password-box input {
-  padding-right: 42px;
+  padding-right: 62px;
   margin-bottom: 4px;
 }
 
-.eye-btn {
+.show-btn {
   position: absolute;
   top: 0;
   right: 0;
-  width: 40px;
+  width: 58px;
   height: 40px;
   border: none;
   background: none;
-  font-size: 18px;
+  color: #3F5523;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -118,6 +121,11 @@ input[type="range"] {
   font-size: 12px;
   color: #777;
   margin: 0 0 12px;
+  padding-left: 18px;
+}
+
+.rule li {
+  margin-bottom: 2px;
 }
 
 .error {
