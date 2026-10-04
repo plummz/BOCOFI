@@ -1,0 +1,40 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.bocofi.app'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'com.bocofi.app'
+        minSdk 24
+        targetSdk 36
+        versionCode 1
+        versionName '1.0'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+}
+
+// copy the website files (index.html, kiosk, app, admin, assets) into the apk
+task copyWebFiles(type: Copy) {
+    from('../..') {
+        include 'index.html'
+        include 'kiosk/**'
+        include 'app/**'
+        include 'admin/**'
+        include 'assets/**'
+    }
+    into 'src/main/assets/www'
+}
+preBuild.dependsOn copyWebFiles
