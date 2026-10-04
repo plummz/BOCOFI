@@ -402,6 +402,10 @@ function saveAccount() {
     showMessage('Password must be at least 6 characters.');
     return;
   }
+  if (pass.indexOf(' ') !== -1) {
+    showMessage('Password cannot have spaces.');
+    return;
+  }
 
   data.settings.adminUser = user;
   if (pass !== '') data.settings.adminPass = pass;

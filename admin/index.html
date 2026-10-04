@@ -19,7 +19,11 @@
       <label for="username">Username</label>
       <input type="text" id="username">
       <label for="password">Password</label>
-      <input type="password" id="password">
+      <div class="password-box">
+        <input type="password" id="password">
+        <button type="button" class="eye-btn" title="Show" onclick="togglePassword('password', this)">👁</button>
+      </div>
+      <p class="rule">At least 6 characters. Letters (A-Z, a-z), numbers (0-9) and symbols are allowed. No spaces.</p>
       <p class="error" id="loginError"></p>
       <button type="submit" class="btn btn-full">Log in</button>
     </form>
@@ -157,7 +161,11 @@
           <label for="setUser">Username</label>
           <input type="text" id="setUser">
           <label for="setPass">New password (leave blank to keep)</label>
-          <input type="password" id="setPass">
+          <div class="password-box">
+            <input type="password" id="setPass">
+            <button type="button" class="eye-btn" title="Show" onclick="togglePassword('setPass', this)">👁</button>
+          </div>
+          <p class="rule">At least 6 characters. Letters (A-Z, a-z), numbers (0-9) and symbols are allowed. No spaces.</p>
           <button class="btn" onclick="saveAccount()">Save account</button>
         </div>
 

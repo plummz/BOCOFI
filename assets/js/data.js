@@ -211,6 +211,29 @@ function cashoutStatus(c) {
   return c.status;
 }
 
+// show or hide a password when the eye button is clicked
+function togglePassword(inputId, button) {
+  var input = document.getElementById(inputId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    button.textContent = '🙈';
+    button.title = 'Hide';
+  } else {
+    input.type = 'password';
+    button.textContent = '👁';
+    button.title = 'Show';
+  }
+}
+
+// only allow numbers in PIN boxes
+function numbersOnly(input) {
+  input.value = input.value.replace(/[^0-9]/g, '');
+}
+
+function isValidPin(pin) {
+  return /^[0-9]{4}$/.test(pin);
+}
+
 // newest first
 function sortByDate(list) {
   return list.slice().sort(function (a, b) {

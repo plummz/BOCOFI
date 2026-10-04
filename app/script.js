@@ -48,7 +48,7 @@ function submitLogin(event) {
     error.textContent = 'Please enter a valid email.';
     return;
   }
-  if (pin.length !== 4 || isNaN(pin)) {
+  if (!isValidPin(pin)) {
     error.textContent = 'PIN must be 4 numbers.';
     return;
   }
@@ -108,6 +108,8 @@ function logout() {
   document.getElementById('nameInput').value = '';
   document.getElementById('emailInput').value = '';
   document.getElementById('pinInput').value = '';
+  document.getElementById('pinInput').type = 'password';
+  document.querySelector('#loginPage .eye-btn').textContent = '👁';
   start();
 }
 
@@ -573,7 +575,7 @@ function saveProfile() {
     error.textContent = 'This email is already used.';
     return;
   }
-  if (pin !== '' && (pin.length !== 4 || isNaN(pin))) {
+  if (pin !== '' && !isValidPin(pin)) {
     error.textContent = 'PIN must be 4 numbers.';
     return;
   }

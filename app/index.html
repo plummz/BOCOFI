@@ -35,7 +35,11 @@
         <input type="email" id="emailInput" autocomplete="off">
 
         <label for="pinInput">4-digit PIN</label>
-        <input type="password" id="pinInput" maxlength="4" inputmode="numeric" autocomplete="off">
+        <div class="password-box">
+          <input type="password" id="pinInput" maxlength="4" inputmode="numeric" autocomplete="off" oninput="numbersOnly(this)">
+          <button type="button" class="eye-btn" title="Show" onclick="togglePassword('pinInput', this)">👁</button>
+        </div>
+        <p class="rule">PIN must be exactly 4 numbers (0-9). Letters, spaces and symbols are not allowed.</p>
 
         <p class="error" id="loginError"></p>
         <button type="submit" class="btn btn-full" id="loginBtn">Log in</button>
@@ -185,7 +189,11 @@
             <label for="profileEmail">Email</label>
             <input type="email" id="profileEmail">
             <label for="profilePin">New PIN (leave blank to keep)</label>
-            <input type="password" id="profilePin" maxlength="4" inputmode="numeric">
+            <div class="password-box">
+              <input type="password" id="profilePin" maxlength="4" inputmode="numeric" oninput="numbersOnly(this)">
+              <button type="button" class="eye-btn" title="Show" onclick="togglePassword('profilePin', this)">👁</button>
+            </div>
+            <p class="rule">4 numbers only (0-9). Letters, spaces and symbols are not allowed.</p>
             <p class="error" id="profileError"></p>
             <button class="btn btn-full" onclick="saveProfile()">Save changes</button>
           </div>
