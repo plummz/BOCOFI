@@ -6,7 +6,6 @@
     android:orientation="vertical"
     android:background="#3F5523">
 
-    <!-- one WebView for each part, so the kiosk keeps its screen when you switch to the app -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -37,7 +36,6 @@
             android:visibility="gone" />
     </FrameLayout>
 
-    <!-- tabs at the bottom to switch between the parts of the system -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="52dp"

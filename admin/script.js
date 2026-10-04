@@ -1,5 +1,3 @@
-// BOCO-FI Admin
-
 var currentSection = 'dashboard';
 
 function showMessage(text) {
@@ -75,7 +73,6 @@ function showSection(name) {
 function loadSection() {
   var data = loadData();
 
-  // unread alerts count in the sidebar
   var unread = data.alerts.filter(function (a) {
     return !a.read;
   }).length;
@@ -233,7 +230,6 @@ function loadTransactions() {
   var select = document.getElementById('filterMachine');
   var selected = select.value;
 
-  // fill the filter dropdown
   var options = '<option value="">All machines</option>';
   for (var i = 0; i < data.machines.length; i++) {
     var m = data.machines[i];
@@ -434,7 +430,6 @@ function start() {
   }
 }
 
-// update the page when the kiosk or app changes something
 window.addEventListener('storage', function () {
   var tag = document.activeElement.tagName;
   if (tag === 'INPUT' || tag === 'SELECT') return;

@@ -18,7 +18,6 @@ import android.widget.LinearLayout;
 
 public class MainActivity extends Activity {
 
-    // the website files are copied into assets/www when building
     private static final String BASE = "file:///android_asset/www/";
 
     private WebView homeView, kioskView, appView, adminView;
@@ -78,10 +77,9 @@ public class MainActivity extends Activity {
     private void setupWebView(WebView view, String page) {
         WebSettings settings = view.getSettings();
         settings.setJavaScriptEnabled(true);
-        settings.setDomStorageEnabled(true);   // needed for localStorage
+        settings.setDomStorageEnabled(true);
         settings.setAllowFileAccess(true);
 
-        // shows alert() and confirm() boxes
         view.setWebChromeClient(new WebChromeClient());
 
         view.setWebViewClient(new WebViewClient() {
@@ -94,7 +92,6 @@ public class MainActivity extends Activity {
         view.loadUrl(BASE + page);
     }
 
-    // links to another part (ex. "Open Kiosk" on the home page) switch tabs instead
     private boolean openLink(String url) {
         if (url.contains("/kiosk/")) {
             showTab(kioskView);
@@ -113,7 +110,6 @@ public class MainActivity extends Activity {
             return true;
         }
         if (url.startsWith("http")) {
-            // google maps and other websites open in the browser
             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
             return true;
         }
@@ -133,7 +129,6 @@ public class MainActivity extends Activity {
         highlight(tabApp, view == appView);
         highlight(tabAdmin, view == adminView);
 
-        // tell the page to reload its data, in case another tab changed something
         view.evaluateJavascript("window.dispatchEvent(new Event('storage'));", null);
     }
 
@@ -145,7 +140,6 @@ public class MainActivity extends Activity {
         }
     }
 
-    // keep the page below the status bar and above the navigation bar and keyboard
     private void fixSystemBars() {
         LinearLayout root = findViewById(R.id.root);
         root.setOnApplyWindowInsetsListener(new View.OnApplyWindowInsetsListener() {

@@ -1,7 +1,3 @@
-// BOCO-FI shared data
-// All three parts (kiosk, app, admin) read and write the same data in localStorage.
-// This is only for the prototype. Later this will be replaced with a real database.
-
 var DATA_KEY = 'bocofi_data_v2';
 
 function getDefaultData() {
@@ -11,18 +7,17 @@ function getDefaultData() {
 
   return {
     settings: {
-      pointsPerPeso: 100,      // 1 peso = 100 points
-      wifiMinutesPerPeso: 10,  // 1 peso = 10 minutes of wifi
-      binCrushLevel: 80,       // crusher runs when bin reaches 80%
-      binFullLevel: 95,        // machine stops accepting items at 95%
-      coinLowLevel: 10,        // no coin payout if hopper is below 10%
+      pointsPerPeso: 100,
+      wifiMinutesPerPeso: 10,
+      binCrushLevel: 80,
+      binFullLevel: 95,
+      coinLowLevel: 10,
       voucherHours: 24,
       cashoutHours: 24,
       adminUser: 'admin',
       adminPass: 'admin123'
     },
 
-    // reward per item
     items: [
       { id: 'sakto', name: 'Sakto bottle', value: 0.05 },
       { id: 'b500', name: '500 ml bottle', value: 0.10 },
@@ -62,10 +57,8 @@ function getDefaultData() {
       { id: 'A1003', machineId: 'BCF-002', message: 'Wi-Fi signal is weak.', level: 'warning', date: now - 1 * hour, read: false }
     ],
 
-    // codes shown on the kiosk for linking the app
     links: [],
 
-    // id of the user logged in on the app
     loggedInUser: null
   };
 }
@@ -112,7 +105,6 @@ function formatMinutes(min) {
   return m + ' min';
 }
 
-// random code like WF-3F9A
 function makeCode(prefix, length) {
   var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   var code = '';
@@ -187,7 +179,6 @@ function addAlert(data, machineId, message, level) {
   });
 }
 
-// machine checks
 function canGiveCoins(data, m) {
   return m.status === 'online' && m.coinLevel >= data.settings.coinLowLevel;
 }
@@ -211,7 +202,6 @@ function cashoutStatus(c) {
   return c.status;
 }
 
-// show or hide a password when the Show button is clicked
 function togglePassword(inputId, button) {
   var input = document.getElementById(inputId);
   if (input.type === 'password') {
@@ -223,7 +213,6 @@ function togglePassword(inputId, button) {
   }
 }
 
-// only allow numbers in PIN boxes
 function numbersOnly(input) {
   input.value = input.value.replace(/[^0-9]/g, '');
 }
@@ -232,14 +221,12 @@ function isValidPin(pin) {
   return /^[0-9]{4}$/.test(pin);
 }
 
-// newest first
 function sortByDate(list) {
   return list.slice().sort(function (a, b) {
     return b.date - a.date;
   });
 }
 
-// readable name for each transaction type
 function typeName(type) {
   var names = {
     'coins': 'Coins',

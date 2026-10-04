@@ -1,6 +1,3 @@
-// BOCO-FI Kiosk
-// The screen numbers follow our Figma flow (1.0 Display Page up to 7.1 Resetting Machine)
-
 var screenNames = {
   '1.0': 'Display Page', '1.1': 'Start',
   '2.0': 'Access Page', '2.1': 'QR Code', '2.2': 'Account Linking', '2.3': 'Guest Limits',
@@ -12,10 +9,8 @@ var screenNames = {
   '7.0': 'Thank You Page', '7.1': 'Resetting Machine'
 };
 
-// which machine this kiosk is
 var machineId = localStorage.getItem('bocofi_kiosk_machine') || 'BCF-001';
 
-// current session
 var currentScreen = '1.0';
 var userId = null;
 var isGuest = false;
@@ -57,7 +52,6 @@ function showScreen(id) {
   document.getElementById('screen-' + id).classList.add('active');
   currentScreen = id;
 
-  // footer
   var phase = parseInt(id.charAt(0));
   document.getElementById('stepLabel').textContent = id + ' ' + screenNames[id];
   document.getElementById('progress').style.width = (phase / 7 * 100) + '%';
@@ -96,7 +90,6 @@ function sessionMinutes(data) {
   return Math.max(1, Math.round(total * data.settings.wifiMinutesPerPeso));
 }
 
-// runs every time a screen is shown
 function setupScreen(id) {
   var data = loadData();
   var m = getMachine(data);
@@ -157,7 +150,6 @@ function setupScreen(id) {
     }
     document.getElementById('rewardList').innerHTML = html;
 
-    // tell the owner if something is not working
     if (!alertSent && (!coinsOk || !wifiOk)) {
       if (!coinsOk) addAlert(data, m.id, 'Coin hopper is low. Users can only get Wi-Fi or save points.', 'warning');
       if (!wifiOk) addAlert(data, m.id, 'Wi-Fi is not available. Users can only get coins or save points.', 'warning');
@@ -194,7 +186,6 @@ function setupScreen(id) {
   }
 
   if (id === '4.1') {
-    // fake scanning time
     screenTimer = setTimeout(finishScan, 1500);
   }
 
@@ -289,7 +280,6 @@ function setupScreen(id) {
 function makeLinkCode() {
   var data = loadData();
 
-  // remove old codes (older than 5 minutes)
   var fresh = [];
   for (var i = 0; i < data.links.length; i++) {
     if (Date.now() - data.links[i].created < 5 * 60 * 1000) {
@@ -307,7 +297,6 @@ function makeLinkCode() {
   drawQR();
 }
 
-// checks if the app already used the code
 function checkLink() {
   var data = loadData();
   var link = findLink(data, linkCode);
@@ -318,8 +307,6 @@ function checkLink() {
   }
 }
 
-// SCAN CODE button: acts like the phone scanned the QR
-// it links the user logged in on the app (or the first user if no one is logged in)
 function scanCode() {
   var data = loadData();
   var link = findLink(data, linkCode);
@@ -353,7 +340,6 @@ function startGuest() {
   showScreen('3.0');
 }
 
-// not a real QR code yet, just random squares for the design
 function drawQR() {
   var canvas = document.getElementById('qrCanvas');
   var ctx = canvas.getContext('2d');
@@ -429,7 +415,6 @@ function finishScan() {
   items.push({ name: pendingItem.name, value: pendingItem.value });
   total = round2(total + pendingItem.value);
 
-  // each item fills the bin a little
   var data = loadData();
   var m = getMachine(data);
   m.binLevel = Math.min(100, round2(m.binLevel + 1.5));
@@ -602,7 +587,6 @@ function endSession() {
   showScreen('1.0');
 }
 
-// go back to the start if nobody touches the screen for 90 seconds
 function resetIdleTimer() {
   clearTimeout(idleTimer);
   idleTimer = setTimeout(function () {
@@ -662,14 +646,12 @@ function updateSensors() {
   document.getElementById('coinValue').textContent = m.coinLevel;
 }
 
-// if the admin changes the machine in another tab, update the start screen
 window.addEventListener('storage', function () {
   if (currentScreen === '1.0') {
     setupScreen('1.0');
   }
 });
 
-// start
 if (!findMachine(loadData(), machineId)) {
   machineId = 'BCF-001';
 }

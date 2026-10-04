@@ -26,7 +26,6 @@ android {
     }
 }
 
-// copy the website files (index.html, kiosk, app, admin, assets) into the apk
 task copyWebFiles(type: Copy) {
     from('../..') {
         include 'index.html'

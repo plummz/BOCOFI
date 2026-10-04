@@ -1,5 +1,3 @@
-// BOCO-FI User App
-
 var currentPage = 'home';
 var loginMode = 'login';
 
@@ -104,7 +102,6 @@ function logout() {
   data.loggedInUser = null;
   saveData(data);
 
-  // clear the login form
   document.getElementById('nameInput').value = '';
   document.getElementById('emailInput').value = '';
   document.getElementById('pinInput').value = '';
@@ -135,7 +132,6 @@ function showPage(name) {
   window.scrollTo(0, 0);
 }
 
-// fills in the current page with the latest data
 function loadPage() {
   var data = loadData();
   var user = getCurrentUser(data);
@@ -255,7 +251,6 @@ function loadWallet(data, user) {
   document.getElementById('cashoutError').textContent = '';
   updateConvertPreview();
 
-  // cash-out amounts the user can afford
   var amounts = [1, 5, 10, 20];
   var options = '';
   for (var i = 0; i < amounts.length; i++) {
@@ -266,7 +261,6 @@ function loadWallet(data, user) {
   if (options === '') options = '<option value="0">Not enough coin balance</option>';
   document.getElementById('cashoutAmount').innerHTML = options;
 
-  // list of cash-out codes
   var codes = data.cashouts.filter(function (c) {
     return c.userId === user.id;
   });
@@ -382,7 +376,6 @@ function cancelCashout(code) {
 
 // ---------- wifi ----------
 
-// minutes left, counting down if connected
 function wifiLeft(user) {
   if (!user.wifiStart) return user.wifiMinutes;
   var used = (Date.now() - user.wifiStart) / 60000;
@@ -492,7 +485,6 @@ function useVoucher(code) {
   loadPage();
 }
 
-// update the wifi countdown every second
 setInterval(function () {
   var data = loadData();
   var user = getCurrentUser(data);
@@ -613,9 +605,7 @@ function start() {
   }
 }
 
-// refresh when the kiosk or admin changes something in another tab
 window.addEventListener('storage', function () {
-  // don't refresh while the user is typing
   var tag = document.activeElement.tagName;
   if (tag === 'INPUT' || tag === 'SELECT') return;
 
