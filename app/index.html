@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BOCO-FI App</title>
+  <link rel="icon" href="../assets/img/mark.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="phone">
+
+    <!-- LOGIN / REGISTER -->
+    <div id="loginPage">
+      <div class="login-top">
+        <img src="../assets/img/mark.svg" alt="BOCO-FI" class="login-logo">
+        <h1>Welcome to BOCO-FI</h1>
+        <p class="gray">Recycle bottles and cans. Earn points, coins and free Wi-Fi.</p>
+      </div>
+
+      <div class="tabs">
+        <button id="loginTab" class="active" onclick="switchTab('login')">Log in</button>
+        <button id="registerTab" onclick="switchTab('register')">Create account</button>
+      </div>
+
+      <form class="card" onsubmit="submitLogin(event)">
+        <div id="nameField" class="hidden">
+          <label for="nameInput">Full name</label>
+          <input type="text" id="nameInput">
+        </div>
+
+        <label for="emailInput">Email</label>
+        <input type="email" id="emailInput">
+
+        <label for="pinInput">4-digit PIN</label>
+        <input type="password" id="pinInput" maxlength="4" inputmode="numeric">
+
+        <p class="error" id="loginError"></p>
+        <button type="submit" class="btn btn-full" id="loginBtn">Log in</button>
+      </form>
+    </div>
+
+    <!-- MAIN APP (after login) -->
+    <div id="mainPage" class="hidden">
+      <header>
+        <img src="../assets/img/logo.svg" alt="BOCO-FI" class="header-logo">
+        <span id="headerName"></span>
+      </header>
+
+      <div class="content">
+
+        <!-- HOME -->
+        <div class="page" id="page-home">
+          <h2>Hi, <span id="homeName"></span>!</h2>
+
+          <div class="balance-card">
+            <p>Your points</p>
+            <div class="points" id="homePoints"></div>
+            <p class="small" id="homePointsValue"></p>
+          </div>
+
+          <div class="two-boxes">
+            <div class="card" onclick="showPage('wallet')">
+              <p class="gray small">Coin balance</p>
+              <h3 id="homeCoins"></h3>
+            </div>
+            <div class="card" onclick="showPage('wifi')">
+              <p class="gray small">Wi-Fi time left</p>
+              <h3 id="homeWifi" class="wifi-time"></h3>
+            </div>
+          </div>
+
+          <div class="card">
+            <p>Items recycled: <b id="homeItems"></b></p>
+            <button class="btn btn-small" onclick="showPage('machines')">Find a machine</button>
+            <button class="btn btn-white btn-small" onclick="showPage('history')">View history</button>
+          </div>
+
+          <h3>Recent activity</h3>
+          <div class="card" id="homeActivity"></div>
+        </div>
+
+        <!-- RECYCLE -->
+        <div class="page" id="page-recycle">
+          <h2>Recycle</h2>
+          <div class="card">
+            <h4>Link to a machine</h4>
+            <p class="small gray">On the kiosk, tap <b>Log in</b>. Then type the 4-letter code shown on the screen.</p>
+            <input type="text" id="linkInput" class="code-input" maxlength="4" placeholder="XXXX">
+            <p class="error" id="linkError"></p>
+            <button class="btn btn-blue btn-full" onclick="linkMachine()">Link my account</button>
+          </div>
+
+          <div class="card">
+            <h4>How it works</h4>
+            <ol class="small">
+              <li>Tap the kiosk screen and choose Log in.</li>
+              <li>Enter the code here to link your account.</li>
+              <li>Insert your empty bottles and cans.</li>
+              <li>Choose COINS, WI-FI or SAVE to keep the points.</li>
+            </ol>
+          </div>
+
+          <div class="card">
+            <h4>Reward per item</h4>
+            <table id="rateTable"></table>
+          </div>
+        </div>
+
+        <!-- WALLET -->
+        <div class="page" id="page-wallet">
+          <h2>Wallet</h2>
+          <div class="card">
+            <p>Points: <b id="walletPoints"></b></p>
+            <p>Coin balance: <b id="walletCoins"></b></p>
+            <p>Wi-Fi time: <b id="walletWifi" class="wifi-time"></b></p>
+          </div>
+
+          <div class="card">
+            <h4>Convert points</h4>
+            <p class="small gray" id="convertInfo"></p>
+            <label for="convertType">Convert to</label>
+            <select id="convertType" onchange="updateConvertPreview()">
+              <option value="coins">Coins</option>
+              <option value="wifi">Wi-Fi time</option>
+            </select>
+            <label for="convertPoints">Points to use</label>
+            <input type="number" id="convertPoints" min="0" step="100" oninput="updateConvertPreview()">
+            <p id="convertPreview" class="small"></p>
+            <p class="error" id="convertError"></p>
+            <button class="btn btn-full" onclick="convertPoints()">Convert</button>
+          </div>
+
+          <div class="card">
+            <h4>Cash out coins</h4>
+            <p class="small gray">Make a code, then enter it on the kiosk reward screen to get your coins. The code works once and expires in 24 hours.</p>
+            <label for="cashoutAmount">Amount</label>
+            <select id="cashoutAmount"></select>
+            <p class="error" id="cashoutError"></p>
+            <button class="btn btn-full" onclick="makeCashout()">Get cash-out code</button>
+            <div id="cashoutList"></div>
+          </div>
+        </div>
+
+        <!-- WIFI -->
+        <div class="page" id="page-wifi">
+          <h2>Wi-Fi</h2>
+          <div class="card center">
+            <div class="wifi-circle">
+              <div class="wifi-time big" id="wifiTimeBig"></div>
+              <small>time left</small>
+            </div>
+            <p id="wifiStatusText"></p>
+            <button class="btn btn-blue btn-full" id="wifiButton" onclick="toggleWifi()">Connect</button>
+            <p class="small gray">Your time only goes down while you are connected.</p>
+          </div>
+
+          <h3>Vouchers from the kiosk</h3>
+          <div id="voucherList"></div>
+        </div>
+
+        <!-- HISTORY -->
+        <div class="page" id="page-history">
+          <h2>History</h2>
+          <div class="card" id="historyList"></div>
+        </div>
+
+        <!-- MACHINES -->
+        <div class="page" id="page-machines">
+          <h2>Find a machine</h2>
+          <div id="machineList"></div>
+        </div>
+
+        <!-- PROFILE -->
+        <div class="page" id="page-profile">
+          <h2>Profile</h2>
+          <div class="card">
+            <label for="profileName">Name</label>
+            <input type="text" id="profileName">
+            <label for="profileEmail">Email</label>
+            <input type="email" id="profileEmail">
+            <label for="profilePin">New PIN (leave blank to keep)</label>
+            <input type="password" id="profilePin" maxlength="4" inputmode="numeric">
+            <p class="error" id="profileError"></p>
+            <button class="btn btn-full" onclick="saveProfile()">Save changes</button>
+          </div>
+          <div class="card">
+            <p class="small">Member since <span id="profileJoined"></span></p>
+            <button class="btn btn-white btn-full" onclick="logout()">Log out</button>
+            <br><br>
+            <button class="btn btn-red btn-full" onclick="resetAll()">Reset test data</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- bottom menu -->
+      <nav class="bottom-nav">
+        <button id="nav-home" onclick="showPage('home')">Home</button>
+        <button id="nav-wallet" onclick="showPage('wallet')">Wallet</button>
+        <button id="nav-recycle" class="recycle-btn" onclick="showPage('recycle')">Recycle</button>
+        <button id="nav-wifi" onclick="showPage('wifi')">Wi-Fi</button>
+        <button id="nav-profile" onclick="showPage('profile')">Profile</button>
+      </nav>
+    </div>
+  </div>
+
+  <div id="message"></div>
+
+  <script src="../assets/js/data.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,339 @@
+/* Kiosk screen */
+
+.kiosk {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  border-bottom: 1px solid #e2e2e2;
+}
+
+header .logo {
+  height: 50px;
+}
+
+.menu-btn {
+  background: none;
+  border: none;
+  font-size: 26px;
+  color: #3F5523;
+  cursor: pointer;
+}
+
+.user-label {
+  font-size: 14px;
+  color: #3F5523;
+  font-weight: 600;
+}
+
+main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.screen {
+  display: none;
+  text-align: center;
+  max-width: 650px;
+  width: 100%;
+}
+
+.screen.active {
+  display: block;
+}
+
+.screen h1 {
+  font-size: 30px;
+}
+
+.screen .btn {
+  margin: 6px;
+}
+
+.btn.big {
+  padding: 16px 40px;
+  font-size: 20px;
+  min-width: 200px;
+}
+
+/* big round start button */
+.start-btn {
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  border: none;
+  background-color: #3F5523;
+  color: white;
+  font-family: inherit;
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.1;
+  cursor: pointer;
+  box-shadow: 0 0 0 15px #e4e7e0;
+  margin: 30px 0;
+}
+
+.start-btn small {
+  display: block;
+  font-size: 16px;
+  font-weight: 400;
+  margin-top: 10px;
+}
+
+.start-btn:disabled {
+  background-color: #999;
+  cursor: not-allowed;
+}
+
+/* circle icons */
+.icon {
+  width: 80px;
+  height: 80px;
+  line-height: 80px;
+  border-radius: 50%;
+  margin: 0 auto 15px;
+  font-size: 40px;
+  color: white;
+  background-color: #3F5523;
+}
+
+.icon.green {
+  background-color: #3F5523;
+}
+
+.icon.red {
+  background-color: #d43f55;
+}
+
+.icon.arrow {
+  background-color: #3FADED;
+}
+
+.panel {
+  background: #f4f5f2;
+  border-radius: 10px;
+  padding: 15px 20px;
+  margin: 15px auto;
+  max-width: 420px;
+  text-align: left;
+}
+
+.panel p {
+  margin: 6px 0;
+}
+
+.green-text {
+  color: #3F5523;
+}
+
+.red-text {
+  color: #d43f55;
+}
+
+.total {
+  font-weight: 600;
+  color: #3F5523;
+}
+
+.big-text {
+  font-size: 42px;
+  font-weight: 700;
+  color: #3F5523;
+  margin: 10px 0;
+}
+
+/* QR code and link code */
+#qrCanvas {
+  width: 180px;
+  height: 180px;
+  image-rendering: pixelated;
+  border: 10px solid white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.link-code {
+  font-family: Consolas, monospace;
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: 8px;
+  color: #3FADED;
+  margin-bottom: 10px;
+}
+
+/* test buttons for inserting items */
+.test-box {
+  border: 2px dashed #ccc;
+  border-radius: 10px;
+  padding: 10px;
+  margin: 20px 0 10px;
+}
+
+.test-box p {
+  font-size: 13px;
+  color: #777;
+}
+
+/* scanning animation */
+.scanner {
+  width: 120px;
+  height: 160px;
+  margin: 0 auto 20px;
+  border: 4px solid #3FADED;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.bottle {
+  width: 40px;
+  height: 110px;
+  background: #bce2f9;
+  border-radius: 10px 10px 6px 6px;
+  margin: 25px auto;
+}
+
+.scanner::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: #3FADED;
+  animation: scan 1s infinite alternate;
+}
+
+@keyframes scan {
+  from { top: 0; }
+  to { top: 100%; }
+}
+
+/* loading bar */
+.bar div.loading {
+  width: 0;
+  animation: fill 2.5s linear forwards;
+}
+
+.bar div.yellow {
+  background: #e0a51e;
+}
+
+@keyframes fill {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+/* reward buttons */
+.rewards {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.reward {
+  width: 160px;
+  padding: 25px 10px;
+  border: 3px solid #3F5523;
+  border-radius: 12px;
+  background: white;
+  color: #3F5523;
+  font-family: inherit;
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.reward:hover {
+  background: #3F5523;
+  color: white;
+}
+
+.reward small {
+  display: block;
+  font-size: 14px;
+  font-weight: 400;
+  margin-top: 6px;
+}
+
+.reward:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.reward:disabled:hover {
+  background: white;
+  color: #3F5523;
+}
+
+.screen .panel input {
+  text-transform: uppercase;
+}
+
+/* wifi voucher code */
+.voucher {
+  display: inline-block;
+  font-family: Consolas, monospace;
+  font-size: 42px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  padding: 10px 30px;
+  border: 4px solid #3FADED;
+  border-radius: 12px;
+  margin: 15px 0;
+}
+
+/* footer with progress */
+footer {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 10px 20px;
+  border-top: 1px solid #e2e2e2;
+  font-size: 13px;
+  color: #777;
+}
+
+footer .bar {
+  flex: 1;
+  height: 8px;
+}
+
+/* side menu */
+.side-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 300px;
+  height: 100%;
+  background: white;
+  padding: 20px;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+  overflow-y: auto;
+  z-index: 50;
+}
+
+@media (max-width: 600px) {
+  .rewards {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .start-btn {
+    width: 200px;
+    height: 200px;
+    font-size: 28px;
+  }
+
+  .screen h1 {
+    font-size: 24px;
+  }
+}

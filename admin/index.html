@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BOCO-FI Admin</title>
+  <link rel="icon" href="../assets/img/mark.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <div id="loginPage" class="login-page">
+    <form class="card login-box" onsubmit="adminLogin(event)">
+      <img src="../assets/img/logo.svg" alt="BOCO-FI" class="login-logo">
+      <h2>Admin Login</h2>
+      <label for="username">Username</label>
+      <input type="text" id="username">
+      <label for="password">Password</label>
+      <input type="password" id="password">
+      <p class="error" id="loginError"></p>
+      <button type="submit" class="btn btn-full">Log in</button>
+    </form>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="adminPage" class="hidden">
+    <div class="sidebar">
+      <img src="../assets/img/logo.svg" alt="BOCO-FI" class="side-logo">
+      <button id="nav-dashboard" onclick="showSection('dashboard')">Dashboard</button>
+      <button id="nav-machines" onclick="showSection('machines')">Machines</button>
+      <button id="nav-alerts" onclick="showSection('alerts')">Alerts <span id="alertCount" class="count"></span></button>
+      <button id="nav-transactions" onclick="showSection('transactions')">Transactions</button>
+      <button id="nav-users" onclick="showSection('users')">Users</button>
+      <button id="nav-codes" onclick="showSection('codes')">Vouchers &amp; Cash-outs</button>
+      <button id="nav-settings" onclick="showSection('settings')">Settings</button>
+      <button class="logout" onclick="adminLogout()">Log out</button>
+    </div>
+
+    <div class="main">
+      <!-- dashboard -->
+      <div class="section" id="section-dashboard">
+        <h1>Dashboard</h1>
+        <div class="stats">
+          <div class="stat"><p>Items today</p><h2 id="statItems"></h2></div>
+          <div class="stat"><p>Value today</p><h2 id="statValue"></h2></div>
+          <div class="stat"><p>Machines online</p><h2 id="statMachines"></h2></div>
+          <div class="stat"><p>Users</p><h2 id="statUsers"></h2></div>
+        </div>
+        <div class="card">
+          <h3>Machines</h3>
+          <table>
+            <thead><tr><th>Machine</th><th>Status</th><th>Bin</th><th>Coins</th><th>Wi-Fi</th></tr></thead>
+            <tbody id="dashMachines"></tbody>
+          </table>
+        </div>
+        <div class="card">
+          <h3>Recent transactions</h3>
+          <table>
+            <thead><tr><th>Date</th><th>Machine</th><th>User</th><th>Type</th><th>Amount</th></tr></thead>
+            <tbody id="dashTransactions"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- machines -->
+      <div class="section" id="section-machines">
+        <h1>Machines</h1>
+        <div id="machineCards"></div>
+      </div>
+
+      <!-- alerts -->
+      <div class="section" id="section-alerts">
+        <h1>Alerts</h1>
+        <button class="btn btn-white btn-small" onclick="markAllRead()">Mark all as read</button>
+        <br><br>
+        <div class="card">
+          <table>
+            <thead><tr><th>Date</th><th>Machine</th><th>Message</th><th>Level</th><th></th></tr></thead>
+            <tbody id="alertTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- transactions -->
+      <div class="section" id="section-transactions">
+        <h1>Transactions</h1>
+        <label for="filterMachine">Filter by machine</label>
+        <select id="filterMachine" class="filter" onchange="loadTransactions()"></select>
+        <div class="card">
+          <table>
+            <thead><tr><th>ID</th><th>Date</th><th>Machine</th><th>User</th><th>Items</th><th>Amount</th><th>Type</th></tr></thead>
+            <tbody id="transactionTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- users -->
+      <div class="section" id="section-users">
+        <h1>Users</h1>
+        <div class="card">
+          <table>
+            <thead><tr><th>Name</th><th>Email</th><th>Points</th><th>Coins</th><th>Items</th><th>Actions</th></tr></thead>
+            <tbody id="userTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- vouchers and cash-outs -->
+      <div class="section" id="section-codes">
+        <h1>Wi-Fi Vouchers</h1>
+        <div class="card">
+          <table>
+            <thead><tr><th>Code</th><th>Minutes</th><th>User</th><th>Machine</th><th>Expires</th><th>Status</th></tr></thead>
+            <tbody id="voucherTable"></tbody>
+          </table>
+        </div>
+        <h1>Cash-out Codes</h1>
+        <div class="card">
+          <table>
+            <thead><tr><th>Code</th><th>User</th><th>Amount</th><th>Created</th><th>Status</th></tr></thead>
+            <tbody id="cashoutTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- settings -->
+      <div class="section" id="section-settings">
+        <h1>Settings</h1>
+        <div class="card">
+          <h3>Reward per item</h3>
+          <table>
+            <thead><tr><th>Item</th><th>Value (₱)</th></tr></thead>
+            <tbody id="itemTable"></tbody>
+          </table>
+          <br>
+          <button class="btn" onclick="saveItems()">Save rewards</button>
+        </div>
+
+        <div class="card">
+          <h3>Rates</h3>
+          <label for="setPoints">Points per ₱1</label>
+          <input type="number" id="setPoints" min="1">
+          <label for="setWifi">Wi-Fi minutes per ₱1</label>
+          <input type="number" id="setWifi" min="1">
+          <label for="setCrush">Run crusher when bin reaches (%)</label>
+          <input type="number" id="setCrush" min="10" max="100">
+          <label for="setFull">Bin is full at (%)</label>
+          <input type="number" id="setFull" min="10" max="100">
+          <button class="btn" onclick="saveRates()">Save rates</button>
+        </div>
+
+        <div class="card">
+          <h3>Admin account</h3>
+          <label for="setUser">Username</label>
+          <input type="text" id="setUser">
+          <label for="setPass">New password (leave blank to keep)</label>
+          <input type="password" id="setPass">
+          <button class="btn" onclick="saveAccount()">Save account</button>
+        </div>
+
+        <div class="card">
+          <h3>Reset data</h3>
+          <p class="small gray">This puts back the sample machines, users and transactions.</p>
+          <button class="btn btn-red" onclick="resetAll()">Reset all data</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="message"></div>
+
+  <script src="../assets/js/data.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

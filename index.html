@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BOCO-FI</title>
+  <link rel="icon" href="assets/img/mark.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 30px 20px;
+    }
+
+    .logo {
+      width: 200px;
+    }
+
+    .intro {
+      max-width: 600px;
+      color: #555;
+    }
+
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin: 25px 0;
+    }
+
+    .links .card {
+      flex: 1;
+      min-width: 220px;
+      border-top: 5px solid #3F5523;
+    }
+
+    .links .card.blue {
+      border-top-color: #3FADED;
+    }
+
+    footer {
+      text-align: center;
+      color: #999;
+      font-size: 13px;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="assets/img/logo.svg" alt="BOCO-FI logo" class="logo">
+    <h1>BOCO-FI</h1>
+    <p class="intro">
+      Bottle Collection with Wi-Fi rewards. Put your plastic bottles and cans in the machine
+      and get coins, free Wi-Fi time, or points that you can save in your account.
+    </p>
+
+    <div class="links">
+      <div class="card">
+        <h3>Machine Kiosk</h3>
+        <p class="gray small">The touch screen on the machine where you insert your bottles and cans.</p>
+        <a href="kiosk/index.html" class="btn">Open Kiosk</a>
+      </div>
+
+      <div class="card blue">
+        <h3>User App</h3>
+        <p class="gray small">Log in to see your points, coins and Wi-Fi time, and link your account to a machine.</p>
+        <a href="app/index.html" class="btn btn-blue">Open App</a>
+      </div>
+
+      <div class="card">
+        <h3>Admin</h3>
+        <p class="gray small">For the machine owner. Check the machines, transactions and users.</p>
+        <a href="admin/index.html" class="btn">Open Admin</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>How to test</h3>
+      <ol>
+        <li>Open the kiosk and the app in two tabs on the same browser.</li>
+        <li>Log in to the app using <b>maria@example.com</b> and PIN <b>1234</b>.</li>
+        <li>On the kiosk, tap <b>Recycle Today</b>, then <b>Start</b>, then <b>Log in</b>.</li>
+        <li>In the app, go to <b>Recycle</b> and type the 4-letter code shown on the kiosk.</li>
+        <li>Use the item buttons on the kiosk to insert bottles or cans, then choose your reward.</li>
+      </ol>
+      <p class="small gray">Admin login: <b>admin</b> / <b>admin123</b></p>
+    </div>
+  </div>
+
+  <footer>BOCO-FI &copy; 2026</footer>
+</body>
+</html>

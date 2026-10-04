@@ -1,0 +1,215 @@
+/* User app (made for phone screens) */
+
+body {
+  background-color: #f4f5f2;
+}
+
+.phone {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background-color: white;
+}
+
+/* login */
+#loginPage {
+  padding: 30px 20px;
+}
+
+.login-top {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.login-logo {
+  width: 90px;
+}
+
+.login-top h1 {
+  font-size: 24px;
+  margin: 10px 0 5px;
+}
+
+.tabs {
+  display: flex;
+  margin-bottom: 12px;
+}
+
+.tabs button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-bottom: 3px solid #ddd;
+  background: none;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+}
+
+.tabs button.active {
+  color: #3F5523;
+  border-bottom-color: #3F5523;
+}
+
+/* header */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid #e2e2e2;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
+}
+
+.header-logo {
+  height: 40px;
+}
+
+#headerName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #3F5523;
+}
+
+.content {
+  padding: 16px 16px 90px;
+}
+
+.content h2 {
+  font-size: 22px;
+}
+
+/* points card */
+.balance-card {
+  background-color: #3F5523;
+  color: white;
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 14px;
+}
+
+.balance-card p {
+  margin: 0;
+}
+
+.balance-card .points {
+  font-size: 36px;
+  font-weight: 700;
+  margin: 5px 0;
+}
+
+.two-boxes {
+  display: flex;
+  gap: 12px;
+}
+
+.two-boxes .card {
+  flex: 1;
+  cursor: pointer;
+}
+
+.two-boxes p {
+  margin: 0 0 5px;
+}
+
+.two-boxes h3 {
+  margin: 0;
+}
+
+/* list rows */
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.card.row {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e2e2;
+}
+
+.right {
+  text-align: right;
+  font-weight: 600;
+  font-size: 14px;
+  color: #3F5523;
+}
+
+.code-input {
+  font-family: Consolas, monospace;
+  font-size: 28px;
+  text-align: center;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+}
+
+/* wifi */
+.wifi-circle {
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  border: 10px solid #3FADED;
+  margin: 10px auto 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.wifi-time.big {
+  font-size: 28px;
+  font-weight: 700;
+  color: #3F5523;
+}
+
+/* bottom menu */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  background: white;
+  border-top: 1px solid #ddd;
+}
+
+.bottom-nav button {
+  flex: 1;
+  padding: 14px 4px;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 13px;
+  color: #888;
+  cursor: pointer;
+}
+
+.bottom-nav button.active {
+  color: #3F5523;
+  font-weight: 700;
+}
+
+.bottom-nav .recycle-btn {
+  background-color: #3F5523;
+  color: white;
+  font-weight: 700;
+}
+
+.bottom-nav .recycle-btn.active {
+  color: white;
+  background-color: #2d3d19;
+}

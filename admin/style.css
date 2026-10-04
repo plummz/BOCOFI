@@ -1,0 +1,162 @@
+/* Admin page */
+
+body {
+  background-color: #f4f5f2;
+}
+
+/* login */
+.login-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.login-box {
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+}
+
+.login-box label,
+.login-box input {
+  text-align: left;
+}
+
+.login-logo {
+  width: 160px;
+  margin-bottom: 10px;
+}
+
+/* sidebar */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 220px;
+  height: 100%;
+  background: white;
+  border-right: 1px solid #e2e2e2;
+  padding: 15px;
+  overflow-y: auto;
+}
+
+.side-logo {
+  width: 140px;
+  display: block;
+  margin: 0 auto 20px;
+}
+
+.sidebar button {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 4px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  font-family: inherit;
+  font-size: 15px;
+  text-align: left;
+  color: #444;
+  cursor: pointer;
+}
+
+.sidebar button:hover {
+  background: #f4f5f2;
+}
+
+.sidebar button.active {
+  background: #3F5523;
+  color: white;
+}
+
+.sidebar .logout {
+  margin-top: 20px;
+  border: 1px solid #ccc;
+  text-align: center;
+}
+
+.count {
+  background: #d43f55;
+  color: white;
+  border-radius: 10px;
+  padding: 0 7px;
+  font-size: 12px;
+}
+
+.count:empty {
+  display: none;
+}
+
+.main {
+  margin-left: 220px;
+  padding: 25px;
+}
+
+.main h1 {
+  font-size: 26px;
+}
+
+/* stat boxes */
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.stat {
+  flex: 1;
+  min-width: 150px;
+  background: white;
+  border-radius: 10px;
+  padding: 15px;
+  border-left: 5px solid #3F5523;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.stat p {
+  margin: 0;
+  color: #777;
+  font-size: 14px;
+}
+
+.stat h2 {
+  margin: 5px 0 0;
+}
+
+.machine select {
+  max-width: 200px;
+}
+
+.filter {
+  max-width: 250px;
+}
+
+tr.read {
+  color: #999;
+}
+
+.item-value {
+  max-width: 120px;
+  margin: 0;
+}
+
+/* smaller screens */
+@media (max-width: 800px) {
+  .sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+  }
+
+  .main {
+    margin-left: 0;
+  }
+
+  .card {
+    overflow-x: auto;
+  }
+}
