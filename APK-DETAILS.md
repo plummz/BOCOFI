@@ -40,6 +40,15 @@ All 4 tabs stay open in the background, so when you switch from the Kiosk to the
 3. If it asks, allow "Install unknown apps" for your browser or file manager.
 4. Tap **Install**, then **Open**.
 
+## iPhone (iOS)
+
+The APK only works on Android. On iPhone, open this link in Safari instead:
+
+https://plummz.github.io/BOCOFI/mobile/
+
+It has the same 4 tabs at the bottom (Home, Kiosk, App, Admin) and works the same way.
+To make it look like an app: tap the **Share** button in Safari, then **Add to Home Screen**. A BOCO-FI icon will appear on the home screen.
+
 ## Test accounts
 
 - User app: `juandelacruz@gmail.com`, PIN `1234`

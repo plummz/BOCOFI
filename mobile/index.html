@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#3F5523">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="BOCO-FI">
+  <title>BOCO-FI</title>
+  <link rel="icon" href="../assets/img/mark.svg">
+  <link rel="apple-touch-icon" href="../assets/img/icon.png">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      background-color: #3F5523;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      height: 100dvh;
+      padding-top: env(safe-area-inset-top);
+    }
+
+    #frames {
+      position: relative;
+      flex: 1;
+      background-color: white;
+    }
+
+    #frames iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: none;
+    }
+
+    #frames iframe.active {
+      display: block;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 6px;
+      padding: 7px 7px calc(7px + env(safe-area-inset-bottom));
+      background-color: #3F5523;
+    }
+
+    .tabs button {
+      flex: 1;
+      height: 44px;
+      border: none;
+      border-radius: 22px;
+      background: none;
+      color: #dde5d6;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .tabs button.active {
+      background-color: white;
+      color: #3F5523;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div id="frames">
+    <iframe id="frame-home" src="../index.html" class="active"></iframe>
+    <iframe id="frame-kiosk" src="../kiosk/index.html"></iframe>
+    <iframe id="frame-app" src="../app/index.html"></iframe>
+    <iframe id="frame-admin" src="../admin/index.html"></iframe>
+  </div>
+
+  <nav class="tabs">
+    <button id="tab-home" class="active" onclick="showTab('home')">Home</button>
+    <button id="tab-kiosk" onclick="showTab('kiosk')">Kiosk</button>
+    <button id="tab-app" onclick="showTab('app')">App</button>
+    <button id="tab-admin" onclick="showTab('admin')">Admin</button>
+  </nav>
+
+  <script>
+    var tabNames = ['home', 'kiosk', 'app', 'admin'];
+
+    function showTab(name) {
+      for (var i = 0; i < tabNames.length; i++) {
+        document.getElementById('frame-' + tabNames[i]).classList.remove('active');
+        document.getElementById('tab-' + tabNames[i]).classList.remove('active');
+      }
+      var frame = document.getElementById('frame-' + name);
+      frame.classList.add('active');
+      document.getElementById('tab-' + name).classList.add('active');
+
+      frame.contentWindow.dispatchEvent(new Event('storage'));
+    }
+
+    function fixLinks(frame) {
+      frame.contentDocument.addEventListener('click', function (event) {
+        var link = event.target.closest('a');
+        if (!link) return;
+
+        var href = link.getAttribute('href') || '';
+        var target = '';
+        if (href.indexOf('kiosk/') !== -1) target = 'kiosk';
+        if (href.indexOf('app/') !== -1) target = 'app';
+        if (href.indexOf('admin/') !== -1) target = 'admin';
+        if (target !== '') {
+          event.preventDefault();
+          showTab(target);
+        }
+      });
+    }
+
+    for (var i = 0; i < tabNames.length; i++) {
+      document.getElementById('frame-' + tabNames[i]).addEventListener('load', function () {
+        fixLinks(this);
+      });
+    }
+  </script>
+</body>
+</html>

@@ -21,6 +21,11 @@ Just open `index.html` in a browser. No installation needed.
 
 The data is saved in the browser's localStorage, so the kiosk, app and admin can share the same data. Open them in tabs on the same browser.
 
+## On a phone
+
+- Android: install the APK (see `APK-DETAILS.md`).
+- iPhone or any phone: open https://plummz.github.io/BOCOFI/mobile/ in the browser. It has tabs at the bottom to switch between the kiosk, app and admin.
+
 ## Test accounts
 
 - User app: `juandelacruz@gmail.com`, PIN `1234`
