@@ -12,9 +12,9 @@
 |---|---|
 | App name | BOCO-FI |
 | Package name | com.bocofi.app |
-| Version | 1.3 (version code 4) |
+| Version | 1.4 (version code 5) |
 | File size | about 1.3 MB |
-| Minimum Android | Android 7.0 (API 24) |
+| Minimum Android | Android 5.0 (API 21) |
 | Target Android | Android 16 (API 36) |
 | Build type | Debug |
 | Built on | October 4, 2026 |
